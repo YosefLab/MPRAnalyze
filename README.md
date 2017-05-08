@@ -2,8 +2,7 @@
 ### Comparing enhancer strength based on MPRA experiments ###
 
 MPRAnalyze is an analysis framework for MPRA data that aims at translating the main scientific questions arising in the context of MPRA data into statistical problems.
-Such questions include variations of ranking enhancers by caused expression magnitude 
-and testing for differential enhancer activity between conditions.
+Such questions include variations of ranking enhancers by caused expression magnitude and testing for differential enhancer activity between conditions.
 Thereby, MPRAnalyze allows the user to answer those questions as part of a likelihood-based framework based on p-values and expression strength scores.
 
 ### INSTALLATION

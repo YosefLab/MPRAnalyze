@@ -1,39 +1,5 @@
-#' Cost function for constant model
-#' 
-#' Log likelihood cost function for numerical optimisation of
-#' constant model.
-#' Implements log linker function for the constant mean parameter
-#' and the batch correction factors.
-#' Implements lower sensitivity bound of likelihood with respect
-#' to constant mean parameter.
-#' Implements upper and lower sensitivity bound of likelihood with respect
-#' to batch correction factors.
-#' 
-#' @seealso Compiled version: \link{evalLogLik_comp}
-#' 
-#' @param vecTheta (numeric vector number of parameters to be estimated) 
-#'    Constant model parameter and batch correction factor estimates.
-#' @param vecCounts (numeric vector number of samples)
-#'    Read count data.
-#' @param scaDisp (scalar) Gene-wise 
-#'    negative binomial dispersion hyper-parameter. 
-#'    Dispersion parameter is taken from vecTheta 
-#'    if this is NULL (numerical fitting of dispersion).
-#' @param vecSizeFactors (numeric vector number of samples) 
-#'    Model scaling factors for each sample which take
-#'    sequencing depth into account (size factors).
-#' @param lsvecidxBatch (list length number of confounding variables)
-#' 		List of index vectors. 
-#' 		One vector per confounding variable.
-#' 		Each vector has one entry per sample with the index batch
-#' 		within the given confounding variable of the given sample.
-#' 		Batches are enumerated from 1 to number of batches.
-#' @param vecboolObserved (bool vector number of samples)
-#'    Whether sample is observed (finite and not NA).
-#'     
-#' @return scaLogLik (scalar) Value of cost function (loglikelihood) for given gene.
-#' 
-#' @author David Sebastian Fischer
+#' @importFrom compiler cmpfun
+
 evalLogLikRNA_pointDNAnbRNA <- function(
     vecTheta,
     matRNACounts,

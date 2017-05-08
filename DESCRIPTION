@@ -9,8 +9,7 @@ Authors@R: c(
 	person('Fabian', 'Theis', NULL, 'fabian.theis@helmholtz-muenchen.de', 'ctb'))
 Author: David S Fischer [aut, cre], Nir Yosef [ctb], Fabian J Theis [ctb],
 Maintainer: David S Fischer <david.fischer@helmholtz-muenchen.de>
-Description: MPRAnalyze is an analysis framework for MPRA data that aims at translating the main scientific questions arising in the context of MPRA data into statistical problems. Such questions include variations of ranking enhancers by caused expression magnitude 
-and testing for differential enhancer activity between conditions. Thereby, MPRAnalyze allows the user to answer those questions as part of a likelihood-based framework based on p-values and expression strength scores.
+Description: MPRAnalyze is an analysis framework for MPRA data that aims at translating the main scientific questions arising in the context of MPRA data into statistical problems. Such questions include variations of ranking enhancers by caused expression magnitude and testing for differential enhancer activity between conditions. Thereby, MPRAnalyze allows the user to answer those questions as part of a likelihood-based framework based on p-values and expression strength scores.
 License: GPL-3
 Encoding: UTF-8
 Imports:
@@ -39,6 +38,7 @@ Collate:
     'srcMPRAnalyze_estimateDepthFactors.R'
     'srcMPRAnalyze_estimateDispersions.R'
     'srcMPRAnalyze_extractModel.R'
+    'srcMPRAnalyze_getModelFits.R'
     'srcMPRAnalyze_fitModels.R'
     'srcMPRAnalyze_prefitCtrlModels.R'
     'srcMPRAnalyze_runDEAnalysis.R'

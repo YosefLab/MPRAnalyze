@@ -1,21 +1,34 @@
-library(compiler)
-library(DESeq2)
-library(BiocParallel)
-library(Biobase)
+#' @import Biobase
+#' @import BiocParallel
+#' @importFrom compiler cmpfun
+#' @import ggplot2
+#' @importFrom grDevices dev.off graphics.off pdf
+#' @import knitr
+#' @import Matrix
+#' @import methods
+#' @importFrom stats dnbinom median optim p.adjust pchisq rnbinom rnorm runif sd time
+#' @import SummarizedExperiment
+#' @importFrom utils packageDescription
+NULL
 
-wdCWD <- getwd()
-setwd("~/gitDevelopment/MPRAnalyze")
+#library(compiler)
+#library(DESeq2)
+#library(BiocParallel)
+#library(Biobase)
+
+#wdCWD <- getwd()
+#setwd("~/gitDevelopment/MPRAnalyze")
 #setwd("/data/yosef2/users/fischerd/software/MPRAnalyze")
-source("R/srcMPRAnalyze_classMPRAnalyzeObject.R")
-source("R/srcMPRAnalyze_CostFunctions.R")
-source("R/srcMPRAnalyze_estimateDepthFactors.R")
-source("R/srcMPRAnalyze_estimateDispersions.R")
-source("R/srcMPRAnalyze_extractModel.R")
-source("R/srcMPRAnalyze_fitModels.R")
-source("R/srcMPRAnalyze_getModelFits.R")
-source("R/srcMPRAnalyze_prefitCtrlModels.R")
-source("R/srcMPRAnalyze_runDEAnalysis.R")
-setwd(wdCWD)
+#source("R/srcMPRAnalyze_classMPRAnalyzeObject.R")
+#source("R/srcMPRAnalyze_CostFunctions.R")
+#source("R/srcMPRAnalyze_estimateDepthFactors.R")
+#source("R/srcMPRAnalyze_estimateDispersions.R")
+#source("R/srcMPRAnalyze_extractModel.R")
+#source("R/srcMPRAnalyze_fitModels.R")
+#source("R/srcMPRAnalyze_getModelFits.R")
+#source("R/srcMPRAnalyze_prefitCtrlModels.R")
+#source("R/srcMPRAnalyze_runDEAnalysis.R")
+#setwd(wdCWD)
 
 #' Wrapper function MPRAnalyze
 #' 
