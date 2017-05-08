@@ -1,7 +1,7 @@
 Package: MPRAnalyze
 Type: Package
 Title: Comparing enhancer strength based on MPRA experiments
-Version: 0.00.1
+Version: 0.90.1
 Date: 2017-05-07
 Authors@R: c(
 	person('David S', 'Fischer', NULL, 'david.fischer@helmholtz-muenchen.de', c('aut','cre')),	

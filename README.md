@@ -14,7 +14,7 @@ Then, from your rsession, e.g. in RStudio, load the wrapper functions via source
 You can now use MPRAnalyze via the wrapper functions.
 
 ### VIGNETTE
-View the vignette (.html) in your browser by double clicking on "vignettes/MPRAnalyze_Tutorial.html".
+View the vignette in your browser by double clicking on "vignettes/MPRAnalyze_Tutorial.Rmd".
 
 
 

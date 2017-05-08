@@ -143,7 +143,7 @@ objMPRA <- runMPRAnalyze(
   boolPreFitCtrlDNA=FALSE,
   scaNProc=1, 
   boolVerbose=TRUE )
-objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$p),]
+print(objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$p),])
 ```
 
 # With scrambled sequences
@@ -216,7 +216,7 @@ objMPRA <- runMPRAnalyze(
   boolPreFitCtrlDNA=TRUE,
   scaNProc=1, 
   boolVerbose=TRUE )
-objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),]
+print(objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),])
 ```
 
 # Session information

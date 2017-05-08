@@ -127,7 +127,7 @@ runMPRAnalyze <- function(
     strModel="lnDNAlnRNA",
     boolVerbose=TRUE ){
     
-    strMessage <- "MPRAnalyze v0.99 for MPRA data (DNA and RNA counts)"
+    strMessage <- "MPRAnalyze v0.90 for MPRA data (DNA and RNA counts)"
     if(boolVerbose) message(strMessage)
     strReport <- strMessage
     
