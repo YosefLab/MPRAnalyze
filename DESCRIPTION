@@ -5,7 +5,7 @@ Version: 0.00.1
 Date: 2017-05-07
 Authors@R: c(
 	person('David S', 'Fischer', NULL, 'david.fischer@helmholtz-muenchen.de', c('aut','cre')),	
-	person('Nir', 'Yosef', NULL, 'niryosef@berkeley.edu', 'ctb')),
+	person('Nir', 'Yosef', NULL, 'niryosef@berkeley.edu', 'ctb'),
 	person('Fabian', 'Theis', NULL, 'fabian.theis@helmholtz-muenchen.de', 'ctb'))
 Author: David S Fischer [aut, cre], Nir Yosef [ctb], Fabian J Theis [ctb],
 Maintainer: David S Fischer <david.fischer@helmholtz-muenchen.de>
@@ -44,4 +44,4 @@ Collate:
     'srcMPRAnalyze_runDEAnalysis.R'
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
-BugReports: https://github.com/YosefLab/ImpulseDE2/issues
+BugReports: https://github.com/davidsebfischer/MPRAnalyze/issues
