@@ -12,6 +12,7 @@ source("R/srcMPRAnalyze_estimateDepthFactors.R")
 source("R/srcMPRAnalyze_estimateDispersions.R")
 source("R/srcMPRAnalyze_extractModel.R")
 source("R/srcMPRAnalyze_fitModels.R")
+source("R/srcMPRAnalyze_getModelFits.R")
 source("R/srcMPRAnalyze_prefitCtrlModels.R")
 source("R/srcMPRAnalyze_runDEAnalysis.R")
 setwd(wdCWD)
@@ -207,20 +208,22 @@ runMPRAnalyze <- function(
         vecModelFacDNA=obj@vecModelFacDNA,
         MAXIT=1000, boolVerbose=boolVerbose)
     
-    strMessage <- "# Fit null model"
-    if(boolVerbose) message(strMessage)
-    obj@strReport <- paste0(obj@strReport, "\n", strMessage)
-    obj@lsModelFitsRed <- fitModels(
-        obj=obj, vecModelFacRNA=obj@vecModelFacRNARed,
-        vecModelFacRNACtrl=obj@vecModelFacRNARedCtrl,
-        vecModelFacDNA=obj@vecModelFacDNA,
-        MAXIT=1000, boolVerbose=boolVerbose)
-    
-    # 4. Perform differential expression analysis
-    strMessage <- "# Perform differential expression analysis"
-    if(boolVerbose) message(strMessage)
-    obj@strReport <- paste0(obj@strReport, "\n", strMessage)
-    obj <- runDEAnalysis(obj=obj)
+    if(!is.null(vecModelFacRNARed)) {
+        strMessage <- "# Fit null model"
+        if(boolVerbose) message(strMessage)
+        obj@strReport <- paste0(obj@strReport, "\n", strMessage)
+        obj@lsModelFitsRed <- fitModels(
+            obj=obj, vecModelFacRNA=obj@vecModelFacRNARed,
+            vecModelFacRNACtrl=obj@vecModelFacRNARedCtrl,
+            vecModelFacDNA=obj@vecModelFacDNA,
+            MAXIT=1000, boolVerbose=boolVerbose)
+        
+        # 4. Perform differential expression analysis
+        strMessage <- "# Perform differential expression analysis"
+        if(boolVerbose) message(strMessage)
+        obj@strReport <- paste0(obj@strReport, "\n", strMessage)
+        obj <- runDEAnalysis(obj=obj)
+    }
     
     return(obj)
 }

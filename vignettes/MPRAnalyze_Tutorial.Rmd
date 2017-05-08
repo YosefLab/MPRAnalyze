@@ -53,7 +53,6 @@ strModel=lnDNAlnRNA,boolPreFitCtrlDNA=FALSE for DNA point estimator-based models
 strModel=gammaDNApoisRNA,boolPreFitCtrlDNA=FALSE for marginalisation-based models with few or no control enhancers (<10) and
 strModel=gammaDNApoisRNA,boolPreFitCtrlDNA=TRUE for marginalisation-based models with many control enhancers.
 strModel=gammaDNApoisRNA_coordascent,boolPreFitCtrlDNA=FALSE is an alternative if many control enhancers are used.
-
 lnDNAlnRNA: DNA point estimators are pre-estimated based on a lognormal model.
 The expression model is then fit based on a negative binomial likelihood of the RNA counts.
 gammaDNApoisRNA: DNA and expression model are co-estimated, exloiting a closed
@@ -81,23 +80,78 @@ Additionally, one can provide:
 * vecDNADepthExternal Externally supplied DNA sample sequencing depth factors.
 * boolVerbose Control output of package.
 
+Please be aware that the model input interface via vectors of model elements may not be very straight forward for the user right now, I am working on that.
+Please consult me to discuss these after looking at the examples below and thinking about which scenario might be applicable to your case.
+
+The general idea is that most questions below can be answered with a hypothesis test:
+We chose a loglikelihood raio test to compare a full and a reduced model.
+One can specifiy the factors included in the full and the reduced model in the wrapper function input, similar to a differential expression test.
+The additional complexity lies in the fact that separately, additional model factors for the set of control/scrambled enhancers have to be defined in many scenarios.
+Moreover, one has to supply factors which define the DNA model which is shared between full and reduced expression model.
 
 # Without scrambled sequences
-## Compare the strength of enhancers 
-This comparison is done in one condition.
-Either, the strength is directly compared based on the model parameter (no testing)
-or all enhancers are compared against a reference (e.g. the WT) enhancer.
-The testing scenario corresponds to the scrambled scenario if in which the set of scrambled enhancers is the WT enhancer.
-The parameter which can be compared directly is the baseline transcription strength.
-This model is fit as an MLE and the the ranked baseline transcription strength are given as an output.
-
-## Test the effect of an condition
-A hypothesis test is conducted to test whether expression varies significantly (= is non-constant) as a function of the fiven conditions(s).
+## Compare the strength of enhancers
+Enhancers can be compared without a reference set based on their induced expression rates.
+The analysis consists of the comparison of the scalar expression rate of each enhancer.
+Enhancers can for example be ranked or compared to a reference (such as wild type) enhancer.
 
 ```{r heatmap, results='markdown'}
-# source("..path../MPRAnalyze/R/main_MPRAnalyze.R")
-# Produce example data: lognormal distributed DNA and poisson distributed RNA
+# source from your target directoy
 source("~/gitDevelopment/MPRAnalyze/R/main_MPRAnalyze.R")
+# Produce example data: lognormal distributed DNA and poisson distributed RNA
+vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
+vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
+vecMuDNA <- sample(x=100, size=20)
+matDNACounts <- do.call(rbind, lapply(vecMuDNA, function(mu) {
+    round(rlnorm(n=scaNSamples, meanlog = log(mu), sdlog = 1)*vecSampleEffect)
+}))
+matDNACounts[matDNACounts <= 1] <- 1
+rownames(matDNACounts) <- c(
+    paste0("Seq_", 1:20)
+)
+colnames(matDNACounts) <- paste0("S", 1:scaNSamples)
+vecExprRates <- seq(0.5,2, length.out = 20)
+matCondEffect <- matrix(1, nrow=20, ncol=100)
+matRNACounts <- do.call(rbind, lapply(1:20, function(i) {
+    sapply(matDNACounts[i,]*matCondEffect[i,], function(x) 
+        round(rpois(n=1, lambda = x*vecExprRates[i])) )
+}))
+rownames(matRNACounts) <- rownames(matDNACounts)
+colnames(matRNACounts) <- colnames(matDNACounts)
+dfAnnotation <- data.frame(
+    sample=rownames(matRNACounts),
+    barcode=rep(paste0("BC",1:25),4),
+    stringsAsFactors = FALSE
+)
+# Run MPRAnalyze
+objMPRA <- runMPRAnalyze(
+  matRNACounts=matRNACounts, 
+  matDNACounts=matDNACounts, 
+  dfAnnotation=dfAnnotation,
+  vecCtrlIDs=NULL,
+  vecModelFacRNAFull=c("1"),
+  vecModelFacRNAFullCtrl=NULL,
+  vecModelFacRNARed=NULL,
+  vecModelFacRNARedCtrl=NULL,
+  vecModelFacDNA=c("barcode"),
+  strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
+  boolPreFitCtrlDNA=FALSE,
+  scaNProc=1, 
+  boolVerbose=TRUE )
+lsExprModels <- getExprModelFull(obj=objMPRA)
+print(data.frame(inferred=lsExprModels$baseline,
+                 simulated=vecExprRates))
+```
+
+## Test the effect of an condition
+A hypothesis test is conducted to test whether expression varies significantly (= is non-constant) as a function of the given conditions(s).
+The test does not take a "base line variation" into account which could be caputred with control enhancers.
+Such a base line variation could be overall transcriptional activity.
+
+```{r heatmap, results='markdown'}
+# source from your target directoy
+source("~/gitDevelopment/MPRAnalyze/R/main_MPRAnalyze.R")
+# Produce example data: lognormal distributed DNA and poisson distributed RNA
 vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
 vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
 vecMuDNA <- sample(x=100, size=20)
@@ -143,34 +197,71 @@ objMPRA <- runMPRAnalyze(
   boolPreFitCtrlDNA=FALSE,
   scaNProc=1, 
   boolVerbose=TRUE )
-print(objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$p),])
+objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$p),]
 ```
 
-# With scrambled sequences
+# With scrambled/control enhancers
 ## Test the strength of enhancers
-
-
-## Test the effect of an condition
-For example: Test the time dependency of expression with control enhancers.
-
-A control time course of garbage sequences can be handled as case-control differential expression analysis where control
-is fit to all garbage sequence time courses (i.e. control is the mean garbage signal).
-Again, assume a condition to be tested $c1$, such as time,
-and a confounding condition $c2$.
-$\Omega$ is the set of garbage enhancers.
-The null model $H0$ has unconstrained DNA models and a constraint on the expression model:
-The expression model is the same for the garbage sequences and the enhancer of interest with respect to the conditions of interest (here, $c1$ or time).
-
-Note that the DNA model is parameterised per enhancer, including the scrambled ones, while the size of the expression model does not depend on the number of scrambled enhancers.
-With about 100 parameters for the DNA model per enhancer and 200 scrambles, the total model if roughly 20,000 dimensional which is not numerically feasible.
-One option could be to reduce the DNA model size by reducing the barcode model to a GC-content model.
-Alternatively and currently implemented is a batch-wise coordinate ascent in which iteratively, 1. DNA models are estimated in parallel conditioned on the expression model and 2. the expression model estimated conditioned on all DNA models.
-This batch-wise estimation is guaranteed to yield a local minimum of the likelihood function and breaks arbitrarily large data sets up into optimisation problems small enough to be solved with BFGS.
+If control sequences are given and only one condition is analysed,
+two approaches are possible:
+Firstly, as without control sequences, enhancers can be compared by their induced expression rates.
+Secondly, one can test whether the expression rates of the "case enhancers" differ significantly from the rates of the control enhancers.
 
 ```{r heatmap, results='markdown'}
-# source("..path../MPRAnalyze/R/main_MPRAnalyze.R")
-# Produce example data: lognormal distributed DNA and poisson distributed RNA
+# source from your target directoy
 source("~/gitDevelopment/MPRAnalyze/R/main_MPRAnalyze.R")
+# Produce example data: lognormal distributed DNA and poisson distributed RNA
+vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
+vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
+vecMuDNA <- sample(x=100, size=20)
+matDNACounts <- do.call(rbind, lapply(vecMuDNA, function(mu) {
+    round(rlnorm(n=scaNSamples, meanlog = log(mu), sdlog = 1)*vecSampleEffect)
+}))
+matDNACounts[matDNACounts <= 1] <- 1
+rownames(matDNACounts) <- c(
+    paste0("Seq_", 1:10), paste0("Ctrl_", 1:10)
+)
+colnames(matDNACounts) <- paste0("S", 1:scaNSamples)
+vecExprRates <- c(rep(1.5, 5), rep(0.5, 15))
+matCondEffect <- matrix(1, nrow=20, ncol=100)
+matRNACounts <- do.call(rbind, lapply(1:20, function(i) {
+    sapply(matDNACounts[i,]*matCondEffect[i,], function(x) 
+        round(rpois(n=1, lambda = x*vecExprRates[i])) )
+}))
+rownames(matRNACounts) <- rownames(matDNACounts)
+colnames(matRNACounts) <- colnames(matDNACounts)
+dfAnnotation <- data.frame(
+    sample=rownames(matRNACounts),
+    barcode=rep(paste0("BC",1:25),4),
+    stringsAsFactors = FALSE
+)
+# Run MPRAnalyze
+objMPRA <- runMPRAnalyze(
+  matRNACounts=matRNACounts, 
+  matDNACounts=matDNACounts, 
+  dfAnnotation=dfAnnotation,
+  vecCtrlIDs=paste0("Ctrl_", 1:10),
+  vecModelFacRNAFull=c("1"),
+  vecModelFacRNAFullCtrl=c("1"),
+  vecModelFacRNARed=c("1"),
+  vecModelFacRNARedCtrl=NULL,
+  vecModelFacDNA=c("barcode"),
+  strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
+  boolPreFitCtrlDNA=TRUE,
+  scaNProc=1, 
+  boolVerbose=TRUE )
+objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),]
+```
+
+## Test the effect of an condition
+## Test the effect of an condition
+A hypothesis test is conducted to test whether expression varies significantly (= is non-constant) as a function of the given conditions(s)
+taking account for baseline variation captured be the control sequences.
+
+```{r heatmap, results='markdown'}
+# source from your target directoy
+source("~/gitDevelopment/MPRAnalyze/R/main_MPRAnalyze.R")
+# Produce example data: lognormal distributed DNA and poisson distributed RNA
 vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
 vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
 vecMuDNA <- sample(x=100, size=20)
@@ -216,7 +307,7 @@ objMPRA <- runMPRAnalyze(
   boolPreFitCtrlDNA=TRUE,
   scaNProc=1, 
   boolVerbose=TRUE )
-print(objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),])
+objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),]
 ```
 
 # Session information

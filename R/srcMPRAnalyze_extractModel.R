@@ -9,9 +9,9 @@ extractModel <- function(
     if(is.null(strModelFull) & is.null(vecModelFacRNAFull)){
         stop(paste0("Supply either strModelFull or vecModelFacRNAFull."))
     }
-    if(is.null(strModelRed) & is.null(vecModelFacRNARed)){
-        stop(paste0("Supply either strModelRed or vecModelFacRNARed."))
-    }
+    #if(is.null(strModelRed) & is.null(vecModelFacRNARed)){
+    #    stop(paste0("Supply either strModelRed or vecModelFacRNARed."))
+    #}
     if(!is.null(strModelFull) & !is.null(vecModelFacRNAFull)){
         warning(paste0("Using strModelFull and not vecModelFacRNAFull."))
     }
@@ -44,7 +44,7 @@ extractModel <- function(
     if(is.null(strModelRed)){
         lsModelFac$vecModelFacRNARed <- vecModelFacRNARed
         lsModelFac$vecModelFacRNARedCtrl <- vecModelFacRNARedCtrl
-    } else {
+    } else if(!is.null(vecModelFacRNARed)) {
         stop("building")
         vecModelFacRNARed <- c("1")
         vecModelFacRNARedCtrl <- c()
