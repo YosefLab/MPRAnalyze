@@ -877,7 +877,7 @@ fitModels <- function(
         # First fit DNA distribution
         if(boolVerbose) message(paste0("Fit DNA"))
         lsFitsDNA <- bplapply(seq(1,scaNGenes),function(i){
-            print(paste0("### DNA Enhancer ", i))
+            if(boolVerbose) message(paste0("### DNA Enhancer ", i))
             fitDNA_lnDNA(
                 vecDNACounts=obj@matDNACountsProc[i,,drop=FALSE],
                 vecDNADepth=obj@vecDNADepth,
@@ -888,7 +888,7 @@ fitModels <- function(
         # Then condition RNA distribution on DNA MLE
         if(boolVerbose) message(paste0("Fit RNA"))
         lsFits <- bplapply(vecidxCase,function(i){
-            print(paste0("### RNA Enhancer ", i))
+            if(boolVerbose) message(paste0("### RNA Enhancer ", i))
             lsFitRNA <- fitRNA_pointDNAnbRNA(
                 matRNACounts=obj@matRNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
                 matDNAEst=do.call(rbind, lapply(c(i, vecidxCtrl), function(j) lsFitsDNA[[j]]$vecFitDNAHat )),
@@ -919,7 +919,7 @@ fitModels <- function(
         names(lsFits) <- rownames(obj@matRNACountsProc)[vecidxCase]
     } else if(obj@strModel=="gammaDNApoisRNA"){
         lsFits <- bplapply(vecidxCase, function(i){
-            print(paste0("### Enhancer ", i))
+            if(boolVerbose) message(paste0("### Enhancer ", i))
             fitDNARNA_gammaDNApoisRNA(
                 matDNACounts=obj@matDNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
                 matRNACounts=obj@matRNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
@@ -936,7 +936,7 @@ fitModels <- function(
         names(lsFits) <- rownames(obj@matRNACountsProc)[vecidxCase]
     } else if(obj@strModel=="gammaDNApoisRNA_coordascent"){
         lsFits <- bplapply(vecidxCase, function(i){
-            print(paste0("### Enhancer ", i))
+            if(boolVerbose) message(paste0("### Enhancer ", i))
             fitDNARNA_gammaDNApoisRNA_coordascent(
                 matDNACounts=obj@matDNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
                 matRNACounts=obj@matRNACountsProc[c(i,vecidxCtrl),,drop=FALSE],

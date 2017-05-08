@@ -7,13 +7,12 @@ Thereby, MPRAnalyze allows the user to answer those questions as part of a likel
 
 ### INSTALLATION
 
-Currently not installable! Instead, all functions are loaded into your current R session.
 Clone the GitHub repository first into you local target directory.
-Then, from your rsession, e.g. in RStudio, load the wrapper functions via source("MPRAnalyze/R/main_MPRAnalyze.R").
-You can now use MPRAnalyze via the wrapper functions.
+Install on the command line via "R CMD INSTALL ." from target director.
 
 ### VIGNETTE
-View the vignette in your browser by double clicking on "vignettes/MPRAnalyze_Tutorial.Rmd".
+Generate the vignette in RStudio by opening "MPRAnalyze/vignettes/MPRAnalyze_Tutorial.Rmd" and clicking on knitr in the toolbar.
+Alternatively, build MPRAnalyze and find the built html vignette in "inst/doc/" in the .tar.gz .
 
 
 

@@ -43,6 +43,12 @@ The additional complexity lies in the fact that separately, additional model fac
 Moreover, one has to supply factors which define the DNA model which is shared between full and reduced expression model.
 The remaining questions which cannot be answered with a hypothesis test which are covered below can be answered by a quantitative comparison of the transcriptional activity / expression strength induced by an enhancer, which is also possible in this framework.
 
+# Barcodes
+MPRA experiments can be conducted with barcoded plasmids such that multiple plasmids with multiple barcodes are measured for each enhancer sequence (i.e. the plasmids are identitcal except for the barcode).
+These barcodes are additional to the UMI barcodes.
+Such plasmid barcoding may increase the reliability of the data and the added information can be used with MPRAnalyze.
+We suggest to NOT MERGE the plasmid counts by barcode but to treat them as separate samples and to add the barcode identity into the DNA model as done below.
+
 # Input
 
 Please be aware that the model input interface via vectors of model elements may not be very straight forward for the user right now, I am working on that.
@@ -99,8 +105,6 @@ Enhancers can for example be ranked or compared to a reference (such as wild typ
 
 ```{r without_scrambles_without_conditions, results='markdown'}
 library(MPRAnalyze)
-# source from your target directoy
-#source("~/gitDevelopment/MPRAnalyze/R/main_MPRAnalyze.R")
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
 vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
 vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
@@ -140,7 +144,7 @@ objMPRA <- runMPRAnalyze(
   strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
   boolPreFitCtrlDNA=FALSE,
   scaNProc=1, 
-  boolVerbose=TRUE )
+  boolVerbose=FALSE )
 lsExprModels <- getExprModelFull(obj=objMPRA)
 print(data.frame(inferred=lsExprModels$baseline,
                  simulated=vecExprRates))
@@ -152,8 +156,6 @@ The test does not take a "base line variation" into account which could be caput
 Such a base line variation could be overall transcriptional activity.
 
 ```{r without_scrambles_with_conditions, results='markdown'}
-# source from your target directoy
-#source("~/gitDevelopment/MPRAnalyze/R/main_MPRAnalyze.R")
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
 vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
 vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
@@ -199,7 +201,7 @@ objMPRA <- runMPRAnalyze(
   strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
   boolPreFitCtrlDNA=FALSE,
   scaNProc=1, 
-  boolVerbose=TRUE )
+  boolVerbose=FALSE )
 objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$p),]
 ```
 
@@ -211,8 +213,6 @@ Firstly, as without control sequences, enhancers can be compared by their induce
 Secondly, one can test whether the expression rates of the "case enhancers" differ significantly from the rates of the control enhancers.
 
 ```{r with_scrambles_without_conditions, results='markdown'}
-# source from your target directoy
-#source("~/gitDevelopment/MPRAnalyze/R/main_MPRAnalyze.R")
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
 vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
 vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
@@ -252,7 +252,7 @@ objMPRA <- runMPRAnalyze(
   strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
   boolPreFitCtrlDNA=TRUE,
   scaNProc=1, 
-  boolVerbose=TRUE )
+  boolVerbose=FALSE )
 objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),]
 ```
 
@@ -262,8 +262,6 @@ A hypothesis test is conducted to test whether expression varies significantly (
 taking account for baseline variation captured be the control sequences.
 
 ```{r with_scrambles_with_conditions, results='markdown'}
-# source from your target directoy
-#source("~/gitDevelopment/MPRAnalyze/R/main_MPRAnalyze.R")
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
 vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
 vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
@@ -309,7 +307,7 @@ objMPRA <- runMPRAnalyze(
   strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
   boolPreFitCtrlDNA=TRUE,
   scaNProc=1, 
-  boolVerbose=TRUE )
+  boolVerbose=FALSE )
 objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),]
 ```
 
