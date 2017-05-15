@@ -1,5 +1,12 @@
+#' Plot case rations of a given enhancer and control ratios as boxplots
+#' 
+#' Aid visual inspection of asigned p-values.
+#' 
 #' @include ggplot2
-#' export
+#' 
+#' @author David Sebastian Fischer
+#' 
+#' @export
 plotBoxplots <- function(obj, strID){
     
     vecboolObs <- !is.na(obj@matDNACountsProc[strID,]) & !is.na(obj@matRNACountsProc[strID,])
