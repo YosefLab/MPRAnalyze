@@ -11,11 +11,10 @@
 #' @importFrom utils packageDescription
 NULL
 
-library(compiler)
-library(DESeq2)
-library(BiocParallel)
-library(Biobase)
-library(methods)
+#library(compiler)
+#library(BiocParallel)
+#library(Biobase)
+#library(methods)
 
 #wdCWD <- getwd()
 #setwd("~/gitDevelopment/MPRAnalyze")

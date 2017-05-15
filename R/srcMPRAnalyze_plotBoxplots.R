@@ -1,3 +1,4 @@
+#' @include ggplot2
 #' export
 plotBoxplots <- function(obj, strID){
     

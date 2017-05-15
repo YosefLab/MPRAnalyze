@@ -311,6 +311,18 @@ objMPRA <- runMPRAnalyze(
 objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),]
 ```
 
+# Plotting
+MPRAnalyze compores distribution with each other and the results can be visualised using boxplots.
+```{r boxplots, results='markdown'}
+strIDToPlot <- rownames(objMPRA$dfMPRAnalyzeResults)[order(objMPRA$dfMPRAnalyzeResults$padj)[1]]
+gplotBoxplots <- plotBoxplots(objMPRA,strIDToPlot)
+print(gplotBoxplots)
+```
+A useful reference for the overall results is also a histogram of the log10 FDR-corrected p-values:
+```{r q-value histogram, results='markdown'}
+hist(log(objMPRA$dfMPRAnalyzeResults$padj)/log(10))
+```
+
 # Session information
 
 ```{r session}

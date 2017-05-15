@@ -50,11 +50,11 @@ doHypothesisTests <- function(obj){
         # Z-test if there is one observation per sample.
         if(dim(obj@matRNACountsProc)[2] > 1) {
             dfDEAnalysis$ttest_ctrl <- calcTTest(
-                obj, strCaseIDs=row.names(obj@matRNACountsProc)[vecidxCase], 
+                obj, vecCaseIDs=row.names(obj@matRNACountsProc)[vecidxCase], 
                 vecCtrlIDs=obj@vecCtrlIDs)
         } else {
             dfDEAnalysis$ztest_ctrl <- calcZTest(
-                obj, strCaseIDs=row.names(obj@matRNACountsProc)[vecidxCase], 
+                obj, vecCaseIDs=row.names(obj@matRNACountsProc)[vecidxCase], 
                 vecCtrlIDs=obj@vecCtrlIDs)
         }
     }
@@ -78,7 +78,7 @@ calcTTest <- function(obj, vecCaseIDs, vecCtrlIDs) {
         obj@matRNACountsProc[id,]/obj@matDNACountsProc[id,]
     })) 
     vecPvalTTest <- sapply(vecCaseIDs, function(id) {
-        t.test(x=obj@matRNACountsProc[strCaseID,]/obj@matDNACountsProc[strCaseID,],
+        t.test(x=obj@matRNACountsProc[id,]/obj@matDNACountsProc[id,],
                y=vecCtrlRatios,
                alternative = "greater")$p.value # one sided test for whether case ratio is larger than enhancers
     })
@@ -94,7 +94,7 @@ calcTTest <- function(obj, vecCaseIDs, vecCtrlIDs) {
 calcZTest <- function(obj, vecCaseIDs, vecCtrlIDs) {
     vecCtrlRatios <- obj@matRNACountsProc[vecCtrlIDs,]/obj@matDNACountsProc[vecCtrlIDs,]
     vecPvalTTest <- sapply(vecCaseIDs, function(id) {
-        pnorm(q=obj@matRNACountsProc[strCaseID,]/obj@matDNACountsProc[strCaseID,],
+        pnorm(q=obj@matRNACountsProc[id,]/obj@matDNACountsProc[id,],
               mean = mean(vecCtrlRatios, na.rm=TRUE),
               sd = sd(vecCtrlRatios, na.rm=TRUE),
               lower.tail = FALSE, # one sided test for whether case ratio is larger than enhancers
