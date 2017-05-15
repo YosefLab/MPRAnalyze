@@ -5,7 +5,8 @@
 \title{Fits constant models to an MPRA dataset}
 \usage{
 fitModels(obj, vecModelFacRNA, vecModelFacRNACtrl, vecModelFacDNA,
-  MAXIT = 1000, RELTOL = 10^(-8), boolVerbose = TRUE)
+  boolFitDNA = FALSE, MAXIT = 1000, RELTOL = 10^(-8),
+  boolVerbose = TRUE)
 }
 \arguments{
 \item{obj}{(object class obj)

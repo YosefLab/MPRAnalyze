@@ -17,19 +17,20 @@ library(BiocParallel)
 library(Biobase)
 library(methods)
 
-wdCWD <- getwd()
-setwd("~/gitDevelopment/MPRAnalyze")
+#wdCWD <- getwd()
+#setwd("~/gitDevelopment/MPRAnalyze")
 #setwd("/data/yosef2/users/fischerd/software/MPRAnalyze")
-source("R/srcMPRAnalyze_classMPRAnalyzeObject.R")
-source("R/srcMPRAnalyze_CostFunctions.R")
-source("R/srcMPRAnalyze_estimateDepthFactors.R")
-source("R/srcMPRAnalyze_estimateDispersions.R")
-source("R/srcMPRAnalyze_extractModel.R")
-source("R/srcMPRAnalyze_fitModels.R")
-source("R/srcMPRAnalyze_getModelFits.R")
-source("R/srcMPRAnalyze_prefitCtrlModels.R")
-source("R/srcMPRAnalyze_runDEAnalysis.R")
-setwd(wdCWD)
+#source("R/srcMPRAnalyze_classMPRAnalyzeObject.R")
+#source("R/srcMPRAnalyze_CostFunctions.R")
+#source("R/srcMPRAnalyze_estimateDepthFactors.R")
+#source("R/srcMPRAnalyze_estimateDispersions.R")
+#source("R/srcMPRAnalyze_extractModel.R")
+#source("R/srcMPRAnalyze_fitModels.R")
+#source("R/srcMPRAnalyze_getModelFits.R")
+#source("R/srcMPRAnalyze_plotBoxplots.R")
+#source("R/srcMPRAnalyze_prefitCtrlModels.R")
+#source("R/srcMPRAnalyze_doHypothesisTests.R")
+#setwd(wdCWD)
 
 #' Wrapper function MPRAnalyze
 #' 
@@ -252,7 +253,7 @@ runMPRAnalyze <- function(
         strMessage <- "# Perform differential expression analysis"
         if(boolVerbose) message(strMessage)
         obj@strReport <- paste0(obj@strReport, "\n", strMessage)
-        obj <- runDEAnalysis(obj=obj)
+        obj <- doHypothesisTests(obj=obj)
     }
     
     return(obj)

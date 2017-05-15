@@ -40,8 +40,9 @@ Collate:
     'srcMPRAnalyze_extractModel.R'
     'srcMPRAnalyze_getModelFits.R'
     'srcMPRAnalyze_fitModels.R'
+    'srcMPRAnalyze_plotBoxplots.R'
     'srcMPRAnalyze_prefitCtrlModels.R'
-    'srcMPRAnalyze_runDEAnalysis.R'
+    'srcMPRAnalyze_doHypothesisTests.R'
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
 BugReports: https://github.com/davidsebfischer/MPRAnalyze/issues
