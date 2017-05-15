@@ -2,10 +2,24 @@
 % Please edit documentation in R/srcMPRAnalyze_plotBoxplots.R
 \name{plotBoxplots}
 \alias{plotBoxplots}
-\title{export}
+\title{Plot case rations of a given enhancer and control ratios as boxplots}
 \usage{
 plotBoxplots(obj, strID)
 }
+\arguments{
+\item{obj}{(ObjectMPRA)
+MPRAnalyze output object from which enhancer is to be visualised.}
+
+\item{strID}{(string)
+ID of enhancer which is to be visualised. The control set is 
+taken from obj if controls were used.}
+}
+\value{
+(gplot) Boxplot graphic.
+}
 \description{
-export
+Aid visual inspection of asigned p-values.
+}
+\author{
+David Sebastian Fischer
 }

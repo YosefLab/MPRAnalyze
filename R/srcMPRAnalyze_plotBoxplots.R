@@ -2,7 +2,15 @@
 #' 
 #' Aid visual inspection of asigned p-values.
 #' 
-#' @include ggplot2
+#' @param obj (ObjectMPRA)
+#' MPRAnalyze output object from which enhancer is to be visualised.
+#' @param strID (string)
+#' ID of enhancer which is to be visualised. The control set is 
+#' taken from obj if controls were used.
+#' 
+#' @return (gplot) Boxplot graphic.
+#' 
+#' @import ggplot2
 #' 
 #' @author David Sebastian Fischer
 #' 

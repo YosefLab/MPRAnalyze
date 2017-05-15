@@ -80,7 +80,7 @@ calcTTest <- function(obj, vecCaseIDs, vecCtrlIDs) {
     vecPvalTTest <- sapply(vecCaseIDs, function(id) {
         t.test(x=obj@matRNACountsProc[id,]/obj@matDNACountsProc[id,],
                y=vecCtrlRatios,
-               alternative = "greater")$p.value # one sided test for whether case ratio is larger than enhancers
+               alternative = "greater")$p.value # one sided test
     })
     return(vecPvalTTest)
 }
@@ -97,7 +97,7 @@ calcZTest <- function(obj, vecCaseIDs, vecCtrlIDs) {
         pnorm(q=obj@matRNACountsProc[id,]/obj@matDNACountsProc[id,],
               mean = mean(vecCtrlRatios, na.rm=TRUE),
               sd = sd(vecCtrlRatios, na.rm=TRUE),
-              lower.tail = FALSE, # one sided test for whether case ratio is larger than enhancers
+              lower.tail = FALSE, # one sided test
               log.p = FALSE)
     })
     return(vecPvalTTest)

@@ -31,18 +31,18 @@ biocViews: Software,
     GeneExpression,
     CellBiology,
     CellBasedAssays
-Collate:
+Collate: 
     'main_MPRAnalyze.R'
-    'srcMPRAnalyze_classMPRAnalyzeObject.R'
     'srcMPRAnalyze_CostFunctions.R'
+    'srcMPRAnalyze_classMPRAnalyzeObject.R'
+    'srcMPRAnalyze_doHypothesisTests.R'
     'srcMPRAnalyze_estimateDepthFactors.R'
     'srcMPRAnalyze_estimateDispersions.R'
     'srcMPRAnalyze_extractModel.R'
-    'srcMPRAnalyze_getModelFits.R'
     'srcMPRAnalyze_fitModels.R'
+    'srcMPRAnalyze_getModelFits.R'
     'srcMPRAnalyze_plotBoxplots.R'
     'srcMPRAnalyze_prefitCtrlModels.R'
-    'srcMPRAnalyze_doHypothesisTests.R'
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
 BugReports: https://github.com/davidsebfischer/MPRAnalyze/issues
