@@ -11,24 +11,25 @@
 #' @importFrom utils packageDescription
 NULL
 
-#library(compiler)
-#library(DESeq2)
-#library(BiocParallel)
-#library(Biobase)
+library(compiler)
+library(DESeq2)
+library(BiocParallel)
+library(Biobase)
+library(methods)
 
-#wdCWD <- getwd()
-#setwd("~/gitDevelopment/MPRAnalyze")
+wdCWD <- getwd()
+setwd("~/gitDevelopment/MPRAnalyze")
 #setwd("/data/yosef2/users/fischerd/software/MPRAnalyze")
-#source("R/srcMPRAnalyze_classMPRAnalyzeObject.R")
-#source("R/srcMPRAnalyze_CostFunctions.R")
-#source("R/srcMPRAnalyze_estimateDepthFactors.R")
-#source("R/srcMPRAnalyze_estimateDispersions.R")
-#source("R/srcMPRAnalyze_extractModel.R")
-#source("R/srcMPRAnalyze_fitModels.R")
-#source("R/srcMPRAnalyze_getModelFits.R")
-#source("R/srcMPRAnalyze_prefitCtrlModels.R")
-#source("R/srcMPRAnalyze_runDEAnalysis.R")
-#setwd(wdCWD)
+source("R/srcMPRAnalyze_classMPRAnalyzeObject.R")
+source("R/srcMPRAnalyze_CostFunctions.R")
+source("R/srcMPRAnalyze_estimateDepthFactors.R")
+source("R/srcMPRAnalyze_estimateDispersions.R")
+source("R/srcMPRAnalyze_extractModel.R")
+source("R/srcMPRAnalyze_fitModels.R")
+source("R/srcMPRAnalyze_getModelFits.R")
+source("R/srcMPRAnalyze_prefitCtrlModels.R")
+source("R/srcMPRAnalyze_runDEAnalysis.R")
+setwd(wdCWD)
 
 #' Wrapper function MPRAnalyze
 #' 
@@ -159,6 +160,7 @@ runMPRAnalyze <- function(
         dfMPRAnalyzeResults  = NULL,
         lsModelFitsFull      = NULL,
         lsModelFitsRed       = NULL,
+        lsDNAModelFits       = NULL,
         lsDNAModelFitsCtrl   = NULL,
         vecDispersions       = vecDispersionsExternal,
         dfDispersions        = NULL,
@@ -202,6 +204,8 @@ runMPRAnalyze <- function(
     }
     
     # 3. Fit full and reduced model
+    # Pre-fit DNA models in marginalisation scenario
+    # to reduce size of optimisation problems: gammaDNApoisRNA
     if(boolPreFitCtrlDNA & obj@strModel=="gammaDNApoisRNA"){
         strMessage <- "# Pre-Fit control DNA model"
         if(boolVerbose) message(strMessage)
@@ -209,6 +213,19 @@ runMPRAnalyze <- function(
         obj@lsDNAModelFitsCtrl <- prefitCtrlDNAModels(
             obj=obj, vecModelFacRNA=obj@vecModelFacRNAFull,
             vecModelFacDNA=obj@vecModelFacDNA,
+            MAXIT=1000, boolVerbose=boolVerbose)
+    }
+    # DNA models are shared between null and full if expression
+    # model is conditioned on DNA model: pointlnDNAnbRNA
+    if(obj@strModel=="pointlnDNAnbRNA"){
+        strMessage <- "# Fit DNA models"
+        if(boolVerbose) message(strMessage)
+        obj@strReport <- paste0(obj@strReport, "\n", strMessage)
+        obj@lsDNAModelFits <- fitModels(
+            obj=obj, vecModelFacRNA=NULL,
+            vecModelFacRNACtrl=NULL,
+            vecModelFacDNA=obj@vecModelFacDNA,
+            boolFitDNA = TRUE,
             MAXIT=1000, boolVerbose=boolVerbose)
     }
     

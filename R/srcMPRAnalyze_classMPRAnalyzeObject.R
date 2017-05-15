@@ -27,6 +27,7 @@ setClass(
     lsModelFitsFull      = "listORNULL",
     lsModelFitsRed       = "listORNULL",
     lsDNAModelFitsCtrl   = "listORNULL",
+    lsDNAModelFits       = "listORNULL",
     vecDispersions       = "numericORNULL",
     dfDispersions        = "data.frameORNULL",
     matDNACountsProc     = "matrix",
@@ -80,8 +81,11 @@ setMethod('names', 'MPRAnalyzeObject', function(x) {
 #' @name list_accession
 #' @export
 setMethod('[[', c('MPRAnalyzeObject', 'character', 'missing'), function(x, i, j, ...){
-  if(identical(i, "dfMPRAnalyzeResults")){ return(x@dfMPRAnalyzeResults)
-  } else { return(NULL) }
+  if(identical(i, "dfMPRAnalyzeResults")){ 
+      return(x@dfMPRAnalyzeResults)
+  } else { 
+      return(NULL) 
+  }
 })
 
 #' @return Target element from MPRAnalyzeObject

@@ -14,51 +14,51 @@ evalLogLikRNA_pointDNAnbRNA <- function(
     if(is.null(scaDisp)){
         scaDisp <- exp(vecTheta[scaNParamUsed+1])
         scaNParamUsed <- scaNParamUsed + 1
-        if(scaDisp < 10^(-10)) scaDisp <- 10^(-10) 
-        if(scaDisp < 10^(-10)) scaDisp <- 10^(-10) 
+        if(scaDisp < 10^(-10)) scaDisp <- 10^(-10)
+        if(scaDisp > 10^(10)) scaDisp <- 10^(10)
     }
-    scaSlopeRNAvsDNA <- exp(vecTheta[scaNParamUsed+1])
-    if(scaSlopeRNAvsDNA < 10^(-10)) scaSlopeRNAvsDNA <- 10^(-10) 
-    if(scaSlopeRNAvsDNA < 10^(-10)) scaSlopeRNAvsDNA <- 10^(-10) 
+    scaSlopeRNAvsDNA <- vecTheta[scaNParamUsed+1]
+    if(scaSlopeRNAvsDNA < -23) scaSlopeRNAvsDNA <- -23 
+    if(scaSlopeRNAvsDNA > 23) scaSlopeRNAvsDNA <- 23 
     scaNParamUsed <- scaNParamUsed + 1
     
-    vecBatchFactors <- array(1, length(vecRNADepth))
+    vecBatchFactors <- array(0, length(vecRNADepth))
     if(!is.null(lsvecidxBatchRNA)){
         for(vecidxConfounder in lsvecidxBatchRNA){
             scaNBatchFactors <- max(vecidxConfounder)-1 # Batches are counted from 1
             # Factor of first batch is one (constant), the remaining
             # factors scale based on the first batch.
-            vecBatchFactorsConfounder <- c(1, exp(vecTheta[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)]))[vecidxConfounder]
+            vecBatchFactorsConfounder <- c(0, vecTheta[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)])[vecidxConfounder]
             scaNParamUsed <- scaNParamUsed+scaNBatchFactors
             # Prevent batch factor shrinkage and explosion:
-            vecBatchFactorsConfounder[vecBatchFactorsConfounder < 10^(-10)] <- 10^(-10)
-            vecBatchFactorsConfounder[vecBatchFactorsConfounder > 10^(10)] <- 10^(10)
+            vecBatchFactorsConfounder[vecBatchFactorsConfounder < -23] <- -23
+            vecBatchFactorsConfounder[vecBatchFactorsConfounder > 23] <- 23
             
-            vecBatchFactors <- vecBatchFactors*vecBatchFactorsConfounder
+            vecBatchFactors <- vecBatchFactors+vecBatchFactorsConfounder
         }
     }
     
     if(boolBaselineCtrl){
-        scaSlopeRNAvsDNACtrl <- exp(vecTheta[scaNParamUsed+1])
-        if(scaSlopeRNAvsDNACtrl < 10^(-10)) scaSlopeRNAvsDNACtrl <- 10^(-10) 
-        if(scaSlopeRNAvsDNACtrl < 10^(-10)) scaSlopeRNAvsDNACtrl <- 10^(-10) 
+        scaSlopeRNAvsDNACtrl <- vecTheta[scaNParamUsed+1]
+        if(scaSlopeRNAvsDNACtrl < -23) scaSlopeRNAvsDNACtrl <- -23 
+        if(scaSlopeRNAvsDNACtrl > 23) scaSlopeRNAvsDNACtrl <- 23 
         scaNParamUsed <- scaNParamUsed + 1
     } else {
-        scaSlopeRNAvsDNACtrl <- 1
+        scaSlopeRNAvsDNACtrl <- 0
     }
-    vecBatchFactorsCtrl <- array(1, length(vecRNADepth))
+    vecBatchFactorsCtrl <- array(0, length(vecRNADepth))
     if(!is.null(lsvecidxBatchRNACtrl)){
         for(vecidxConfounder in lsvecidxBatchRNACtrl){
             scaNBatchFactors <- max(vecidxConfounder)-1 # Batches are counted from 1
             # Factor of first batch is one (constant), the remaining
             # factors scale based on the first batch.
-            vecBatchFactorsConfounder <- c(1, exp(vecTheta[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)]))[vecidxConfounder]
+            vecBatchFactorsConfounder <- c(0, vecTheta[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)])[vecidxConfounder]
             scaNParamUsed <- scaNParamUsed+scaNBatchFactors
             # Prevent batch factor shrinkage and explosion:
-            vecBatchFactorsConfounder[vecBatchFactorsConfounder < 10^(-10)] <- 10^(-10)
-            vecBatchFactorsConfounder[vecBatchFactorsConfounder > 10^(10)] <- 10^(10)
+            vecBatchFactorsConfounder[vecBatchFactorsConfounder < -23] <- -23
+            vecBatchFactorsConfounder[vecBatchFactorsConfounder > 23] <- 23
             
-            vecBatchFactorsCtrl <- vecBatchFactorsCtrl*vecBatchFactorsConfounder
+            vecBatchFactorsCtrl <- vecBatchFactorsCtrl+vecBatchFactorsConfounder
         }
     }
     
@@ -67,15 +67,15 @@ evalLogLikRNA_pointDNAnbRNA <- function(
     scaLogLik <- sum(sapply(seq(1,dim(matRNACounts)[1]), function(i){
         vecboolObserved <- !is.na(matRNACounts[i,]) & !is.na(matDNAEst[i,])
         if(i==1) {
-            scaCtrlCorrection <- 1
+            scaCtrlCorrection <- 0
         } else {
-            scaCtrlCorrection <- scaSlopeRNAvsDNACtrl*vecBatchFactorsCtrl[vecboolObserved]
+            scaCtrlCorrection <- scaSlopeRNAvsDNACtrl+vecBatchFactorsCtrl[vecboolObserved]
         }
         scaLogLik <- sum(dnbinom(
             matRNACounts[i,vecboolObserved], 
             mu=matDNAEst[i,vecboolObserved]*
-                scaSlopeRNAvsDNA*vecBatchFactors[vecboolObserved]*
-                scaCtrlCorrection*
+                exp(scaSlopeRNAvsDNA+vecBatchFactors[vecboolObserved]+
+                scaCtrlCorrection) *
                 vecRNADepth[vecboolObserved], 
             size=scaDisp, 
             log=TRUE))
@@ -91,44 +91,43 @@ evalLogLikDNA_lnDNA <- function(
     vecTheta,
     vecDNACounts,
     vecboolObs,
-    vecDNADepth,
+    vecLogDNADepth,
     lsvecidxBatchDNA){
     
     scaNParamUsed <- 0
-    scaMuDNA <- exp(vecTheta[scaNParamUsed+1])
-    if(scaMuDNA < 10^(-10)) scaMuDNA <- 10^(-10) 
-    if(scaMuDNA > 10^(10)) scaMuDNA <- 10^(10)
+    scaMuDNA <- vecTheta[scaNParamUsed+1]
+    if(scaMuDNA < -23) scaMuDNA <- -23 
+    if(scaMuDNA > 23) scaMuDNA <- 23
     scaNParamUsed <- scaNParamUsed + 1
     scaSdDNA <- exp(vecTheta[scaNParamUsed+1])
-    if(scaSdDNA < 10^(-10)) scaSdDNA <- 10^(-10) 
-    if(scaSdDNA > 10^(10)) scaSdDNA <- 10^(10)
+    if(scaSdDNA < -23) scaSdDNA <- -23 
+    if(scaSdDNA > 23) scaSdDNA <- 23
     scaNParamUsed <- scaNParamUsed + 1
     
-    vecDNAFit <- array(scaMuDNA, length(vecDNADepth))
+    vecDNAFit <- array(scaMuDNA, length(vecLogDNADepth))
     if(!is.null(lsvecidxBatchDNA)){
         for(vecidxConfounder in lsvecidxBatchDNA){
             scaNBatchFactors <- max(vecidxConfounder)-1 # Batches are counted from 1
             # Factor of first batch is one (constant), the remaining
             # factors scale based on the first batch.
-            vecBatchFacConf <- c(1, exp(vecTheta[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)]))[vecidxConfounder]
+            vecBatchFacConf <- c(0, vecTheta[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)])[vecidxConfounder]
             scaNParamUsed <- scaNParamUsed+scaNBatchFactors
             # Prevent batch factor shrinkage and explosion:
-            vecBatchFacConf[vecBatchFacConf < 10^(-10)] <- 10^(-10)
-            vecBatchFacConf[vecBatchFacConf > 10^(10)] <- 10^(10)
+            vecBatchFacConf[vecBatchFacConf < -23] <- -23
+            vecBatchFacConf[vecBatchFacConf > 23] <- 23
             
-            vecDNAFit <- vecDNAFit*vecBatchFacConf
+            vecDNAFit <- vecDNAFit+vecBatchFacConf
         }
     }
-    vecDNAHat <- vecDNAFit*vecDNADepth
+    vecLogDNAHat <- vecDNAFit+vecLogDNADepth
     
     # Compute log likelihood under constant model by
     # adding log likelihood of model at each timepoint.
-    vecLogLik <- dlnorm(
+    scaLogLik <- sum(dlnorm(
         x=vecDNACounts[vecboolObs],
-        meanlog=log(vecDNAHat[vecboolObs]),
+        meanlog=vecLogDNAHat[vecboolObs],
         sdlog=scaSdDNA,
-        log=TRUE)
-    scaLogLik <- sum(vecLogLik, na.rm=TRUE)
+        log=TRUE), na.rm=TRUE)
     
     # Maximise log likelihood: Return likelihood as value to optimisation routine
     return(scaLogLik)
@@ -211,7 +210,7 @@ evalLogLikDNARNA_gammaDNApoisRNA <- function(
     if(boolBaselineCtrl){
         scaSlopeRNAvsDNACtrl <- exp(vecTheta[scaNParamUsed+1])
         if(scaSlopeRNAvsDNACtrl < 10^(-10)) scaSlopeRNAvsDNACtrl <- 10^(-10) 
-        if(scaSlopeRNAvsDNACtrl < 10^(-10)) scaSlopeRNAvsDNACtrl <- 10^(-10) 
+        if(scaSlopeRNAvsDNACtrl > 10^(10)) scaSlopeRNAvsDNACtrl <- 10^(10) 
         scaNParamUsed <- scaNParamUsed + 1
     } else {
         scaSlopeRNAvsDNACtrl <- 1
@@ -352,7 +351,7 @@ evalLogLikRNA_gammaDNApoisRNA <- function(
     if(boolBaselineCtrl){
         scaSlopeRNAvsDNACtrl <- exp(vecTheta[scaNParamUsed+1])
         if(scaSlopeRNAvsDNACtrl < 10^(-10)) scaSlopeRNAvsDNACtrl <- 10^(-10) 
-        if(scaSlopeRNAvsDNACtrl < 10^(-10)) scaSlopeRNAvsDNACtrl <- 10^(-10) 
+        if(scaSlopeRNAvsDNACtrl > 10^(10)) scaSlopeRNAvsDNACtrl <- 10^(10) 
         scaNParamUsed <- scaNParamUsed + 1
         vecRNAModelFitCtrl <- vecRNAModelFitCtrl*scaSlopeRNAvsDNACtrl
     } else {

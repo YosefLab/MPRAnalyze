@@ -211,7 +211,7 @@ fitDNA_lnDNA <- function(
             fn=evalLogLikDNA_lnDNA_comp,
             vecDNACounts=vecDNACounts,
             vecboolObs=!is.na(vecDNACounts),
-            vecDNADepth=vecDNADepth,
+            vecLogDNADepth=log(vecDNADepth),
             lsvecidxBatchDNA=lsvecidxBatchDNA,
             method="BFGS",
             control=list(maxit=1000,
@@ -390,7 +390,7 @@ fitDNARNA_gammaDNApoisRNA <- function(
     scaNParamUsed <- scaNParamUsed + 1
     scaSlopeRNAvsDNA[scaSlopeRNAvsDNA < 10^(-10)] <- 10^(-10)
     scaSlopeRNAvsDNA[scaSlopeRNAvsDNA > 10^(10)] <- 10^(10)
-   
+    
     # RNA model
     vecFitRNAModel <- rep(scaSlopeRNAvsDNA, length(vecRNADepth))
     if(!is.null(lsvecidxBatchRNA)){
@@ -524,7 +524,7 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
     scaLLOld <- -Inf
     scaPrec <- 10^(-6)
     scaIter <- 0
-
+    
     print("Enter itertative coordinate ascent")
     while(scaLLNew+(scaPrec*scaLLNew) > scaLLOld | scaIter==0){
         scaIter <- scaIter + 1
@@ -627,7 +627,7 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
             vecRNAModelFit=lsModelRNA$vecRNAModelFit,
             vecRNAModelFitCtrl=lsModelRNA$vecRNAModelFitCtrl)
         print(paste0(scaIter, ". iteration DNA done with LL=", round(scaLLNew,5)))
-    
+        
         # RNA model
         vecParamGuessRNA <- log(lsModelRNA$vecExprModel) # baseline #RNA per plasmid
         if(!is.null(lsvecidxBatchRNA)){ # DNA batch model
@@ -787,6 +787,7 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
 #' @author David Sebastian Fischer
 fitModels <- function(
     obj, vecModelFacRNA, vecModelFacRNACtrl, vecModelFacDNA,
+    boolFitDNA = FALSE,
     MAXIT=1000, RELTOL=10^(-8), boolVerbose=TRUE ){
     
     scaNGenes <- dim(obj@matRNACountsProc)[1]
@@ -875,48 +876,57 @@ fitModels <- function(
     
     if(obj@strModel=="pointlnDNAnbRNA"){
         # First fit DNA distribution
-        if(boolVerbose) message(paste0("Fit DNA"))
-        lsFitsDNA <- bplapply(seq(1,scaNGenes),function(i){
-            if(boolVerbose) message(paste0("### DNA Enhancer ", i))
-            fitDNA_lnDNA(
-                vecDNACounts=obj@matDNACountsProc[i,,drop=FALSE],
-                vecDNADepth=obj@vecDNADepth,
-                lsvecidxBatchDNA=lsvecidxBatchDNA,
-                MAXIT=MAXIT,
-                RELTOL=RELTOL )
-        })
         # Then condition RNA distribution on DNA MLE
-        if(boolVerbose) message(paste0("Fit RNA"))
-        lsFits <- bplapply(vecidxCase,function(i){
-            if(boolVerbose) message(paste0("### RNA Enhancer ", i))
-            lsFitRNA <- fitRNA_pointDNAnbRNA(
-                matRNACounts=obj@matRNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
-                matDNAEst=do.call(rbind, lapply(c(i, vecidxCtrl), function(j) lsFitsDNA[[j]]$vecFitDNAHat )),
-                scaDisp=obj@vecDispersions[i],
-                vecRNADepth=obj@vecRNADepth,
-                lsvecidxBatchRNA=lsvecidxBatchRNA,
-                boolBaselineCtrl="1" %in% vecModelFacRNACtrl,
-                lsvecidxBatchRNACtrl=lsvecidxBatchRNACtrl,
-                MAXIT=MAXIT,
-                RELTOL=RELTOL )
-            # Summarise two fits
-            lsFit <- list(
-                vecDNAModel=c(lsFitsDNA[[i]]$scaMuDNA, 
-                              lsFitsDNA[[i]]$scaSdDNA),
-                scaRNAModel=lsFitRNA$vecExprModel,
-                scaRNAModelCtrl=lsFitRNA$vecExprModelCtrl,
-                lsvecBatchFacDNA=lsFitsDNA[[i]]$lsvecBatchFactorsDNA,
-                lsvecBatchFacRNA=lsFitRNA$lsvecBatchFactorsRNA,
-                lsvecBatchFactorsRNACtrl=lsFitRNA$lsvecBatchFactorsRNACtrl,
-                vecFitDNA=lsFitsDNA[[i]]$vecFitDNA,
-                vecFitRNA=lsFitRNA$vecFitRNA,
-                scaDisp=lsFitRNA$scaDisp,
-                scaDF=lsFitRNA$scaDF,
-                scaLL=lsFitRNA$scaLL,
-                scaConvergence=lsFitRNA$scaConvergence)
-            return(lsFit)
-        })
-        names(lsFits) <- rownames(obj@matRNACountsProc)[vecidxCase]
+        # These are handled as separate calls to this function.
+        if(boolFitDNA) {
+            if(boolVerbose) message(paste0("Fit DNA"))
+            lsFits <- bplapply(seq(1,scaNGenes),function(i){
+                if(boolVerbose) message(paste0("### DNA Enhancer ", i))
+                fitDNA_lnDNA(
+                    vecDNACounts=obj@matDNACountsProc[i,,drop=FALSE],
+                    vecDNADepth=obj@vecDNADepth,
+                    lsvecidxBatchDNA=lsvecidxBatchDNA,
+                    MAXIT=MAXIT,
+                    RELTOL=RELTOL )
+            })
+            names(lsFits) <- rownames(obj@matRNACountsProc)
+        } else {
+            if(is.null(obj@lsDNAModelFits)) {
+                stop(print("ERROR: Fit DNA models first."))
+            }
+            if(boolVerbose) message(paste0("Fit RNA"))
+            lsFits <- bplapply(vecidxCase,function(i){
+                if(boolVerbose) message(paste0("### RNA Enhancer ", i))
+                lsFitRNA <- fitRNA_pointDNAnbRNA(
+                    matRNACounts=obj@matRNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
+                    matDNAEst=do.call(rbind, lapply(c(i, vecidxCtrl), function(j) 
+                        obj@lsDNAModelFits[[j]]$vecFitDNAHat )),
+                    scaDisp=obj@vecDispersions[i],
+                    vecRNADepth=obj@vecRNADepth,
+                    lsvecidxBatchRNA=lsvecidxBatchRNA,
+                    boolBaselineCtrl="1" %in% vecModelFacRNACtrl,
+                    lsvecidxBatchRNACtrl=lsvecidxBatchRNACtrl,
+                    MAXIT=MAXIT,
+                    RELTOL=RELTOL )
+                # Summarise two fits
+                lsFit <- list(
+                    vecDNAModel=c(obj@lsDNAModelFits[[i]]$scaMuDNA, 
+                                  obj@lsDNAModelFits[[i]]$scaSdDNA),
+                    scaRNAModel=lsFitRNA$vecExprModel,
+                    scaRNAModelCtrl=lsFitRNA$vecExprModelCtrl,
+                    lsvecBatchFacDNA=obj@lsDNAModelFits[[i]]$lsvecBatchFactorsDNA,
+                    lsvecBatchFacRNA=lsFitRNA$lsvecBatchFactorsRNA,
+                    lsvecBatchFactorsRNACtrl=lsFitRNA$lsvecBatchFactorsRNACtrl,
+                    vecFitDNA=obj@lsDNAModelFits[[i]]$vecFitDNA,
+                    vecFitRNA=lsFitRNA$vecFitRNA,
+                    scaDisp=lsFitRNA$scaDisp,
+                    scaDF=lsFitRNA$scaDF,
+                    scaLL=lsFitRNA$scaLL,
+                    scaConvergence=lsFitRNA$scaConvergence)
+                return(lsFit)
+            })
+            names(lsFits) <- rownames(obj@matRNACountsProc)[vecidxCase]
+        }
     } else if(obj@strModel=="gammaDNApoisRNA"){
         lsFits <- bplapply(vecidxCase, function(i){
             if(boolVerbose) message(paste0("### Enhancer ", i))
