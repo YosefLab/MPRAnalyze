@@ -1,5 +1,5 @@
 #' @importFrom compiler cmpfun
-
+#' @author David Sebastian Fischer
 evalLogLikRNA_pointDNAnbRNA <- function(
     vecTheta,
     matRNACounts,
@@ -85,8 +85,10 @@ evalLogLikRNA_pointDNAnbRNA <- function(
     # Maximise log likelihood: Return likelihood as value to optimisation routine
     return(scaLogLik)
 }
+#' @author David Sebastian Fischer
 evalLogLikRNA_pointDNAnbRNA_comp <- cmpfun(evalLogLikRNA_pointDNAnbRNA)
 
+#' @author David Sebastian Fischer
 evalLogLikDNA_lnDNA <- function(
     vecTheta,
     vecDNACounts,
@@ -132,8 +134,14 @@ evalLogLikDNA_lnDNA <- function(
     # Maximise log likelihood: Return likelihood as value to optimisation routine
     return(scaLogLik)
 }
+#' @author David Sebastian Fischer
 evalLogLikDNA_lnDNA_comp <- cmpfun(evalLogLikDNA_lnDNA)
 
+#' Objective for fittin DNA and RNA model under gammaDNApoisRNA framework
+#' 
+#' Used if DNA model was not pre-fit.
+#' 
+#' @author David Sebastian Fischer
 evalLogLikDNARNA_gammaDNApoisRNA <- function(
     vecTheta,
     matDNACounts,
@@ -259,8 +267,14 @@ evalLogLikDNARNA_gammaDNApoisRNA <- function(
     }))
     return(scaLogLik)
 }
+#' @author David Sebastian Fischer
 evalLogLikDNARNA_gammaDNApoisRNA_comp <- cmpfun(evalLogLikDNARNA_gammaDNApoisRNA)
 
+#' Objective for fittin DNA model under gammaDNApoisRNA framework
+#' 
+#' Used to pre-fit DNA model or to fit DNA-model only in iterative estimation.
+#' 
+#' @author David Sebastian Fischer
 evalLogLikDNA_gammaDNApoisRNA <- function(
     vecTheta,
     vecDNACounts,
@@ -311,8 +325,14 @@ evalLogLikDNA_gammaDNApoisRNA <- function(
         sum(vecLogLikGamma)
     return(scaLogLik)
 }
+#' @author David Sebastian Fischer
 evalLogLikDNA_gammaDNApoisRNA_comp <- cmpfun(evalLogLikDNA_gammaDNApoisRNA)
 
+#' Objective for fittin RNA model under gammaDNApoisRNA framework
+#' 
+#' Used if DNA model was pre-fit or to fit RNA model only in iterative estimation.
+#' 
+#' @author David Sebastian Fischer
 evalLogLikRNA_gammaDNApoisRNA <- function(
     vecTheta,
     lsvecDNAModel,
@@ -393,8 +413,10 @@ evalLogLikRNA_gammaDNApoisRNA <- function(
     }))
     return(scaLogLik)
 }
+#' @author David Sebastian Fischer
 evalLogLikRNA_gammaDNApoisRNA_comp <- cmpfun(evalLogLikRNA_gammaDNApoisRNA)
 
+#' @author David Sebastian Fischer
 evalLogLikDNARNA_gammaDNApoisRNA_direct <- function(
     vecTheta,
     matDNACounts,
@@ -435,4 +457,5 @@ evalLogLikDNARNA_gammaDNApoisRNA_direct <- function(
     })
     return(sum(vecLogLik))
 }
+#' @author David Sebastian Fischer
 evalLogLikDNARNA_gammaDNApoisRNA_direct_comp <- cmpfun(evalLogLikDNARNA_gammaDNApoisRNA_direct)

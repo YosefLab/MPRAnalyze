@@ -99,10 +99,10 @@ NULL
 #' this pre-fitting to TRUE reduces the problem size by conditioning
 #' full and reduced model on pre-estimated DNA models of the control sequences.
 #' This likely comes at little cost in accuracy.
-#' @param strModel (string) [Default "lnDNAlnRNA"]
-#' {"lnDNAlnRNA", "gammaDNApoisRNA", "gammaDNApoisRNA_coordascent"}
+#' @param strModel (string) [Default "lnDNAnbRNA"]
+#' {"lnDNAnbRNA", "gammaDNApoisRNA", "gammaDNApoisRNA_coordascent"}
 #' Model and estimation scheme to be used:
-#' lnDNAlnRNA: DNA point estimators are pre-estimated based on a lognormal model.
+#' lnDNAnbRNA: DNA point estimators are pre-estimated based on a lognormal model.
 #' The expression model is then fit based on a negative binomial likelihood of the 
 #' RNA counts.
 #' gammaDNApoisRNA: DNA and expression model are co-estimated, exloiting a closed
@@ -190,6 +190,7 @@ runMPRAnalyze <- function(
     obj <- estimateDepthFactors(obj=obj)
     
     # 2. Estimate dispersion parameters if not supplied
+    # NOT USED
     if(is.null(obj@vecDispersions) &
        obj@strModel == "pointlnDNAnbRNA" & FALSE){
         strMessage <- "# Estimate over-dispersion parameters"

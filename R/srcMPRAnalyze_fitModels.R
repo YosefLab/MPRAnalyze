@@ -2,14 +2,9 @@
 #++++++++++++++++++++++++++     Cost Functions    +++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
-#' Fit negative binomial RNA model based on DNA point estimator
+#' Optimisation wrapper for RNA model estimation under pointDNAnbRNA framework
 #' 
-#' With or without dispersion.
-#' 
-#' @seealso Called by \link{fitConstImpulseGene} to fit constant
-#'    model to samples of one condition and one gene.
-#'    Calls constant model cost function 
-#'    \link{evalLogLik} within \link{optim}.
+#' This wrapper runs and handles input to and output from optim().
 #' 
 #' @param vecCounts (numeric vector number of samples)
 #'    Read count data.
@@ -184,6 +179,11 @@ fitRNA_pointDNAnbRNA <- function(
                 scaConvergence=lsFit$convergence))
 }
 
+#' Optimisation wrapper for DNA model estimation under pointDNA*RNA framework
+#' 
+#' This wrapper runs and handles input to and output from optim().
+#' 
+#' @author David Sebastian Fischer
 fitDNA_lnDNA <- function(
     vecDNACounts,
     vecDNADepth,
@@ -270,6 +270,15 @@ fitDNA_lnDNA <- function(
                 scaConvergence=lsFit$convergence))
 }
 
+#' Optimisation wrapper for DNA and RNA model estimation under gammaDNApoisRNA framework
+#' 
+#' This wrapper runs and handles input to and output from optim().
+#' 
+#' @seealso fitDNARNA_gammaDNApoisRNA_coordascent_coordascent() for the
+#' same statistical framework but coordinate ascent based parameter estimation
+#' which makes fitting in high dimensional parameter spaces feasible.
+#' 
+#' @author David Sebastian Fischer
 fitDNARNA_gammaDNApoisRNA <- function(
     matDNACounts,
     matRNACounts,
@@ -452,6 +461,20 @@ fitDNARNA_gammaDNApoisRNA <- function(
                  scaConvergence=lsFit$convergence))
 }
 
+#' Optimisation wrapper for DNA and RNA model estimation under gammaDNApoisRNA framework
+#' with coordinate ascent estimation scheme
+#' 
+#' This wrapper runs coordinate ascent as an iteration over BFGS-based estimation
+#' of parameter groups exploiting conditionaly independencies.
+#' Within each iteration, this wrapper runs and handles input to and output from optim().
+#' Coordinate ascent allows parameter estimation in large parameter spaces,
+#' e.g. if many control sequences are given.
+#' 
+#' @seealso fitDNARNA_gammaDNApoisRNA_coordascent() the same statistical
+#' framework without coordinate ascent for more exact and faster
+#' estimation in low dimensional parameter spaces.
+#' 
+#' @author David Sebastian Fischer
 fitDNARNA_gammaDNApoisRNA_coordascent <- function(
     matDNACounts,
     matRNACounts,
@@ -770,15 +793,7 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
                  scaConvergence=lsFitRNA$convergence))
 }
 
-#' Fits constant models to an MPRA dataset
-#' 
-#' [Model fitting function hierarchy: 1 out of 4]
-#' This primary wrapper coordinates fitting of impulse and constant model
-#' to separate conditions according to the differential expression
-#' mode (case-only or case-control).
-#'  
-#' @seealso Calls \link{fitConstImpulse}
-#' once for each condition with the appropriate parameters and samples.
+#' Fits models to an MPRA dataset
 #'  
 #' @param obj (object class obj)
 #'    Object to be fit.

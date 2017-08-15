@@ -37,7 +37,7 @@ options(getClass.msg=FALSE)
 MPRAnalyze is an analysis framework for MPRA data that aims at translating the main scientific questions arising in the context of MPRA data into statistical problems. Such questions include variations of ranking enhancers by caused expression magnitude and testing for differential enhancer activity between conditions. Thereby, MPRAnalyze allows the user to answer those questions as part of a likelihood-based framework based on p-values and expression strength scores.
 
 The general idea is that most questions below can be answered with a hypothesis test:
-We chose a loglikelihood raio test to compare a full and a reduced model.
+We chose a log-likelihood ratio test to compare a full and a reduced model.
 One can specifiy the factors included in the full and the reduced model in the wrapper function input, similar to a differential expression test.
 The additional complexity lies in the fact that separately, additional model factors for the set of control/scrambled enhancers have to be defined in many scenarios.
 Moreover, one has to supply factors which define the DNA model which is shared between full and reduced expression model.
@@ -63,14 +63,14 @@ The user should consider the minimal parameter set for the wrapper function runM
 * matRNACounts Count matrix RNA (enhancers x samples). No normalisation or transformations, the entries must be integers!
 * matDNACounts Count matrix DNA (enhancers x samples). No normalisation or transformations, the entries must be integers!
 * dfAnnotation Data frame with sample meta data
-* strModel Model name. {"lnDNAlnRNA", "gammaDNApoisRNA", "gammaDNApoisRNA_coordascent"} and
+* strModel Model name. {"lnDNAnbRNA", "gammaDNApoisRNA", "gammaDNApoisRNA_coordascent"} and
 boolPreFitCtrlDNA.
 Model and estimation scheme to be used. Currently, we suggest the use of 
-strModel=lnDNAlnRNA,boolPreFitCtrlDNA=FALSE for DNA point estimator-based models, 
+strModel=lnDNAnbRNA,boolPreFitCtrlDNA=FALSE for DNA point estimator-based models, 
 strModel=gammaDNApoisRNA,boolPreFitCtrlDNA=FALSE for marginalisation-based models with few or no control enhancers (<10) and
 strModel=gammaDNApoisRNA,boolPreFitCtrlDNA=TRUE for marginalisation-based models with many control enhancers.
 strModel=gammaDNApoisRNA_coordascent,boolPreFitCtrlDNA=FALSE is an alternative if many control enhancers are used.
-lnDNAlnRNA: DNA point estimators are pre-estimated based on a lognormal model.
+lnDNAnbRNA: DNA point estimators are pre-estimated based on a lognormal model.
 The expression model is then fit based on a negative binomial likelihood of the RNA counts.
 gammaDNApoisRNA: DNA and expression model are co-estimated, exloiting a closed
 form marginalisation. The DNA counts are modeled with a beta distribution
