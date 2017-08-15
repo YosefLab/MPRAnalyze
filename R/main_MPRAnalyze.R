@@ -52,8 +52,12 @@ NULL
 #' @param vecCtrlIDs (vector of strings number of control enhancers)
 #' [default NULL] IDs of enhancers which are scrambled/controls and
 #' used to define a background set.
-#' @param strModelFull (string) Not yet supported.
+#' @param strModelFull (string) Not yet supported. 
+#' formula() based model input.
+#' Alternative to vecModelFacRNAFull and vecModelFacRNAFullCtrl.
 #' @param strModelRed (string) Not yet supported.
+#' formula() based model input.
+#' Alternative to vecModelFacRNARed and vecModelFacRNARedCtrl.
 #' @param vecModelFacRNAFull (vector of strings lenght number of factors
 #' in full expression model)
 #' [Default NULL]
@@ -138,8 +142,8 @@ runMPRAnalyze <- function(
     vecDispersionsExternal=NULL,
     vecRNADepthExternal=NULL,
     vecDNADepthExternal=NULL,
-    boolPreFitCtrlDNA=FALSE,
-    strModel="lnDNAlnRNA",
+    boolPreFitCtrlDNA=TRUE,
+    strModel="gammaDNApoisRNA",
     boolVerbose=TRUE ){
     
     strMessage <- "MPRAnalyze v0.90 for MPRA data (DNA and RNA counts)"

@@ -1,3 +1,19 @@
+#' Optimisation wrapper for control enhancer DNA model estimation 
+#' under gammaDNApoisRNA framework with coordinate ascent estimation scheme
+#' 
+#' This wrapper runs coordinate ascent as an iteration over BFGS-based estimation
+#' of parameter groups exploiting conditionaly independencies.
+#' The iteration is an estimation of conditionally independent DNA models of all
+#' control enhancers followed by the estimation of a single RNA model for all
+#' control enhancers. Accordingly, parallelization is possible and implmented
+#' for the DNA model estimation in each iteration across all control enhancers.
+#' Note that this function is only called once for each data set! 
+#' The coordinate ascent iteration would not be necessary if the RNA observations
+#' would be ignored in the estimation of the control enhancer DNA models which 
+#' is not done in MPRAnalyze right now.
+#' Within each iteration, this wrapper runs and handles input to and output from optim().
+#' 
+#' @author David Sebastian Fischer
 prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
     matDNACounts,
     matRNACounts,
@@ -248,6 +264,13 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
     ))
 }
 
+#' Convenience wrapper for 
+#' optimisation wrapper for control enhancer DNA model estimation 
+#' under gammaDNApoisRNA framework with coordinate ascent estimation scheme
+#' 
+#' @seealso Wrapper for prefitCtrlDNA_gammaDNApoisRNA_coordascent().
+#' 
+#' @author David Sebastian Fischer
 prefitCtrlDNAModels <- function(
     obj, vecModelFacRNA, vecModelFacDNA,
     MAXIT=1000, RELTOL=10^(-8), boolVerbose=TRUE ){

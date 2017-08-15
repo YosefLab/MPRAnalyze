@@ -139,7 +139,8 @@ evalLogLikDNA_lnDNA_comp <- cmpfun(evalLogLikDNA_lnDNA)
 
 #' Objective for fittin DNA and RNA model under gammaDNApoisRNA framework
 #' 
-#' Used if DNA model was not pre-fit.
+#' Used if DNA model was or was not pre-fit. Whether or not the control
+#' DNA models are fit or taken as given is selected within the function.
 #' 
 #' @author David Sebastian Fischer
 evalLogLikDNARNA_gammaDNApoisRNA <- function(
@@ -155,15 +156,15 @@ evalLogLikDNARNA_gammaDNApoisRNA <- function(
     lsDNAModelFitsCtrl=NULL){
     
     if(is.null(lsDNAModelFitsCtrl)) {
-        vecDNAModelsToFit <- seq(1, dim(matDNACounts)[1])
+        vecidxDNAModelsToFit <- seq(1, dim(matDNACounts)[1])
     } else {
-        vecDNAModelsToFit <- 1
+        vecidxDNAModelsToFit <- 1
     }
     scaNParamUsed <- 0
     # DNA model
     lsvecDNAModel <- list()
     lsvecCumulBatchFacDNA <- list()
-    for(i in vecDNAModelsToFit){
+    for(i in vecidxDNAModelsToFit){
         vecDNAModel <- exp(vecTheta[(scaNParamUsed+1):(scaNParamUsed+2)])
         vecDNAModel[vecDNAModel < 10^(-10)] <- 10^(-10) 
         vecDNAModel[vecDNAModel > 10^(10)] <- 10^(10)
@@ -239,7 +240,7 @@ evalLogLikDNARNA_gammaDNApoisRNA <- function(
         }
     }
     
-    scaLogLik <- sum(sapply(seq(1,dim(matDNACounts)[1]), function(i){
+    scaLogLikRNA <- sum(sapply(seq(1,dim(matDNACounts)[1]), function(i){
         vecboolObsBoth <- !is.na(matDNACounts[i,]) & !is.na(matRNACounts[i,]) 
         if(i==1) {
             vecCtrlCorrection <- rep(1, sum(vecboolObsBoth))
@@ -254,7 +255,22 @@ evalLogLikDNARNA_gammaDNApoisRNA <- function(
                 vecRNADepth[vecboolObsBoth], 
             size=lsvecDNAModel[[i]][1], #1/a?
             log=TRUE)
-        vecboolObsDNA <- !is.na(matDNACounts[i,])
+        #vecboolObsDNA <- !is.na(matDNACounts[i,])
+        #vecLogLikGamma <- dgamma(
+        #    x=matDNACounts[i,vecboolObsDNA],
+        #    shape=lsvecDNAModel[[i]][1], 
+        #    rate=lsvecDNAModel[[i]][2]/
+        #       (lsvecCumulBatchFacDNA[[i]][vecboolObsDNA]*
+        #             vecDNADepth[vecboolObsDNA]),
+        #    log=TRUE)
+        #scaLL <- sum(vecLogLikNB) + sum(vecLogLikGamma)
+        scaLL <- sum(vecLogLikNB)
+        return(scaLL)
+    }))
+    # only evaluate on the models that are actually re-estimated:
+    # the likelihood of control enhancer DNA observations with pre-fit
+    # models does not change here!
+    scaLogLikDNA <- sum(sapply(vecidxDNAModelsToFit, function(i){
         vecLogLikGamma <- dgamma(
             x=matDNACounts[i,vecboolObsDNA],
             shape=lsvecDNAModel[[i]][1], 
@@ -262,9 +278,10 @@ evalLogLikDNARNA_gammaDNApoisRNA <- function(
                 (lsvecCumulBatchFacDNA[[i]][vecboolObsDNA]*
                      vecDNADepth[vecboolObsDNA]),
             log=TRUE)
-        scaLogLik <- sum(vecLogLikNB) + sum(vecLogLikGamma)
-        return(scaLogLik)
+        scaLL <- sum(vecLogLikGamma)
+        return(scaLL)
     }))
+    scaLogLik <- scaLogLikRNA + scaLogLikDNA
     return(scaLogLik)
 }
 #' @author David Sebastian Fischer
