@@ -197,6 +197,7 @@ runMPRAnalyze <- function(
     # NOT USED
     if(is.null(obj@vecDispersions) &
        obj@strModel == "pointlnDNAnbRNA" & FALSE){
+        stop()
         strMessage <- "# Estimate over-dispersion parameters"
         if(boolVerbose) message(strMessage)
         obj@strReport <- paste0(obj@strReport, "\n", strMessage)
@@ -226,32 +227,52 @@ runMPRAnalyze <- function(
         strMessage <- "# Fit DNA models"
         if(boolVerbose) message(strMessage)
         obj@strReport <- paste0(obj@strReport, "\n", strMessage)
-        obj@lsDNAModelFits <- fitModels(
-            obj=obj, vecModelFacRNA=NULL,
-            vecModelFacRNACtrl=NULL,
-            vecModelFacDNA=obj@vecModelFacDNA,
-            boolFitDNA = TRUE,
-            MAXIT=1000, boolVerbose=boolVerbose)
+        tm_dnamodel <- system.time({
+            obj@lsDNAModelFits <- fitModels(
+                obj=obj, vecModelFacRNA=NULL,
+                vecModelFacRNACtrl=NULL,
+                vecModelFacDNA=obj@vecModelFacDNA,
+                boolFitDNA = TRUE,
+                boolVerbose=boolVerbose)
+        })
+        strMessage <- paste0("Time elapsed during DNA model pre-fitting: ",
+                             round(tm_dnamodel["elapsed"]/60,2)," min")
+        if(boolVerbose) message(strMessage)
+        obj@strReport <- paste0(obj@strReport, "\n", strMessage)
+        
     }
     
     strMessage <- "# Fit full model"
     if(boolVerbose) message(strMessage)
     obj@strReport <- paste0(obj@strReport, "\n", strMessage)
-    obj@lsModelFitsFull <- fitModels(
-        obj=obj, vecModelFacRNA=obj@vecModelFacRNAFull,
-        vecModelFacRNACtrl=obj@vecModelFacRNAFullCtrl,
-        vecModelFacDNA=obj@vecModelFacDNA,
-        MAXIT=1000, boolVerbose=boolVerbose)
+    tm_fullmodel <- system.time({
+        obj@lsModelFitsFull <- fitModels(
+            obj=obj, vecModelFacRNA=obj@vecModelFacRNAFull,
+            vecModelFacRNACtrl=obj@vecModelFacRNAFullCtrl,
+            vecModelFacDNA=obj@vecModelFacDNA,
+            boolVerbose=boolVerbose)
+    })
+    strMessage <- paste0("Time elapsed during full model fitting: ",
+                         round(tm_fullmodel["elapsed"]/60,2)," min")
+    if(boolVerbose) message(strMessage)
+    obj@strReport <- paste0(obj@strReport, "\n", strMessage)
     
     if(!is.null(vecModelFacRNARed)) {
         strMessage <- "# Fit null model"
         if(boolVerbose) message(strMessage)
         obj@strReport <- paste0(obj@strReport, "\n", strMessage)
-        obj@lsModelFitsRed <- fitModels(
-            obj=obj, vecModelFacRNA=obj@vecModelFacRNARed,
-            vecModelFacRNACtrl=obj@vecModelFacRNARedCtrl,
-            vecModelFacDNA=obj@vecModelFacDNA,
-            MAXIT=1000, boolVerbose=boolVerbose)
+        tm_redmodel <- system.time({
+            obj@lsModelFitsRed <- fitModels(
+                obj=obj, vecModelFacRNA=obj@vecModelFacRNARed,
+                vecModelFacRNACtrl=obj@vecModelFacRNARedCtrl,
+                vecModelFacDNA=obj@vecModelFacDNA,
+                boolVerbose=boolVerbose)
+        })
+        strMessage <- paste0("Time elapsed during reduced model fitting: ",
+                             round(tm_redmodel["elapsed"]/60,2)," min")
+        if(boolVerbose) message(strMessage)
+        obj@strReport <- paste0(obj@strReport, "\n", strMessage)
+        
         
         # 4. Perform differential expression analysis
         strMessage <- "# Perform differential expression analysis"

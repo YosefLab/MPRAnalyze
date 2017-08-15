@@ -102,7 +102,7 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
                     vecRNAModelFit=vecModel,
                     lsvecidxBatchDNA=lsvecidxBatchDNA,
                     method="BFGS",
-                    control=list(maxit=1000,
+                    control=list(maxit=MAXIT,
                                  reltol=RELTOL,
                                  fnscale=-1)
                 )[c("par","value","convergence")]
@@ -192,7 +192,7 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
                 boolBaselineCtrl=FALSE,
                 lsvecidxBatchRNACtrl=NULL,
                 method="BFGS",
-                control=list(maxit=1000,
+                control=list(maxit=MAXIT,
                              reltol=RELTOL,
                              fnscale=-1)
             )[c("par","value","convergence")]

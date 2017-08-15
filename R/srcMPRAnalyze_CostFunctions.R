@@ -271,6 +271,7 @@ evalLogLikDNARNA_gammaDNApoisRNA <- function(
     # the likelihood of control enhancer DNA observations with pre-fit
     # models does not change here!
     scaLogLikDNA <- sum(sapply(vecidxDNAModelsToFit, function(i){
+        vecboolObsDNA <- !is.na(matDNACounts[i,])
         vecLogLikGamma <- dgamma(
             x=matDNACounts[i,vecboolObsDNA],
             shape=lsvecDNAModel[[i]][1], 
@@ -347,7 +348,7 @@ evalLogLikDNA_gammaDNApoisRNA_comp <- cmpfun(evalLogLikDNA_gammaDNApoisRNA)
 
 #' Objective for fittin RNA model under gammaDNApoisRNA framework
 #' 
-#' Used if DNA model was pre-fit or to fit RNA model only in iterative estimation.
+#' Used to fit RNA model only in iterative estimation.
 #' 
 #' @author David Sebastian Fischer
 evalLogLikRNA_gammaDNApoisRNA <- function(
@@ -425,8 +426,8 @@ evalLogLikRNA_gammaDNApoisRNA <- function(
                 vecRNADepth[vecboolObsBoth], 
             size=lsvecDNAModel[[i]][1], #1/a?
             log=TRUE)
-        scaLogLik <- sum(vecLogLikNB)
-        return(scaLogLik)
+        scaLL <- sum(vecLogLikNB)
+        return(scaLL)
     }))
     return(scaLogLik)
 }
