@@ -71,92 +71,190 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
     scaPrec <- 10^(-6)
     scaIter <- 0
     
-    print("Enter itertative coordinate ascent")
     while(scaLLNew+(scaPrec*scaLLNew) > scaLLOld | scaIter==0){
         scaIter <- scaIter + 1
         scaLLOld <- scaLLNew
         
         # DNA model
-        lsModelsDNA <- bplapply(seq(1, dim(matDNACounts)[1]), function(i){
-            vecModel <- lsModelRNA$vecRNAModelFit
-            
-            # Gamma distr parameters, mean right and disp 1
-            vecParamGuessDNA <- log(lsModelsDNA[[i]]$vecDNAModel)
-            if(!is.null(lsvecidxBatchDNA)){ # DNA batch model
-                for(j in seq(1, length(lsvecidxBatchDNA))){
-                    vecBatchFac <- lsModelsDNA[[i]]$lsvecBatchFacDNA[[j]]
-                    vecParamGuessDNA <- 
-                        c(vecParamGuessDNA, log(vecBatchFac[2:length(vecBatchFac)]))
+        tm_preest_dna <- system.time({
+            lsModelsDNA <- bplapply(seq(1, dim(matDNACounts)[1]), function(i){
+                vecModel <- lsModelRNA$vecRNAModelFit
+                
+                # Gamma distr parameters, mean right and disp 1
+                vecParamGuessDNA <- log(lsModelsDNA[[i]]$vecDNAModel)
+                if(!is.null(lsvecidxBatchDNA)){ # DNA batch model
+                    for(j in seq(1, length(lsvecidxBatchDNA))){
+                        vecBatchFac <- lsModelsDNA[[i]]$lsvecBatchFacDNA[[j]]
+                        vecParamGuessDNA <- 
+                            c(vecParamGuessDNA, log(vecBatchFac[2:length(vecBatchFac)]))
+                    }
+                }
+                lsFitDNA <- tryCatch({
+                    lsObjPars <- list( # convenience parameters for cost function only computed once here
+                        scaNSamples = dim(matRNACounts)[2],
+                        vecNBatchFacDNA = sapply(lsvecidxBatchDNA, function(x) max(x)-1 )
+                    )
+                    optim(
+                        par=vecParamGuessDNA,
+                        fn=evalLogLikDNA_gammaDNApoisRNA_comp,
+                        vecDNACounts=matDNACounts[i,],
+                        vecRNACounts=matRNACounts[i,],
+                        vecidxDNARNAObs = which(!is.na(matDNACounts[i,]) & !is.na(matRNACounts[i,])),
+                        vecidxDNAObs = which(!is.na(matDNACounts[i,]) ),
+                        vecDNADepth=vecDNADepth,
+                        vecRNAModelFitXRNADepth=vecModel*vecRNADepth,
+                        lsvecidxBatchDNA=lsvecidxBatchDNA,
+                        lsObjPars = lsObjPars,
+                        method="BFGS",
+                        control=list(maxit=MAXIT,
+                                     reltol=RELTOL,
+                                     fnscale=-1)
+                    )[c("par","value","convergence")]
+                }, error=function(strErrorMsg){
+                    print(paste0("ERROR: Fitting DNA model: evalLogLikDNA_gammaDNApoisRNA_comp()."))
+                    print(paste0("vecParamGuessDNA ", paste(vecParamGuessDNA,collapse=" ")))
+                    print(paste0("matDNACounts ", paste(matDNACounts,collapse=" ")))
+                    print(paste0("vecDNADepth ", paste(vecDNADepth,collapse=" ")))
+                    print(paste0("matRNACounts ", paste(matRNACounts,collapse=" ")))
+                    print(paste0("vecRNADepth ", paste(vecRNADepth,collapse=" ")))
+                    print(paste0("lsvecidxBatchRNA ", paste(lsvecidxBatchRNA,collapse=" ")))
+                    print(paste0("lsvecidxBatchDNA ", paste(lsvecidxBatchDNA,collapse=" ")))
+                    print(paste0("MAXIT ", MAXIT))
+                    print(strErrorMsg)
+                })
+                
+                # Extract parameter estimates
+                scaNParamUsed <- 0
+                vecDNAModel <- exp(lsFitDNA$par[(scaNParamUsed+1):(scaNParamUsed+2)])
+                scaNParamUsed <- scaNParamUsed + 2
+                vecDNAModel[vecDNAModel < 10^(-10)] <- 10^(-10)
+                vecDNAModel[vecDNAModel > 10^(10)] <- 10^(10)
+                
+                vecBatchFacDNA <- rep(1, length(vecDNADepth))
+                if(!is.null(lsvecidxBatchDNA)){
+                    lsvecBatchFacDNA <- list()
+                    for(i in seq(1, length(lsvecidxBatchDNA))){
+                        scaNBatchFactors <- max(lsvecidxBatchDNA[[i]])-1 # Batches are counted from 1
+                        # Factor of first batch is one (constant), the remaining
+                        # factors scale based on the first batch.
+                        vecBatchFactors <- c(1, exp(lsFitDNA$par[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)]))
+                        scaNParamUsed <- scaNParamUsed+scaNBatchFactors
+                        # Catch boundary of likelihood domain on batch factor space:
+                        vecBatchFactors[vecBatchFactors < 10^(-10)] <- 10^(-10)
+                        vecBatchFactors[vecBatchFactors > 10^(10)] <- 10^(10)
+                        lsvecBatchFacDNA[[i]] <- vecBatchFactors
+                        
+                        vecBatchFacDNA <- vecBatchFacDNA*vecBatchFactors[lsvecidxBatchDNA[[i]]]
+                    }
+                } else { 
+                    lsvecBatchFacDNA <- NULL
+                }
+                vecFitDNAHat <- vecDNAModel[1]/vecDNAModel[2]*vecBatchFacDNA
+                return(list(
+                    vecDNAModel=vecDNAModel,
+                    lsvecBatchFacDNA=lsvecBatchFacDNA,
+                    vecCumulBatchFacDNA=vecBatchFacDNA,
+                    vecFitDNAHat=vecFitDNAHat,
+                    scaDFDNA=length(lsFitDNA$par),
+                    scaLL=lsFitDNA$value,
+                    scaConvergence=lsFitDNA$convergence
+                ))
+            })
+            vecFitDNA <- lsModelsDNA[[1]]$vecFitDNAHat*vecDNADepth
+        })["elapsed"]
+        
+        scaLLNew <- evalLogLikDNARNA_gammaDNApoisRNA_direct(
+            matDNACounts=matDNACounts,
+            matRNACounts=matRNACounts,
+            vecDNADepth=vecDNADepth,
+            vecRNADepth=vecRNADepth,
+            lsvecDNAModel=lapply(lsModelsDNA, function(f) f$vecDNAModel ),
+            lsvecCumulBatchFacDNA=lapply(lsModelsDNA, function(f) f$vecCumulBatchFacDNA),
+            vecRNAModelFit=lsModelRNA$vecRNAModelFit,
+            vecRNAModelFitCtrl=rep(1, length(lsModelRNA$vecRNAModelFit)))
+        message(paste0(scaIter, ". iteration DNA done with LL=", round(scaLLNew,5), 
+                     " in ", round(tm_preest_dna/60,2), " min."))
+        
+        # RNA model
+        tm_preest_rna <- system.time({
+            vecParamGuessRNA <- log(lsModelRNA$vecExprModel) # baseline #RNA per plasmid
+            if(!is.null(lsvecidxBatchRNA)){ # DNA batch model
+                for(j in seq(1, length(lsvecidxBatchRNA))){
+                    vecBatchFac <- lsModelRNA$lsvecBatchFactorsRNA[[j]]
+                    vecParamGuessRNA <- 
+                        c(vecParamGuessRNA, log(vecBatchFac[2:length(vecBatchFac)]))
                 }
             }
-            lsFitDNA <- tryCatch({
+            lsFitRNA <- tryCatch({
+                lsObjPars <- list( # convenience parameters for cost function only computed once here
+                    scaNEnhancers = dim(matRNACounts)[1],
+                    scaNSamples = dim(matRNACounts)[2],
+                    vecNBatchFacRNA = sapply(lsvecidxBatchRNA, function(x) max(x)-1 ),
+                    vecNBatchFacRNACtrl = NULL
+                )
                 optim(
-                    par=vecParamGuessDNA,
-                    fn=evalLogLikDNA_gammaDNApoisRNA_comp,
-                    vecDNACounts=matDNACounts[i,],
-                    vecRNACounts=matRNACounts[i,],
-                    vecboolObsDNA=!is.na(matDNACounts[i,]),
-                    vecboolObsBoth=!is.na(matDNACounts[i,]) & !is.na(matRNACounts[i,]),
-                    vecDNADepth=vecDNADepth,
-                    vecRNADepth=vecRNADepth,
-                    vecRNAModelFit=vecModel,
-                    lsvecidxBatchDNA=lsvecidxBatchDNA,
+                    par = vecParamGuessRNA,
+                    fn = evalLogLikRNA_gammaDNApoisRNA_comp,
+                    matDNAModel = do.call(rbind, lapply(lsModelsDNA, function(f) f$vecDNAModel )),
+                    matCumulBatchFacDNA = do.call(rbind, lapply(lsModelsDNA, function(f) f$vecCumulBatchFacDNA)),
+                    matRNACounts = matRNACounts,
+                    lsvecidxDNARNAObs = lapply(seq(1, dim(matRNACounts)[1], by=1), function(i) {
+                        which(!is.na(matDNACounts[i,]) & !is.na(matRNACounts[i,])) }),
+                    vecRNADepth = vecRNADepth,
+                    lsvecidxBatchRNA = lsvecidxBatchRNA,
+                    lsObjPars = lsObjPars,
                     method="BFGS",
                     control=list(maxit=MAXIT,
                                  reltol=RELTOL,
                                  fnscale=-1)
                 )[c("par","value","convergence")]
             }, error=function(strErrorMsg){
-                print(paste0("ERROR: Fitting DNA model: fitDNARNA_gammaDNApoisRNA_coordascent()."))
-                print(paste0("vecParamGuessDNA ", paste(vecParamGuessDNA,collapse=" ")))
-                print(paste0("matDNACounts ", paste(matDNACounts,collapse=" ")))
-                print(paste0("vecDNADepth ", paste(vecDNADepth,collapse=" ")))
-                print(paste0("matRNACounts ", paste(matRNACounts,collapse=" ")))
-                print(paste0("vecRNADepth ", paste(vecRNADepth,collapse=" ")))
+                print(paste0("ERROR: Fitting RNA model: evalLogLikRNA_gammaDNApoisRNA_comp()."))
+                print(paste0("vecParamGuessRNA ", paste(vecParamGuessRNA,collapse=" ")))
                 print(paste0("lsvecidxBatchRNA ", paste(lsvecidxBatchRNA,collapse=" ")))
                 print(paste0("lsvecidxBatchDNA ", paste(lsvecidxBatchDNA,collapse=" ")))
                 print(paste0("MAXIT ", MAXIT))
                 print(strErrorMsg)
             })
             
-            # Extract parameter estimates
             scaNParamUsed <- 0
-            vecDNAModel <- exp(lsFitDNA$par[(scaNParamUsed+1):(scaNParamUsed+2)])
-            scaNParamUsed <- scaNParamUsed + 2
-            vecDNAModel[vecDNAModel < 10^(-10)] <- 10^(-10)
-            vecDNAModel[vecDNAModel > 10^(10)] <- 10^(10)
+            scaSlopeRNAvsDNA <- exp(lsFitRNA$par[(scaNParamUsed+1)])
+            scaNParamUsed <- scaNParamUsed + 1
+            scaSlopeRNAvsDNA[scaSlopeRNAvsDNA < 10^(-10)] <- 10^(-10)
+            scaSlopeRNAvsDNA[scaSlopeRNAvsDNA > 10^(10)] <- 10^(10)
             
-            vecBatchFacDNA <- rep(1, length(vecDNADepth))
-            if(!is.null(lsvecidxBatchDNA)){
-                lsvecBatchFacDNA <- list()
-                for(i in seq(1, length(lsvecidxBatchDNA))){
-                    scaNBatchFactors <- max(lsvecidxBatchDNA[[i]])-1 # Batches are counted from 1
+            vecRNAModelFit <- rep(scaSlopeRNAvsDNA, length(vecRNADepth))
+            if(!is.null(lsvecidxBatchRNA)){
+                lsvecBatchFactorsRNA <- list()
+                for(i in seq(1, length(lsvecidxBatchRNA))){
+                    scaNBatchFactors <- max(lsvecidxBatchRNA[[i]])-1 # Batches are counted from 1
                     # Factor of first batch is one (constant), the remaining
                     # factors scale based on the first batch.
-                    vecBatchFactors <- c(1, exp(lsFitDNA$par[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)]))
+                    vecBatchFactors <- c(1, exp(lsFitRNA$par[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)]))
                     scaNParamUsed <- scaNParamUsed+scaNBatchFactors
                     # Catch boundary of likelihood domain on batch factor space:
                     vecBatchFactors[vecBatchFactors < 10^(-10)] <- 10^(-10)
                     vecBatchFactors[vecBatchFactors > 10^(10)] <- 10^(10)
-                    lsvecBatchFacDNA[[i]] <- vecBatchFactors
+                    lsvecBatchFactorsRNA[[i]] <- vecBatchFactors
                     
-                    vecBatchFacDNA <- vecBatchFacDNA*vecBatchFactors[lsvecidxBatchDNA[[i]]]
+                    vecRNAModelFit <- vecRNAModelFit*vecBatchFactors[lsvecidxBatchRNA[[i]]]
                 }
             } else { 
-                lsvecBatchFacDNA <- NULL
+                lsvecBatchFactorsRNA <- NULL
             }
-            vecFitDNAHat <- vecDNAModel[1]/vecDNAModel[2]*vecBatchFacDNA
-            return(list(
-                vecDNAModel=vecDNAModel,
-                lsvecBatchFacDNA=lsvecBatchFacDNA,
-                vecCumulBatchFacDNA=vecBatchFacDNA,
-                vecFitDNAHat=vecFitDNAHat,
-                scaDFDNA=length(lsFitDNA$par),
-                scaLL=lsFitDNA$value,
-                scaConvergence=lsFitDNA$convergence
-            ))
-        })
-        vecFitDNA <- lsModelsDNA[[1]]$vecFitDNAHat*vecDNADepth
+            
+            vecFitRNA <- lsModelsDNA[[1]]$vecFitDNAHat*vecRNAModelFit*vecRNADepth
+            lsModelRNA <- list(
+                vecExprModel=scaSlopeRNAvsDNA,
+                vecExprModelCtrl=NULL,
+                lsvecBatchFactorsRNA=lsvecBatchFactorsRNA,
+                lsvecBatchFactorsRNACtrl=NULL,
+                vecFitRNA=vecFitRNA,
+                vecRNAModelFit=vecRNAModelFit,
+                vecRNAModelFitCtrl=NULL,
+                scaLL=lsFitRNA$value,
+                scaConvergence=lsFitRNA$convergence)
+        })["elapsed"]
         
         scaLLNew <- evalLogLikDNARNA_gammaDNApoisRNA_direct(
             matDNACounts=matDNACounts,
@@ -167,94 +265,10 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
             lsvecCumulBatchFacDNA=lapply(lsModelsDNA, function(f) f$vecCumulBatchFacDNA),
             vecRNAModelFit=lsModelRNA$vecRNAModelFit,
             vecRNAModelFitCtrl=rep(1, length(lsModelRNA$vecRNAModelFit)))
-        print(paste0(scaIter, ". iteration DNA done with LL=", round(scaLLNew,5)))
-        
-        # RNA model
-        vecParamGuessRNA <- log(lsModelRNA$vecExprModel) # baseline #RNA per plasmid
-        if(!is.null(lsvecidxBatchRNA)){ # DNA batch model
-            for(j in seq(1, length(lsvecidxBatchRNA))){
-                vecBatchFac <- lsModelRNA$lsvecBatchFactorsRNA[[j]]
-                vecParamGuessRNA <- 
-                    c(vecParamGuessRNA, log(vecBatchFac[2:length(vecBatchFac)]))
-            }
-        }
-        lsFitRNA <- tryCatch({
-            optim(
-                par=vecParamGuessRNA,
-                fn=evalLogLikRNA_gammaDNApoisRNA_comp,
-                lsvecDNAModel=lapply(lsModelsDNA, function(f) f$vecDNAModel ),
-                lsvecCumulBatchFacDNA=lapply(lsModelsDNA, function(f) f$vecCumulBatchFacDNA),
-                matDNACounts=matDNACounts,
-                matRNACounts=matRNACounts,
-                vecDNADepth=vecDNADepth,
-                vecRNADepth=vecRNADepth,
-                lsvecidxBatchRNA=lsvecidxBatchRNA,
-                boolBaselineCtrl=FALSE,
-                lsvecidxBatchRNACtrl=NULL,
-                method="BFGS",
-                control=list(maxit=MAXIT,
-                             reltol=RELTOL,
-                             fnscale=-1)
-            )[c("par","value","convergence")]
-        }, error=function(strErrorMsg){
-            print(paste0("ERROR: Fitting DNA model: fitDNARNA_gammaDNApoisRNA_coordascent()."))
-            print(paste0("vecParamGuessRNA ", paste(vecParamGuessRNA,collapse=" ")))
-            print(paste0("lsvecidxBatchRNA ", paste(lsvecidxBatchRNA,collapse=" ")))
-            print(paste0("lsvecidxBatchDNA ", paste(lsvecidxBatchDNA,collapse=" ")))
-            print(paste0("MAXIT ", MAXIT))
-            print(strErrorMsg)
-        })
-        
-        scaNParamUsed <- 0
-        scaSlopeRNAvsDNA <- exp(lsFitRNA$par[(scaNParamUsed+1)])
-        scaNParamUsed <- scaNParamUsed + 1
-        scaSlopeRNAvsDNA[scaSlopeRNAvsDNA < 10^(-10)] <- 10^(-10)
-        scaSlopeRNAvsDNA[scaSlopeRNAvsDNA > 10^(10)] <- 10^(10)
-        
-        vecRNAModelFit <- rep(scaSlopeRNAvsDNA, length(vecRNADepth))
-        if(!is.null(lsvecidxBatchRNA)){
-            lsvecBatchFactorsRNA <- list()
-            for(i in seq(1, length(lsvecidxBatchRNA))){
-                scaNBatchFactors <- max(lsvecidxBatchRNA[[i]])-1 # Batches are counted from 1
-                # Factor of first batch is one (constant), the remaining
-                # factors scale based on the first batch.
-                vecBatchFactors <- c(1, exp(lsFitRNA$par[(scaNParamUsed+1):(scaNParamUsed+scaNBatchFactors)]))
-                scaNParamUsed <- scaNParamUsed+scaNBatchFactors
-                # Catch boundary of likelihood domain on batch factor space:
-                vecBatchFactors[vecBatchFactors < 10^(-10)] <- 10^(-10)
-                vecBatchFactors[vecBatchFactors > 10^(10)] <- 10^(10)
-                lsvecBatchFactorsRNA[[i]] <- vecBatchFactors
-                
-                vecRNAModelFit <- vecRNAModelFit*vecBatchFactors[lsvecidxBatchRNA[[i]]]
-            }
-        } else { 
-            lsvecBatchFactorsRNA <- NULL
-        }
-        
-        vecFitRNA <- lsModelsDNA[[1]]$vecFitDNAHat*vecRNAModelFit*vecRNADepth
-        lsModelRNA <- list(
-            vecExprModel=scaSlopeRNAvsDNA,
-            vecExprModelCtrl=NULL,
-            lsvecBatchFactorsRNA=lsvecBatchFactorsRNA,
-            lsvecBatchFactorsRNACtrl=NULL,
-            vecFitRNA=vecFitRNA,
-            vecRNAModelFit=vecRNAModelFit,
-            vecRNAModelFitCtrl=NULL,
-            scaLL=lsFitRNA$value,
-            scaConvergence=lsFitRNA$convergence)
-        
-        scaLLNew <- evalLogLikDNARNA_gammaDNApoisRNA_direct(
-            matDNACounts=matDNACounts,
-            matRNACounts=matRNACounts,
-            vecDNADepth=vecDNADepth,
-            vecRNADepth=vecRNADepth,
-            lsvecDNAModel=lapply(lsModelsDNA, function(f) f$vecDNAModel ),
-            lsvecCumulBatchFacDNA=lapply(lsModelsDNA, function(f) f$vecCumulBatchFacDNA),
-            vecRNAModelFit=lsModelRNA$vecRNAModelFit,
-            vecRNAModelFitCtrl=rep(1, length(lsModelRNA$vecRNAModelFit)))
-        print(paste0(scaIter, ". iteration RNA done with LL=", round(scaLLNew,5)))
+        message(paste0(scaIter, ". iteration RNA done with LL=", round(scaLLNew,5), 
+                     " in ", round(tm_preest_rna/60,2), " min."))
     }
-    print("Coordinate ascent done.")
+    message("Coordinate ascent done.")
     
     scaDF <- sum(sapply(lsModelsDNA, function(f) length(f$par) )) + length(lsFitRNA$par)
     

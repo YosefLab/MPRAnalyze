@@ -118,6 +118,9 @@ NULL
 #' the likelihood function.
 #' @param boolVerbose (bool) [Default TRUE]
 #' Whether to print progress statements.
+#' @param boolSuperVerbose (bool) [Default TRUE]
+#' Whether to print progress statements during coorinate ascent of each enhancer model
+#' (only applies if strModel==gammaDNApoisRNA_coordascent).
 #' 
 #' @return (MPRAnalyzeObject)
 #' Output container class object with data frame 
@@ -144,7 +147,8 @@ runMPRAnalyze <- function(
     vecDNADepthExternal=NULL,
     boolPreFitCtrlDNA=TRUE,
     strModel="gammaDNApoisRNA",
-    boolVerbose=TRUE ){
+    boolVerbose=TRUE,
+    boolSuperVerbose=FALSE){
     
     strMessage <- "MPRAnalyze v0.90 for MPRA data (DNA and RNA counts)"
     if(boolVerbose) message(strMessage)
@@ -212,14 +216,20 @@ runMPRAnalyze <- function(
     # 3. Fit full and reduced model
     # Pre-fit DNA models in marginalisation scenario
     # to reduce size of optimisation problems: gammaDNApoisRNA
-    if(boolPreFitCtrlDNA & obj@strModel=="gammaDNApoisRNA"){
+    if(boolPreFitCtrlDNA & obj@strModel %in% c("gammaDNApoisRNA", "gammaDNApoisRNA_coordascent") ){
         strMessage <- "# Pre-Fit control DNA model"
         if(boolVerbose) message(strMessage)
         obj@strReport <- paste0(obj@strReport, "\n", strMessage)
-        obj@lsDNAModelFitsCtrl <- prefitCtrlDNAModels(
-            obj=obj, vecModelFacRNA=obj@vecModelFacRNAFull,
-            vecModelFacDNA=obj@vecModelFacDNA,
-            MAXIT=1000, boolVerbose=boolVerbose)
+        tm_preest_dnamodel <- system.time({
+            obj@lsDNAModelFitsCtrl <- prefitCtrlDNAModels(
+                obj=obj, vecModelFacRNA=obj@vecModelFacRNAFull,
+                vecModelFacDNA=obj@vecModelFacDNA,
+                MAXIT=1000, boolVerbose=boolVerbose)
+        })
+        strMessage <- paste0("Time elapsed during DNA model pre-fitting: ",
+                             round(tm_preest_dnamodel["elapsed"]/60,2)," min")
+        if(boolVerbose) message(strMessage)
+        obj@strReport <- paste0(obj@strReport, "\n", strMessage)
     }
     # DNA models are shared between null and full if expression
     # model is conditioned on DNA model: pointlnDNAnbRNA
@@ -250,7 +260,7 @@ runMPRAnalyze <- function(
             obj=obj, vecModelFacRNA=obj@vecModelFacRNAFull,
             vecModelFacRNACtrl=obj@vecModelFacRNAFullCtrl,
             vecModelFacDNA=obj@vecModelFacDNA,
-            boolVerbose=boolVerbose)
+            boolVerbose=boolVerbose, boolSuperVerbose=boolSuperVerbose)
     })
     strMessage <- paste0("Time elapsed during full model fitting: ",
                          round(tm_fullmodel["elapsed"]/60,2)," min")
@@ -266,7 +276,7 @@ runMPRAnalyze <- function(
                 obj=obj, vecModelFacRNA=obj@vecModelFacRNARed,
                 vecModelFacRNACtrl=obj@vecModelFacRNARedCtrl,
                 vecModelFacDNA=obj@vecModelFacDNA,
-                boolVerbose=boolVerbose)
+                boolVerbose=boolVerbose, boolSuperVerbose=boolSuperVerbose)
         })
         strMessage <- paste0("Time elapsed during reduced model fitting: ",
                              round(tm_redmodel["elapsed"]/60,2)," min")
