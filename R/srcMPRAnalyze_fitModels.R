@@ -532,12 +532,17 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
         } else{
             lsvecBatchFacDNA <- NULL
         }
-        for(i in seq(1, dim(matDNACounts)[1])){
+        for(i in vecidxDNAModelsToFit){
             # Gamma distr parameters, mean right and disp 1
             vecDNAModel <- c(1,1/mean(matDNACounts[i,], na.rm=TRUE))
             lsModelsDNA[[i]] <- list()
             lsModelsDNA[[i]]$vecDNAModel <- vecDNAModel
             lsModelsDNA[[i]]$lsvecBatchFacDNA <- lsvecBatchFacDNA
+        }
+    }
+    if(!is.null(lsDNAModelFitsCtrl)){
+        for(i in seq(2, dim(matDNACounts)[1])){
+            lsModelsDNA[[i]] <- lsDNAModelFitsCtrl[[i-1]]
         }
     }
     
@@ -586,7 +591,7 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
             # If ctrl DNA models were pre-estimated, only ONE DNA model is estimated here!
             matModelRNA <- rbind(lsModelRNA$vecRNAModelFit*vecRNADepth,
                                  lsModelRNA$vecRNAModelFit * lsModelRNA$vecRNAModelFitCtrl * vecRNADepth)
-            lsModelsDNA <- lapply(vecidxDNAModelsToFit, function(i){
+            lsModelsDNANew <- lapply(vecidxDNAModelsToFit, function(i){
                 # Gamma distr parameters, mean right and disp 1
                 vecParamGuessDNA <- log(lsModelsDNA[[i]]$vecDNAModel)
                 if(!is.null(lsvecidxBatchDNA)){ # DNA batch model
@@ -661,6 +666,7 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
             })
             vecFitDNACase <- lsModelsDNA[[1]]$vecFitDNAHat*vecDNADepth
         })["elapsed"]
+        for(i in vecidxDNAModelsToFit) lsModelsDNA[[i]] <- lsModelsDNANew[[i]]
         
         scaLLNew <- evalLogLikDNARNA_gammaDNApoisRNA_direct(
             matDNACounts=matDNACounts,
