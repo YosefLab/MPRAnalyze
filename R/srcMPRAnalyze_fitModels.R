@@ -324,21 +324,21 @@ fitDNARNA_gammaDNApoisRNA <- function(
         }
     }
     
+    if(is.null(lsDNAModelFitsCtrl)) {
+        vecidxDNAModelsToFit <- seq(1, dim(matDNACounts)[1])
+    } else {
+        vecidxDNAModelsToFit <- 1
+    }
+    lsObjPars <- list( # convenience parameters for cost function only computed once here
+        vecidxDNAModelsToFit = vecidxDNAModelsToFit,
+        scaNDNAModelsToFit = length(vecidxDNAModelsToFit),
+        scaNEnhancers = dim(matRNACounts)[1],
+        scaNSamples = dim(matRNACounts)[2],
+        vecNBatchFacDNA = sapply(lsvecidxBatchDNA, function(x) max(x)-1 ),
+        vecNBatchFacRNA = sapply(lsvecidxBatchRNA, function(x) max(x)-1 ),
+        vecNBatchFacRNACtrl = sapply(lsvecidxBatchRNACtrl, function(x) max(x)-1 )
+    )
     lsFit <- tryCatch({
-        if(is.null(lsDNAModelFitsCtrl)) {
-            vecidxDNAModelsToFit <- seq(1, dim(matDNACounts)[1])
-        } else {
-            vecidxDNAModelsToFit <- 1
-        }
-        lsObjPars <- list( # convenience parameters for cost function only computed once here
-            vecidxDNAModelsToFit = vecidxDNAModelsToFit,
-            scaNDNAModelsToFit = length(vecidxDNAModelsToFit),
-            scaNEnhancers = dim(matRNACounts)[1],
-            scaNSamples = dim(matRNACounts)[2],
-            vecNBatchFacDNA = sapply(lsvecidxBatchDNA, function(x) max(x)-1 ),
-            vecNBatchFacRNA = sapply(lsvecidxBatchRNA, function(x) max(x)-1 ),
-            vecNBatchFacRNACtrl = sapply(lsvecidxBatchRNACtrl, function(x) max(x)-1 )
-        )
         optim(
             par = vecParamGuess,
             fn = evalLogLikDNARNA_gammaDNApoisRNA_comp,
@@ -507,7 +507,6 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
     lsModelsDNA=NULL,
     lsModelRNA=NULL,
     lsDNAModelFitsCtrl=NULL,
-    boolSuperVerbose = FALSE,
     MAXIT=1000,
     RELTOL=10^(-8),
     MAXIT_CA=1000,
@@ -581,6 +580,7 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
     scaLLNew <- -Inf
     scaLLOld <- -Inf
     scaIter  <- 0
+    strReport <- ""
     
     while( (scaLLNew+(RELTOL_CA*scaLLNew) > scaLLOld & scaIter <= MAXIT_CA) | scaIter==0){
         scaIter <- scaIter + 1
@@ -601,11 +601,11 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
                             c(vecParamGuessDNA, log(vecBatchFac[2:length(vecBatchFac)]))
                     }
                 }
+                lsObjPars <- list( # convenience parameters for cost function only computed once here
+                    scaNSamples = dim(matRNACounts)[2],
+                    vecNBatchFacDNA = sapply(lsvecidxBatchDNA, function(x) max(x)-1 )
+                )
                 lsFitDNA <- tryCatch({
-                    lsObjPars <- list( # convenience parameters for cost function only computed once here
-                        scaNSamples = dim(matRNACounts)[2],
-                        vecNBatchFacDNA = sapply(lsvecidxBatchDNA, function(x) max(x)-1 )
-                    )
                     optim(
                         par=vecParamGuessDNA,
                         fn=evalLogLikDNA_gammaDNApoisRNA_comp,
@@ -659,7 +659,7 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
                     lsvecBatchFacDNA=lsvecBatchFacDNA,
                     vecCumulBatchFacDNA=vecBatchFacDNA,
                     vecFitDNAHat=vecFitDNAHat,
-                    scaDFDNA=length(lsFitDNA$par),
+                    scaDF=length(lsFitDNA$par),
                     scaLL=lsFitDNA$value,
                     scaConvergence=lsFitDNA$convergence
                 ))
@@ -677,9 +677,9 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
             lsvecCumulBatchFacDNA=lapply(lsModelsDNA, function(f) f$vecCumulBatchFacDNA),
             vecRNAModelFit=lsModelRNA$vecRNAModelFit,
             vecRNAModelFitCtrl=lsModelRNA$vecRNAModelFitCtrl)
-        if(boolSuperVerbose) message(paste0(scaIter, ". iteration DNA done with LL=", round(scaLLNew,5), 
-                                            " in ", round(tm_coordasc_dna/60,2), " min."))
-        
+        strReport <- paste0(strReport, scaIter, ". iteration DNA done with LL=", round(scaLLNew,5), 
+                            " in ", round(tm_coordasc_dna/60,2), " min.\n")
+
         ## II RNA model
         tm_coordasc_rna <- system.time({
             vecParamGuessRNA <- log(lsModelRNA$vecExprModel) # baseline #RNA per plasmid
@@ -701,13 +701,13 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
                         c(vecParamGuessRNA, log(vecBatchFac[2:length(vecBatchFac)]))
                 }
             }
+            lsObjPars <- list( # convenience parameters for cost function only computed once here
+                scaNEnhancers = dim(matRNACounts)[1],
+                scaNSamples = dim(matRNACounts)[2],
+                vecNBatchFacRNA = sapply(lsvecidxBatchRNA, function(x) max(x)-1 ),
+                vecNBatchFacRNACtrl = sapply(lsvecidxBatchRNACtrl, function(x) max(x)-1 )
+            )
             lsFitRNA <- tryCatch({
-                lsObjPars <- list( # convenience parameters for cost function only computed once here
-                    scaNEnhancers = dim(matRNACounts)[1],
-                    scaNSamples = dim(matRNACounts)[2],
-                    vecNBatchFacRNA = sapply(lsvecidxBatchRNA, function(x) max(x)-1 ),
-                    vecNBatchFacRNACtrl = sapply(lsvecidxBatchRNACtrl, function(x) max(x)-1 )
-                )
                 optim(
                     par = vecParamGuessRNA,
                     fn = evalLogLikRNA_gammaDNApoisRNA_comp,
@@ -807,8 +807,8 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
             lsvecCumulBatchFacDNA = lapply(lsModelsDNA, function(f) f$vecCumulBatchFacDNA),
             vecRNAModelFit = lsModelRNA$vecRNAModelFit,
             vecRNAModelFitCtrl = lsModelRNA$vecRNAModelFitCtrl)
-        if(boolSuperVerbose) message(paste0(scaIter, ". iteration RNA done with LL=", round(scaLLNew,5), 
-                                            " in ", round(tm_coordasc_rna/60,2), " min."))
+        strReport <- paste0(strReport, scaIter, ". iteration RNA done with LL=", round(scaLLNew,5), 
+                                            " in ", round(tm_coordasc_rna/60,2), " min.\n")
     }
     
     scaDF <- sum(sapply(lsModelsDNA, function(f) length(f$par) )) + length(lsFitRNA$par)
@@ -824,7 +824,8 @@ fitDNARNA_gammaDNApoisRNA_coordascent <- function(
                  scaDisp = lsModelsDNA[[1]]$vecDNAModel,
                  scaDF = scaDF,
                  scaLL = scaLLNew,
-                 scaConvergence = lsFitRNA$convergence))
+                 scaConvergence = lsFitRNA$convergence,
+                 strReport = strReport))
 }
 
 #' Fits models to an MPRA dataset
@@ -930,13 +931,13 @@ fitModels <- function(
         if(boolFitDNA) {
             if(boolVerbose) message(paste0("Fit DNA"))
             lsFits <- bplapply(seq(1,scaNGenes),function(i){
-                if(boolVerbose) message(paste0("### DNA Enhancer ", i))
-                fitDNA_lnDNA(
+                if(boolSuperVerbose) message(paste0("### DNA Enhancer ", i))
+                return(fitDNA_lnDNA(
                     vecDNACounts=obj@matDNACountsProc[i,,drop=FALSE],
                     vecDNADepth=obj@vecDNADepth,
                     lsvecidxBatchDNA=lsvecidxBatchDNA,
                     MAXIT=MAXIT,
-                    RELTOL=RELTOL )
+                    RELTOL=RELTOL ))
             })
             names(lsFits) <- rownames(obj@matRNACountsProc)
         } else {
@@ -979,7 +980,7 @@ fitModels <- function(
     } else if(obj@strModel=="gammaDNApoisRNA"){
         lsFits <- bplapply(vecidxCase, function(i){
             tm_enhancer <- system.time({
-                fitDNARNA_gammaDNApoisRNA(
+                lsFit <- fitDNARNA_gammaDNApoisRNA(
                     matDNACounts=obj@matDNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
                     matRNACounts=obj@matRNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
                     vecDNADepth=obj@vecDNADepth,
@@ -992,14 +993,14 @@ fitModels <- function(
                     MAXIT=MAXIT,
                     RELTOL=RELTOL )
             })["elapsed"]
-            if(boolVerbose) message(paste0("### Enhancer ", i, 
-                                           " in ", round(tm_enhancer/60,2), " min"))
+            lsFit$time_for_fit <- paste0(round(tm_enhancer/60,2), " min")
+            return(lsFit)
         })
         names(lsFits) <- rownames(obj@matRNACountsProc)[vecidxCase]
     } else if(obj@strModel=="gammaDNApoisRNA_coordascent"){
         lsFits <- bplapply(vecidxCase, function(i){
             tm_enhancer <- system.time({
-                fitDNARNA_gammaDNApoisRNA_coordascent(
+                lsFit <- fitDNARNA_gammaDNApoisRNA_coordascent(
                     matDNACounts=obj@matDNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
                     matRNACounts=obj@matRNACountsProc[c(i,vecidxCtrl),,drop=FALSE],
                     vecDNADepth=obj@vecDNADepth,
@@ -1009,12 +1010,11 @@ fitModels <- function(
                     boolBaselineCtrl="1" %in% vecModelFacRNACtrl,
                     lsvecidxBatchRNACtrl=lsvecidxBatchRNACtrl,
                     lsDNAModelFitsCtrl=obj@lsDNAModelFitsCtrl,
-                    boolSuperVerbose = boolSuperVerbose,
                     MAXIT=MAXIT,
                     RELTOL=RELTOL )
             })["elapsed"]
-            if(boolVerbose) message(paste0("### Enhancer ", i, 
-                                           " in ", round(tm_enhancer/60,2), " min"))
+            lsFit$time_for_fit <- paste0(round(tm_enhancer/60,2), " min")
+            return(lsFit)
         })
         names(lsFits) <- rownames(obj@matRNACountsProc)[vecidxCase]
     } else {

@@ -224,7 +224,7 @@ runMPRAnalyze <- function(
             obj@lsDNAModelFitsCtrl <- prefitCtrlDNAModels(
                 obj=obj, vecModelFacRNA=obj@vecModelFacRNAFull,
                 vecModelFacDNA=obj@vecModelFacDNA,
-                MAXIT=1000, boolVerbose=boolVerbose)
+                MAXIT=1000, boolSuperVerbose=boolSuperVerbose)
         })
         strMessage <- paste0("Time elapsed during DNA model pre-fitting: ",
                              round(tm_preest_dnamodel["elapsed"]/60,2)," min")

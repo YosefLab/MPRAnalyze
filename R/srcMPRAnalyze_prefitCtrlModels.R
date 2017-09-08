@@ -21,6 +21,7 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
     vecRNADepth,
     lsvecidxBatchDNA,
     lsvecidxBatchRNA,
+    boolSuperVerbose=FALSE,
     MAXIT=1000,
     RELTOL=10^(-8) ){
     
@@ -70,6 +71,7 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
     scaLLOld <- -Inf
     scaPrec <- 10^(-6)
     scaIter <- 0
+    strReport <- ""
     
     while(scaLLNew+(scaPrec*scaLLNew) > scaLLOld | scaIter==0){
         scaIter <- scaIter + 1
@@ -172,8 +174,10 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
             lsvecCumulBatchFacDNA=lapply(lsModelsDNA, function(f) f$vecCumulBatchFacDNA),
             vecRNAModelFit=lsModelRNA$vecRNAModelFit,
             vecRNAModelFitCtrl=rep(1, length(lsModelRNA$vecRNAModelFit)))
-        message(paste0(scaIter, ". iteration DNA done with LL=", round(scaLLNew,5), 
-                     " in ", round(tm_preest_dna/60,2), " min."))
+        strReport <- paste0(strReport, scaIter, ". iteration DNA done with LL=", round(scaLLNew,5), 
+                            " in ", round(tm_preest_dna/60,2), " min.\n")
+        if(boolSuperVerbose) message(paste0(scaIter, ". iteration DNA done with LL=", round(scaLLNew,5), 
+                                            " in ", round(tm_preest_dna/60,2), " min."))
         
         # RNA model
         tm_preest_rna <- system.time({
@@ -265,17 +269,16 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
             lsvecCumulBatchFacDNA=lapply(lsModelsDNA, function(f) f$vecCumulBatchFacDNA),
             vecRNAModelFit=lsModelRNA$vecRNAModelFit,
             vecRNAModelFitCtrl=rep(1, length(lsModelRNA$vecRNAModelFit)))
-        message(paste0(scaIter, ". iteration RNA done with LL=", round(scaLLNew,5), 
+        strReport <- paste0(strReport, scaIter, ". iteration RNA done with LL=", round(scaLLNew,5), 
+                     " in ", round(tm_preest_rna/60,2), " min.\n")
+        if(boolSuperVerbose) message(paste0(scaIter, ". iteration RNA done with LL=", round(scaLLNew,5), 
                      " in ", round(tm_preest_rna/60,2), " min."))
     }
-    message("Coordinate ascent done.")
+    if(boolSuperVerbose) message("Coordinate ascent done.")
+    names(lsModelsDNA) <- rownames(matDNACounts)
     
-    scaDF <- sum(sapply(lsModelsDNA, function(f) length(f$par) )) + length(lsFitRNA$par)
-    
-    return(list(
-        lsModelsDNA=lsModelsDNA,
-        lsModelRNA=lsModelRNA
-    ))
+    # not saving strReport yet...
+    return(lsModelsDNA)
 }
 
 #' Convenience wrapper for 
@@ -287,7 +290,7 @@ prefitCtrlDNA_gammaDNApoisRNA_coordascent <- function(
 #' @author David Sebastian Fischer
 prefitCtrlDNAModels <- function(
     obj, vecModelFacRNA, vecModelFacDNA,
-    MAXIT=1000, RELTOL=10^(-8), boolVerbose=TRUE ){
+    MAXIT=1000, RELTOL=10^(-8), boolSuperVerbose=FALSE ){
     
     scaNGenes <- dim(obj@matRNACountsProc)[1]
     # Get batch assignments of samples
@@ -340,15 +343,16 @@ prefitCtrlDNAModels <- function(
     }
     
     # this prefitting only makes sense for gammaDNApoisRNA_coordascent
-    lsFits <- prefitCtrlDNA_gammaDNApoisRNA_coordascent(
+    lsFitsDNA <- prefitCtrlDNA_gammaDNApoisRNA_coordascent(
         matDNACounts=obj@matDNACountsProc[obj@vecCtrlIDs,,drop=FALSE],
         matRNACounts=obj@matRNACountsProc[obj@vecCtrlIDs,,drop=FALSE],
         vecDNADepth=obj@vecDNADepth,
         vecRNADepth=obj@vecRNADepth,
         lsvecidxBatchDNA=lsvecidxBatchDNA,
         lsvecidxBatchRNA=lsvecidxBatchRNA,
+        boolSuperVerbose=boolSuperVerbose,
         MAXIT=MAXIT,
         RELTOL=RELTOL )
     
-    return(lsFits$lsModelsDNA)
+    return(lsFitsDNA)
 }
