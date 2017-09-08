@@ -216,7 +216,9 @@ runMPRAnalyze <- function(
     # 3. Fit full and reduced model
     # Pre-fit DNA models in marginalisation scenario
     # to reduce size of optimisation problems: gammaDNApoisRNA
-    if(boolPreFitCtrlDNA & obj@strModel %in% c("gammaDNApoisRNA", "gammaDNApoisRNA_coordascent") ){
+    if(boolPreFitCtrlDNA & 
+       obj@strModel %in% c("gammaDNApoisRNA", "gammaDNApoisRNA_coordascent") &
+       !is.null(vecCtrlIDs) ){
         strMessage <- "# Pre-Fit control DNA model"
         if(boolVerbose) message(strMessage)
         obj@strReport <- paste0(obj@strReport, "\n", strMessage)
