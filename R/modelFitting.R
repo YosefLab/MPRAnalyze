@@ -270,6 +270,33 @@ fit.mixture.gammaPoisson <- function(dcounts, rcounts,
         ll = -fit$value))
 }
 
+#' A wrapper function for fitting a point-estimation based model, where a
+#' point estimate for DNA levels is fitted from DNA counts, then used for RNA
+#' estimation, without joint fitting.
+#'
+#' @param dnaFn the fitting function for the DNA counts. Should have the same API
+#' as fit.gammaDNA (default) and fit.lnDNA
+#' @param rnaFn the fitting function for the RNA counts, should have the same API
+#' as fit.nbRNA (default)
+#' @param dcounts the DNA count data
+#' @param rcounts the RNA count data
+#' @param ddepth the DNA library size correction factors
+#' @param rdepth the RNA library size correction factors
+#' @param ddesign.mat the DNA design matrix
+#' @param rdesign.mat the RNA design matrix
+#'
+#' @return a list:
+#' \itemize{
+#'     \item d.fitval: the fitted values of the DNA counts
+#'     \item d.est: the estimated true DNA levels (corrected for library size)
+#'     \item d.coef: the fitted mode parameters for the DNA counts
+#'     \item d.se: the standard errors of the estimates of the DNA counts
+#'     \item r.est: the fitted values of the RNA counts
+#'     \item r.fitval: the fitted mode parameters for the RNA counts
+#'     \item r.est: the estimated true RNA levels (corrected for library size)
+#'     \item r.se: the standard errors of the estimates of the RNA counts
+#'     \item ll: the log likelihood of the model
+#' }
 fit.separate <- function(dnaFn=fit.gammaDNA, rnaFn=fit.nbRNA,
                          dcounts, rcounts,
                          ddepth, rdepth,
@@ -284,14 +311,10 @@ fit.separate <- function(dnaFn=fit.gammaDNA, rnaFn=fit.nbRNA,
                      d.est = dna.fit$est,
                      design.mat = rdesign.mat)
 
-    return()
-
-    # return(list(fitval = fv, est = est, coef = coef, se = se, ll = -fit$value))
-
-    # return(list(fitval = fv, est = est, coef = coef, se = se, ll = fit$value))
-
-    # return(list(
-    #     d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = d.se,
-    #     r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = r.se,
-    #     ll = fit$value))
+    return(list(
+        d.fitval = dna.fit$fitval, d.est = dna.fit$est,
+        d.coef = dna.fit$coef, d.se = dna.fit$se,
+        r.fitval = rna.fit$fitval, r.est = rna.fit$est,
+        r.coef = rna.fit$coef, r.se = rna.fit$se,
+        ll = -(rna.fit$ll + dna.fit$ll)))
 }
