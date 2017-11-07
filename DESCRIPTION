@@ -28,4 +28,5 @@ biocViews: Software,
     CellBasedAssays
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
+ByteCompile: true
 BugReports: https://github.com/YosefLab/MPRAnalyze

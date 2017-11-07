@@ -1,3 +1,35 @@
+
+#' fit models for a differential activity analysis
+#' @param obj the MpraObject
+#' @param model the model to use (TODO: if nul?)
+#' @param dnaDesign the design to use for the DNA model (see details)
+#' @param rnaDesign the design to use for the RNA model (see details)
+#' @param condition the condition to do the differential analysis over. Only
+#' used if design is provided as formulas.
+#' @param dnaDesignNull used to explicitly specify the design of the null DNA model
+#' @param rnaDesignNull used to explicitly specify the design of the null RNA model
+#'
+fit.differential <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL,
+                            condition=NULL,
+                            dnaDesignNull=NULL, rnaDesignNull=NULL) {
+    ## TODO: if condition is specified and design input is formulas, create design matrices
+    ## for full (as is) and reduced (remove condition term). Also make sure the
+    ## condition is the first term in the formula. This will be for cases where
+    ## the comparison is all-vs-one
+
+    ## TODO: if designs are all specified and condition is not, either create model matrices
+    ##is the designs are formulas, or use the design matrices as is.
+}
+
+#' fit model for quantitative activity analysis
+#' @param obj the MpraObject
+#' @param model the model to fit
+#' @param dnaDesign the design for the DNA model
+#' @param rnaDesign the design for the RNA model
+fit.quantitative <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL) {
+    ##TODO: fit a single model per enhancer
+}
+
 #' fit a log normal GLM to the DNA count data
 #'
 #' @param dcounts the DNA counts (integer, N)
