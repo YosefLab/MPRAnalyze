@@ -1,29 +1,24 @@
 Package: MPRAnalyze
 Type: Package
-Title: Comparing enhancer strength based on MPRA experiments
+Title: Statistical Analysis of MPRA data
 Version: 0.90.1
-Date: 2017-05-07
+Date: 2017-11-06
 Authors@R: c(
-	person('David S', 'Fischer', NULL, 'david.fischer@helmholtz-muenchen.de', c('aut','cre')),	
+	person('David S', 'Fischer', NULL, 'david.fischer@helmholtz-muenchen.de', c('aut','cre')),
+    person('Tal', 'Ashuach', NULL, 'tal_ashuach@berkeley.edu', 'aut'),	
 	person('Nir', 'Yosef', NULL, 'niryosef@berkeley.edu', 'ctb'),
 	person('Fabian', 'Theis', NULL, 'fabian.theis@helmholtz-muenchen.de', 'ctb'))
-Author: David S Fischer [aut, cre], Nir Yosef [ctb], Fabian J Theis [ctb],
+Author: David S Fischer [aut, cre], Tal Ashuac [aut], Nir Yosef [ctb], Fabian J Theis [ctb],
 Maintainer: David S Fischer <david.fischer@helmholtz-muenchen.de>
 Description: MPRAnalyze is an analysis framework for MPRA data that aims at translating the main scientific questions arising in the context of MPRA data into statistical problems. Such questions include variations of ranking enhancers by caused expression magnitude and testing for differential enhancer activity between conditions. Thereby, MPRAnalyze allows the user to answer those questions as part of a likelihood-based framework based on p-values and expression strength scores.
 License: GPL-3
 Encoding: UTF-8
 Imports:
-    Biobase,
-    BiocParallel,
     compiler,
-    ggplot2,
-    grDevices,
-    knitr,
     Matrix,
     methods,
     S4Vectors,
     stats,
-    SummarizedExperiment,
     utils
 biocViews: Software,
     StatisticalMethod,
@@ -31,18 +26,6 @@ biocViews: Software,
     GeneExpression,
     CellBiology,
     CellBasedAssays
-Collate: 
-    'main_MPRAnalyze.R'
-    'srcMPRAnalyze_CostFunctions.R'
-    'srcMPRAnalyze_classMPRAnalyzeObject.R'
-    'srcMPRAnalyze_doHypothesisTests.R'
-    'srcMPRAnalyze_estimateDepthFactors.R'
-    'srcMPRAnalyze_estimateDispersions.R'
-    'srcMPRAnalyze_extractModel.R'
-    'srcMPRAnalyze_fitModels.R'
-    'srcMPRAnalyze_getModelFits.R'
-    'srcMPRAnalyze_plotBoxplots.R'
-    'srcMPRAnalyze_prefitCtrlModels.R'
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
-BugReports: https://github.com/davidsebfischer/MPRAnalyze/issues
+BugReports: https://github.com/YosefLab/MPRAnalyze
