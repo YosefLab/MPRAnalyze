@@ -19,6 +19,9 @@ fit.differential <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL,
 
     ## TODO: if designs are all specified and condition is not, either create model matrices
     ##is the designs are formulas, or use the design matrices as is.
+
+    ## TODO: if this is one.vs.all, then a standard LRT is needed, and the
+    ## models can be fit without computing the Hessian
 }
 
 #' fit model for quantitative activity analysis
@@ -35,9 +38,8 @@ fit.quantitative <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL) {
 #' @param dcounts the DNA counts (integer, N)
 #' @param depth library size correction factors (numeric, N)
 #' @param design.mat the design matrix (logical, N x K)
-#' @param control list of parameter to be passed to `optim` as
-#' the control argument. NOTE: since this is a maximization problem,
-#' control$fnscale should be set to a negative number (idealy -1)
+#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
+#' coefficients to facilitate coefficient-based hypothesis testing
 #'
 #' @return a list with components:
 #' \itemize {
@@ -49,7 +51,7 @@ fit.quantitative <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL) {
 #'     \item se: the standard errors of the coefficients
 #'     \item ll: the log likelihood of the model
 #' }
-fit.lnDNA <- function(dcounts, depth, design.mat) {
+fit.lnDNA <- function(dcounts, depth, design.mat, compute.hessian=TRUE) {
     ##TODO: lm does a faster and just as accurate job if depth factors are not
     ##a consideration. If we can incorporate them or remove the need to account
     ##for them, using lm will be preferable.
@@ -73,8 +75,7 @@ fit.lnDNA <- function(dcounts, depth, design.mat) {
                  logdepth = logdepth.valid,
                  design.mat = dmat.valid,
                  method = "BFGS",
-                 hessian = TRUE,
-                 control = list(trace=TRUE))
+                 hessian = compute.hessian)
 
     ## extract parameters
     est <- rep(NA, length(dcounts))
@@ -86,9 +87,13 @@ fit.lnDNA <- function(dcounts, depth, design.mat) {
     coef[c(1, which(valid.f) + 1)] <- fit$par
     names(coef) <- c("dispersion", colnames(design.mat))
 
-    se <- rep(NA, 1 + NCOL(design.mat))
-    se[c(1, 1 + which(valid.f))] <- sqrt(diag(solve(fit$hessian)))
-    names(se) <- c("dispersion", colnames(design.mat))
+    if(compute.hessian) {
+        se <- rep(NA, 1 + NCOL(design.mat))
+        se[c(1, 1 + which(valid.f))] <- sqrt(diag(solve(fit$hessian)))
+        names(se) <- c("dispersion", colnames(design.mat))
+    } else {
+        se <- NULL
+    }
 
     return(list(fitval = fv, est = est, coef = coef, se = se, ll = -fit$value))
 }
@@ -98,9 +103,8 @@ fit.lnDNA <- function(dcounts, depth, design.mat) {
 #' @param dcounts the DNA counts (integer, N)
 #' @param depth library size correction factors (numeric, N)
 #' @param design.mat the design matrix (logical, N x K)
-#' @param control list of parameter to be passed to `optim` as
-#' the control argument. NOTE: since this is a maximization problem,
-#' control$fnscale should be set to a negative number (idealy -1)
+#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
+#' coefficients to facilitate coefficient-based hypothesis testing
 #'
 #' @return a list with components:
 #' \itemize {
@@ -111,7 +115,7 @@ fit.lnDNA <- function(dcounts, depth, design.mat) {
 #'     \item se: the standard errors of the coefficients
 #'     \item ll: the log likelihood of the model
 #' }
-fit.gammaDNA <- function(dcounts, depth, design.mat) {
+fit.gammaDNA <- function(dcounts, depth, design.mat, compute.hessian=TRUE) {
     ## filter invalid counts (NAs) from data and design
     valid.c <- (!is.na(dcounts) & dcounts != 0)
     dcounts.valid <- dcounts[valid.c]
@@ -131,8 +135,7 @@ fit.gammaDNA <- function(dcounts, depth, design.mat) {
                  logdepth = logdepth.valid,
                  design.mat = dmat.valid,
                  method = "BFGS",
-                 hessian = TRUE,
-                 control = list(trace=TRUE))
+                 hessian = compute.hessian)
 
     ## extract parameters
     est <- rep(NA, length(dcounts))
@@ -144,9 +147,13 @@ fit.gammaDNA <- function(dcounts, depth, design.mat) {
     coef[c(1, which(valid.f) + 1)] <- fit$par
     ##TODO: name the parameters!
 
-    se <- rep(NA, 1 + NCOL(design.mat))
-    se[c(1, which(valid.f) + 1)] <- sqrt(diag(solve(fit$hessian)))
-    ##TODO: name the parameters!
+    if(compute.hessian) {
+        se <- rep(NA, 1 + NCOL(design.mat))
+        se[c(1, which(valid.f) + 1)] <- sqrt(diag(solve(fit$hessian)))
+        ##TODO: name the parameters!
+    } else {
+        se <- NULL
+    }
 
     return(list(fitval = fv, est = est, coef = coef, se = se, ll = -fit$value))
 }
@@ -158,6 +165,8 @@ fit.gammaDNA <- function(dcounts, depth, design.mat) {
 #' @param depth library size correction factors
 #' @param d.est point estimates of the DNA base counts
 #' @param design.mat the RNA design matrix
+#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
+#' coefficients to facilitate coefficient-based hypothesis testing
 #'
 #' @return a list with components:
 #' \itemize {
@@ -167,7 +176,7 @@ fit.gammaDNA <- function(dcounts, depth, design.mat) {
 #'     \item se: the standard errors of the coefficients
 #'     \item ll: the log likelihood of the model
 #' }
-fit.nbRNA <- function(rcounts, depth, d.est, design.mat) {
+fit.nbRNA <- function(rcounts, depth, d.est, design.mat, compute.hessian=TRUE) {
     ## filter invalid counts (NAs) from data and design
     valid.c <- !is.na(rcounts) & !is.na(d.est)
     rcounts.valid <- rcounts[valid.c]
@@ -189,8 +198,7 @@ fit.nbRNA <- function(rcounts, depth, d.est, design.mat) {
                  log.dest = logd.est.valid,
                  design.mat = dmat.valid,
                  method = "BFGS",
-                 hessian = TRUE,
-                 control = list(trace=TRUE))
+                 hessian = compute.hessian)
 
     ## extract parameters
     est <- rep(NA, length(dcounts))
@@ -201,8 +209,12 @@ fit.nbRNA <- function(rcounts, depth, d.est, design.mat) {
     coef <- rep(NA, 1 + NCOL(design.mat))
     coef[c(1, which(valid.f) + 1)] <- fit$par
 
-    se <- rep(NA, 1 + NCOL(design.mat))
-    se[c(1, which(valid.f) + 1)] <- sqrt(diag(solve(fit$hessian)))
+    if(compute.hessian) {
+        se <- rep(NA, 1 + NCOL(design.mat))
+        se[c(1, which(valid.f) + 1)] <- sqrt(diag(solve(fit$hessian)))
+    } else {
+        se <- NULL
+    }
 
     return(list(fitval = fv, est = est, coef = coef, se = se, ll = -fit$value))
 
@@ -219,8 +231,8 @@ fit.nbRNA <- function(rcounts, depth, d.est, design.mat) {
 #' @param rdepth RNA library size correction factors
 #' @param ddesign.mat the design matrix for the DNA
 #' @param rdesign.mat the design matrix for the RNA
-#' @param control control arguments to pass to `optim`. NOTE: since this is a
-#' maximization problem, control$fnscale should be set to a negative number.
+#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
+#' coefficients to facilitate coefficient-based hypothesis testing
 #'
 #' @return a list with components:
 #' \itemize {
@@ -236,7 +248,8 @@ fit.nbRNA <- function(rcounts, depth, d.est, design.mat) {
 #' }
 fit.mixture.gammaPoisson <- function(dcounts, rcounts,
                                      ddepth, rdepth,
-                                     ddesign.mat, rdesign.mat) {
+                                     ddesign.mat, rdesign.mat,
+                                     compute.hessian) {
     ## filter invalid counts (NAs) from data and design
     valid.c <- (dcounts > 0) & !is.na(dcounts) & !is.na(rcounts)
     dcounts.valid <- dcounts[valid.c]
@@ -263,8 +276,7 @@ fit.mixture.gammaPoisson <- function(dcounts, rcounts,
                  ddesign.mat = ddmat.valid,
                  rdesign.mat = rdmat.valid,
                  method = "BFGS",
-                 hessian = TRUE,
-                 control = list(trace=TRUE))
+                 hessian = compute.hessian)
 
     ## split parameters to the two parts of the model
     d.par <- fit$par[2:(NCOL(ddmat.valid) + 1)]
@@ -288,13 +300,18 @@ fit.mixture.gammaPoisson <- function(dcounts, rcounts,
     r.coef[1 + which(valid.rf)] <- r.par
 
     ## standard error of the estimates
-    se <- sqrt(diag(solve(fit$hessian)))
+    if (compute.hessian) {
+        se <- sqrt(diag(solve(fit$hessian)))
 
-    d.se <- rep(NA, 1 + NCOL(ddesign.mat))
-    d.se[c(1, 1 + which(valid.df))] <- se[1:(NCOL(ddmat.valid) + 1)]
+        d.se <- rep(NA, 1 + NCOL(ddesign.mat))
+        d.se[c(1, 1 + which(valid.df))] <- se[1:(NCOL(ddmat.valid) + 1)]
 
-    r.se <- rep(NA, 1 + NCOL(rdesign.mat))
-    r.se[c(1, 1 + which(valid.rf))] <- se[-(2:(NCOL(rdmat.valid) + 1))]
+        r.se <- rep(NA, 1 + NCOL(rdesign.mat))
+        r.se[c(1, 1 + which(valid.rf))] <- se[-(2:(NCOL(rdmat.valid) + 1))]
+    } else {
+        d.se <- NULL
+        r.se <- NULL
+    }
 
     return(list(
         d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = d.se,
@@ -316,6 +333,8 @@ fit.mixture.gammaPoisson <- function(dcounts, rcounts,
 #' @param rdepth the RNA library size correction factors
 #' @param ddesign.mat the DNA design matrix
 #' @param rdesign.mat the RNA design matrix
+#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
+#' coefficients to facilitate coefficient-based hypothesis testing
 #'
 #' @return a list:
 #' \itemize{
@@ -332,16 +351,19 @@ fit.mixture.gammaPoisson <- function(dcounts, rcounts,
 fit.separate <- function(dnaFn=fit.gammaDNA, rnaFn=fit.nbRNA,
                          dcounts, rcounts,
                          ddepth, rdepth,
-                         ddesign.mat, rdesign.mat) {
+                         ddesign.mat, rdesign.mat,
+                         compute.hessian) {
 
     dna.fit <- dnaFn(dcounts = dcounts,
                      depth = ddepth,
-                     design.mat = ddesign.mat)
+                     design.mat = ddesign.mat,
+                     compute.hessian = compute.hessian)
 
     rna.fit <- rnaFn(rcounts = rcounts,
                      depth = rdepth,
                      d.est = dna.fit$est,
-                     design.mat = rdesign.mat)
+                     design.mat = rdesign.mat,
+                     compute.hessian = compute.hessian)
 
     return(list(
         d.fitval = dna.fit$fitval, d.est = dna.fit$est,
