@@ -10,10 +10,13 @@ setClass("MpraObject", slots = c(
 
     mode = "character", ## quantitative, diff-one.vs.all, diff-all.vs.all
     model = "character",
-    condition = "character",
-    designFormulas = "list",
-    designMats = "list",
-    modelFits = "list"
+    condition = "character", ## only stored for documentation purposes
+    designFormulas = "list", ## only stored for documentation purposes
+    designMats = "list", ## for LRT testing, four matrices: dnaAlt, dnaNull, rnaAlt, rnaNull
+                         ## for coef. testing, two: dna, rna
+    modelFits = "list" ## for LRT testing, two models per enhancer, named <enh>.null and <enh>.alt
+                       ## for coef. testing, one model per enhancer, named <enh>
+
     ##TODO: analysis results containers?
 ))
 
