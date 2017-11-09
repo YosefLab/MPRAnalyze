@@ -30,3 +30,11 @@ RoxygenNote: 6.0.1
 VignetteBuilder: knitr
 ByteCompile: true
 BugReports: https://github.com/YosefLab/MPRAnalyze
+Collate: 
+    'hypothesisTesting.R'
+    'libraryDepth.R'
+    'optimizers.R'
+    'modelFitting.R'
+    'modelSelection.R'
+    'mpraObject.R'
+    'objectiveFunctions.R'

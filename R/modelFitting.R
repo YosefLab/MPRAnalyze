@@ -30,8 +30,10 @@ fit.differential <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL,
                             mode="LRT") {
     ## check mode
     if(mode=="LRT") {
+        obj@mode = "LRT"
         compHess = FALSE
     } else if (mode=="T-Test") {
+        obj@mode = "T-Test"
         compHess = TRUE
     } else {
         stop("Only 'LRT' and 'T-Test' are currently supported")
@@ -55,7 +57,6 @@ fit.differential <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL,
 
     ## fit models
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
-        print(rn)
         return(fitfun(dcounts=obj@dnaCounts[rn,],
                       rcounts=obj@rnaCounts[rn,],
                       ddepth=obj@dnaDepth,
@@ -74,6 +75,7 @@ fit.differential <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL,
 #' @param dnaDesign the design for the DNA model
 #' @param rnaDesign the design for the RNA model
 fit.quantitative <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL) {
+    obj@mode = "Quant"
     ##TODO: fit a single model per enhancer
 }
 

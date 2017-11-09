@@ -19,12 +19,14 @@ setClass("MpraObject", slots = c(
     dnaDepth = "numeric",
     rnaDepth = "numeric",
 
+    mode = "character",
     model = "character",
     designs = "Designs",
     modelFits = "list",
-    reducedModelFits = "list", ##only used for LRT diff mode
+    modelFits.reduced = "list", ##only used for LRT diff mode
 
     ##TODO: analysis results containers?
+    hyptestResults = "data.frame"
 
     BPPARAM = "BiocParallelParam"
 ))
