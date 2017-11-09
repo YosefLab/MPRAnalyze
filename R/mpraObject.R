@@ -1,3 +1,14 @@
+setClassUnion('Design', members = c('matrix', 'formula'))
+
+setClass("Designs", slots = c(
+    dnaFull = "Design",
+    rnaFull = "Design",
+
+    ## only used in differential LRT mode
+    dnaRed = "Design",
+    rnaRed = "Design"
+))
+
 setClass("MpraObject", slots = c(
     ## provided by user
     dnaCounts = "matrix",
@@ -8,34 +19,41 @@ setClass("MpraObject", slots = c(
     dneDepth = "numeric",
     rnaDepth = "numeric",
 
-    mode = "character", ## quantitative, diff-one.vs.all, diff-all.vs.all
     model = "character",
-    condition = "character", ## only stored for documentation purposes
-    designFormulas = "list", ## only stored for documentation purposes
-    designMats = "list", ## for LRT testing, four matrices: dnaAlt, dnaNull, rnaAlt, rnaNull
-                         ## for coef. testing, two: dna, rna
-    modelFits = "list" ## for LRT testing, two models per enhancer, named <enh>.null and <enh>.alt
-                       ## for coef. testing, one model per enhancer, named <enh>
+    designs = "Designs",
+    modelFits = "list",
+    reducedModelFits = "list", ##only used for LRT diff mode
 
     ##TODO: analysis results containers?
+
+    BPPARAM = "BiocParallelParam"
 ))
 
-#' Initialize a MpraObject object
+##TODO: validity stuff, check rownames\colnames match in data, dimensions match, etc
 
-#' an initialize function for the MpraObject class
+#' Initialize a MpraObject object
+#'
+#' @import BiocParallel
 #'
 #' @param dnaCounts the DNA counts matrix
 #' @param rnaCounts the RNA counts matrix
 #' @param colAnnot column annotations
 #' @param controls a vector specifying which enhancers are negative controls
 #' (scrambles)
+#' @param BPPARAM the biocParalell backend to use for parallelization throughout
+#' the analysis
+#'
 #' @export
 #'
 #' @examples
 #' ##TODO
-MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NULL) {
+MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NULL,
+                       BPPARAM=NULL) {
 
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
                colAnnot=colAnnot, controls=controls)
+    if(is.null(BPPARAM)) {
+        obj@BPPARAM <- bpparam()
+    }
     return(obj)
 }
