@@ -21,8 +21,7 @@ plotModelPerformance <- function(obj) {
 
 
 autoChooseModel <- function(obj) {
-
-    modelDiag <- evalModels()
-
-    ##TODO
+    return("gammaPoisson")
+    ##modelDiag <- evalModels()
+    ##TODO: select the best model somehow
 }

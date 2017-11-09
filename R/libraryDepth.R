@@ -2,7 +2,10 @@
 #'
 #'@param obj an mpraObject
 estimateDepthFactors <- function(obj, batchids=NULL) {
-    if(is.null(batchids)) {
+    ## library size already set
+    if(!is.null(obj@dnaDepth)) {
+        return(obj)
+    } else if(is.null(batchids)) {
         ##TODO: now what?
     } else {
         ## TODO: compute size factor per batch

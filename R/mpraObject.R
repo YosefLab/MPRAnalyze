@@ -16,7 +16,7 @@ setClass("MpraObject", slots = c(
     colAnnot = "data.frame",
     controls = "integer", #idx of negative controls
 
-    dneDepth = "numeric",
+    dnaDepth = "numeric",
     rnaDepth = "numeric",
 
     model = "character",
@@ -47,13 +47,12 @@ setClass("MpraObject", slots = c(
 #'
 #' @examples
 #' ##TODO
-MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NULL,
+MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_,
                        BPPARAM=NULL) {
-
-    obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
-               colAnnot=colAnnot, controls=controls)
     if(is.null(BPPARAM)) {
-        obj@BPPARAM <- bpparam()
+        BPPARAM <- bpparam()
     }
+    obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
+               colAnnot=colAnnot, controls=controls, BPPARAM=BPPARAM)
     return(obj)
 }

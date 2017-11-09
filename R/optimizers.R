@@ -223,11 +223,11 @@ fit.mixture.gammaPoisson <- function(dcounts, rcounts,
     log.rdepth.valid <- log(rdepth[valid.c])
 
     ## clean design matrix from unused factors: note that these should be
-    valid.df <- apply(ddesign.mat[valid.c,], 2, function(x) !all(x==0))
-    valid.rf <- apply(rdesign.mat[valid.c,], 2, function(x) !all(x==0))
+    valid.df <- apply(ddesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
+    valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
 
-    ddmat.valid <- ddesign.mat[valid.c,valid.df]
-    rdmat.valid <- rdesign.mat[valid.c,valid.rf]
+    ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
+    rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
 
     ## Initialize parameter vector with a guess
     guess <- rep(0, 1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
