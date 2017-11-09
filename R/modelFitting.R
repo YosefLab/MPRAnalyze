@@ -2,11 +2,11 @@
 #' easy-access list relating model id character to the fitting wrappers
 #' @include optimizers.R
 FITTING_FUNCTIONS <- list(
-    "gammaPoisson" = fit.mixture.gammaPoisson,
-    "lnDNA.nbRNA" = function(...) {
+    gammaPoisson = fit.mixture.gammaPoisson,
+    lnDNA.nbRNA = function(...) {
         fit.separate(dnaFn=fit.lnDNA, rnaFn=fit.nbRNA, ...)
         },
-    "gammaDNA.nbRNA" = function(...) {
+    gammaDNA.nbRNA = function(...) {
         fit.separate(dnaFn=fit.gammaDNA, rnaFn=fit.nbRNA, ...)
     })
 

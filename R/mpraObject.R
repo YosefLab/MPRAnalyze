@@ -17,11 +17,11 @@ setClass("Designs", slots = c(
 #' explaining how it's invalid
 validateMpraObject <- function(object) {
     errors = character()
-    if (dim(dnaCounts) != dim(rnaCounts)) {
+    if (any(dim(dnaCounts) != dim(rnaCounts))) {
         errors <- c(errors,
                     "DNA, RNA matrix must be of same dimensions")
     }
-    if (is.null(rownnames(dnaCounts)) |
+    if (is.null(rownames(dnaCounts)) |
         any(rownames(dnaCounts) != rownames(rnaCounts))) {
         errors <- c(errors,
                     "RNA, DNA feature names either missing or don't match")
@@ -53,7 +53,7 @@ setClass("MpraObject", validity = validateMpraObject,
     modelFits.reduced = "list", ##only used for LRT diff mode
 
     ##TODO: analysis results containers?
-    hyptestResults = "data.frame"
+    hyptestResults = "data.frame",
 
     BPPARAM = "BiocParallelParam"
 ))
@@ -81,19 +81,13 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
         BPPARAM <- bpparam()
     }
 
-    if(!is.na(controls)) {
-        if(is(controls, "character")) {
-            ctrl <- which(rownames(dnaCounts) %in% controls)
-        } else if(is(controls, "logical")) {
-            ctrl <- which(controls)
-        } else if(is(controls, "integer")) {
-            ctrl <- controls
-        } else {
-            stop("controls must be integer, character or logical vector")
-        }
+    if(is(controls, "character")) {
+        controls <- which(rownames(dnaCounts) %in% controls)
+    } else if(is(controls, "logical")) {
+        controls <- which(controls)
     }
 
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
-               colAnnot=colAnnot, controls=ctrl, BPPARAM=BPPARAM)
+               colAnnot=colAnnot, controls=controls, BPPARAM=BPPARAM)
     return(obj)
 }
