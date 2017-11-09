@@ -9,7 +9,34 @@ setClass("Designs", slots = c(
     rnaRed = "Design"
 ))
 
-setClass("MpraObject", slots = c(
+#' validate an MpraObject
+#'
+#' @param object the MpraObject instance to validate
+#'
+#' @return TRUE if object is valid, otherwise vector of character strings
+#' explaining how it's invalid
+validateMpraObject <- function(object) {
+    errors = character()
+    if (dim(dnaCounts) != dim(rnaCounts)) {
+        errors <- c(errors,
+                    "DNA, RNA matrix must be of same dimensions")
+    }
+    if (is.null(rownnames(dnaCounts)) |
+        any(rownames(dnaCounts) != rownames(rnaCounts))) {
+        errors <- c(errors,
+                    "RNA, DNA feature names either missing or don't match")
+    }
+
+    if(length(errors) > 0) {
+        return(errors)
+    } else {
+        return(TRUE)
+    }
+}
+
+##TODO: document this
+setClass("MpraObject", validity = validateMpraObject,
+         slots = c(
     ## provided by user
     dnaCounts = "matrix",
     rnaCounts = "matrix",
@@ -31,7 +58,6 @@ setClass("MpraObject", slots = c(
     BPPARAM = "BiocParallelParam"
 ))
 
-##TODO: validity stuff, check rownames\colnames match in data, dimensions match, etc
 
 #' Initialize a MpraObject object
 #'
@@ -54,7 +80,20 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
     if(is.null(BPPARAM)) {
         BPPARAM <- bpparam()
     }
+
+    if(!is.na(controls)) {
+        if(is(controls, "character")) {
+            ctrl <- which(rownames(dnaCounts) %in% controls)
+        } else if(is(controls, "logical")) {
+            ctrl <- which(controls)
+        } else if(is(controls, "integer")) {
+            ctrl <- controls
+        } else {
+            stop("controls must be integer, character or logical vector")
+        }
+    }
+
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
-               colAnnot=colAnnot, controls=controls, BPPARAM=BPPARAM)
+               colAnnot=colAnnot, controls=ctrl, BPPARAM=BPPARAM)
     return(obj)
 }
