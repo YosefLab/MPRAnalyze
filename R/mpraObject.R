@@ -52,7 +52,6 @@ setClass("MpraObject", validity = validateMpraObject,
     modelFits = "list",
     modelFits.reduced = "list", ##only used for LRT diff mode
 
-    ##TODO: analysis results containers?
     hyptestResults = "data.frame",
 
     BPPARAM = "BiocParallelParam"
