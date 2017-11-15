@@ -185,7 +185,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
     llnew <- 0
     iter <- 1
     converged <- TRUE
-    RELTOL <- 10^(-4)
+    RELTOL <- 10^(-8)
     MAXITER <- 1000
     while(llnew > llold+llold*RELTOL & iter < MAXITER) {
         ## estimate dna model condition on rna model
