@@ -1,5 +1,3 @@
-### Optim wrappers
-
 #' Fit dna and rna model to a given enhancer
 #' 
 #' Optim wrapper that performs numerical optimisation and extracts results.
