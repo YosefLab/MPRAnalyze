@@ -10,7 +10,34 @@ setClass("Designs", slots = c(
     rnaCtrlRed = "Design"
 ))
 
-setClass("MpraObject", slots = c(
+#' validate an MpraObject
+#'
+#' @param object the MpraObject instance to validate
+#'
+#' @return TRUE if object is valid, otherwise vector of character strings
+#' explaining how it's invalid
+validateMpraObject <- function(object) {
+    errors = character()
+    if (any(dim(dnaCounts) != dim(rnaCounts))) {
+        errors <- c(errors,
+                    "DNA, RNA matrix must be of same dimensions")
+    }
+    if (is.null(rownames(dnaCounts)) |
+        any(rownames(dnaCounts) != rownames(rnaCounts))) {
+        errors <- c(errors,
+                    "RNA, DNA feature names either missing or don't match")
+    }
+
+    if(length(errors) > 0) {
+        return(errors)
+    } else {
+        return(TRUE)
+    }
+}
+
+##TODO: document this
+setClass("MpraObject", validity = validateMpraObject,
+         slots = c(
     ## provided by user
     dnaCounts = "matrix",
     rnaCounts = "matrix",
@@ -27,13 +54,11 @@ setClass("MpraObject", slots = c(
     modelFits.red = "list", ##only used for LRT diff mode
     modelPreFits.dna.ctrl = "list", ##only used for LRT_iter diff mode 
 
-    ##TODO: analysis results containers?
-    results = "data.frame"
+    hyptestResults = "data.frame",
 
     BPPARAM = "BiocParallelParam"
 ))
 
-##TODO: validity stuff, check rownames\colnames match in data, dimensions match, etc
 
 #' Initialize a MpraObject object
 #'
@@ -56,6 +81,13 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
     if(is.null(BPPARAM)) {
         BPPARAM <- bpparam()
     }
+
+    if(is(controls, "character")) {
+        controls <- which(rownames(dnaCounts) %in% controls)
+    } else if(is(controls, "logical")) {
+        controls <- which(controls)
+    }
+
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
                colAnnot=colAnnot, controls=controls, BPPARAM=BPPARAM)
     return(obj)

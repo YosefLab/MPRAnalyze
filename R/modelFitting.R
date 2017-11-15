@@ -28,6 +28,10 @@ NULL
 #' @rdname analyse.condition
 analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL
                                   dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL, ) {
+    ## check depth is set
+    if(length(obj@dnaDepth) == 0 | length(obj@rnaDepth) == 0) {
+        stop("Library depth factors must be estimated or manually set")
+    }
     ## check mode
     if(!is.null(obj@controls)) {
         # set default
@@ -121,6 +125,10 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL
 #' @rdname analyse.condition
 analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
                                   dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL, ) {
+    ## check depth is set
+    if(length(obj@dnaDepth) == 0 | length(obj@rnaDepth) == 0) {
+        stop("Library depth factors must be estimated or manually set")
+    }
     ## check mode
     if(!is.null(obj@controls)) {
         # set default
@@ -211,6 +219,10 @@ NULL
 #' @rdname analyse.casectrl
 analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL, rnaDesign=~1) {
     
+    ## check depth is set
+    if(length(obj@dnaDepth) == 0 | length(obj@rnaDepth) == 0) {
+        stop("Library depth factors must be estimated or manually set")
+    }
     ## check mode
     if(!is.null(obj@controls)) {
         # set default
@@ -300,6 +312,10 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
 #' @rdname analyse.casectrl
 analyse.quant <- function(obj, mode="quant", model=NULL, dnaDesign=NULL, rnaDesign=~1) {
     
+    ## check depth is set
+    if(length(obj@dnaDepth) == 0 | length(obj@rnaDepth) == 0) {
+        stop("Library depth factors must be estimated or manually set")
+    }
     ## check mode
     if(!mode %in% c("quant")) {
         stop("Only mode 'quant' is sensible if no control enhancers are supplied")
@@ -332,7 +348,6 @@ analyse.quant <- function(obj, mode="quant", model=NULL, dnaDesign=NULL, rnaDesi
     # TODO rank based on strength of effect
 }
 
-
 #' get a design matrix from the input design
 #'
 #' @param obj the MpraObject
@@ -342,7 +357,9 @@ analyse.quant <- function(obj, mode="quant", model=NULL, dnaDesign=NULL, rnaDesi
 #' @param testcondition condition to substract from formulae TODO this
 #'
 #' @return a design matrix
-getDesignMat <- function(obj, design, testcondition=NULL) {
+#'
+#' ##TODO: this should take the mode into account
+getDesignMat <- function(obj, design, mode) {
     if (is.matrix(design)) {
         return(design)
     } else if (is.null(design)) {

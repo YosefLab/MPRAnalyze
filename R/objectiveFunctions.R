@@ -1,46 +1,50 @@
-# new likelihood functions
+### Low level likelihoods for DNA/RNA observations
+
+#' likelihood of dna observations
+#' 
+#' @name ll.dna
+#' @rdname ll.dna
+#' 
+#' @aliases 
+#' ll.dna.gamma.pois
+#' ll.dna.ln.nb
+#'
+#' @param theta the vector of rna model parameters to evaluate likelihood for
+#' (numeric, rna parameters)
+#' @param dcounts the observed DNA counts (integer, enhancers x samples)
+#' @param log.ddepth dna library size correction vector, log scale (numeric, samples)
+#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
+#'
+#' @return negative log likelihood of dna  observations under the specified model
+NULL
+
+#' @rdname ll.dna
 ll.dna.gamma.pois <- function(theta,
-                              dcounts, logdepth,
+                              dcounts, log.ddepth,
                               ddesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
     # theta <- pmax(pmin(theta, 23), -23)
     
-    beta.inv <- as.numeric((ddesign.mat %*% theta[,-1]) + logdepth)
+    # (enhancers x parameters) x (parameters x  samples) = (enhancers x samples)
+    beta.inv <- theta[,1] + theta[,-1] %*% t(ddesign.mat) + log.ddepth
     
     ll <- sum(dgamma(x = dcounts,
-                     shape = exp(theta[,1]),
+                     shape = exp(theta[,1]), # alpha
                      rate = exp(-beta.inv),
                      log = TRUE))
     
     return(-ll)
 }
 
-ll.rna.gamma.pois <- function(theta, theta.d, 
-                              rcounts, logdepth,
-                              ddesign.mat, rdesign.mat) {
-    ## limit theta to avoid model shrinkage\explosion
-    # theta <- pmax(pmin(theta, 23), -23)
-    
-    ## get sample-specific estimators
-    log.d.est <- log(theta.d[,1] + ddesign.mat %*% theta.d[,-1])
-    r.est <- as.numeric((rdesign.mat %*% theta[,-1]) + logdepth + log.d.est)
-    
-    ## compute total likelihood
-    ll <- sum(dnbinom(x = rcounts,
-                      size = exp(theta[,1]),
-                      mu = exp(r.est),
-                      log = TRUE))
-    
-    return(-ll)
-}
-
+#' @rdname ll.dna
 ll.dna.ln.nb <- function(theta,
-                         dcounts, logdepth,
+                         dcounts, log.ddepth,
                          ddesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
     # theta <- pmax(pmin(theta, 23), -23)
     
-    d.est <- ddesign.mat %*% theta[,-1] + logdepth
+    # (enhancers x parameters) x (parameters x  samples) = (enhancers x samples)
+    d.est <- theta[,-1] %*% t(ddesign.mat) + log.ddepth
     
     # the sum of log-likelihoods
     ll <- sum(dlnorm(x = dcounts,
@@ -51,16 +55,57 @@ ll.dna.ln.nb <- function(theta,
     return(-ll)
 }
 
+#' likelihood of rna observations
+#' 
+#' @name ll.rna
+#' @rdname ll.rna
+#' 
+#' @aliases 
+#' ll.rna.gamma.pois
+#' ll.rna.ln.nb
+#'
+#' @param theta the vector of rna model parameters to evaluate likelihood for
+#' (numeric, rna parameters)
+#' @param theta.d dna model parameters to condition likelihood on
+#' @param rcounts the observed RNA counts (integer, enhancers x samples)
+#' @param log.rdepth rna library size correction vector, log scale (numeric, samples)
+#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
+#' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
+#'
+#' @return negative log likelihood of rna observations under the specified model
+NULL
 
+#' @rdname ll.rna
+ll.rna.gamma.pois <- function(theta, theta.d, 
+                              rcounts, log.rdepth,
+                              ddesign.mat, rdesign.mat) {
+    ## limit theta to avoid model shrinkage\explosion
+    # theta <- pmax(pmin(theta, 23), -23)
+    
+    # (enhancers x parameters) x (parameters x  samples) = (enhancers x samples)
+    log.d.est <- log(theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat))
+    log.r.est <- theta[,-1] %*% t(rdesign.mat) + log.rdepth + log.d.est
+    
+    ## compute likelihood
+    ll <- sum(dnbinom(x = rcounts,
+                      size = exp(theta[,1]),
+                      mu = exp(log.r.est),
+                      log = TRUE))
+    
+    return(-ll)
+}
+
+#' @rdname ll.rna
 ll.rna.ln.nb <- function(theta, theta.d, 
-                         rcounts, logdepth,
+                         rcounts, log.rdepth,
                          ddesign.mat, rdesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
     # theta <- pmax(pmin(theta, 23), -23)
     
-    r.est <- ddesign.mat %*% theta.d[,-1] + rdesign.mat %*% theta[,-1] + logdepth
-        
-    ## compute total likelihood
+    # (enhancers x parameters) x (parameters x  samples) = (enhancers x samples)
+    r.est <- theta.d[,-1] %*% t(ddesign.mat) + theta[,-1] %*% t(rdesign.mat) + log.rdepth
+    
+    ## compute likelihood
     ll <- sum(dnbinom(x = rcounts,
                       size = exp(theta[,1]),
                       mu = exp(r.est),
@@ -69,359 +114,249 @@ ll.rna.ln.nb <- function(theta, theta.d,
     return(-ll)
 }
 
+### High level likelihoods for optimisation
 
-#' likelihood objective function for lognormal point estimator for DNA counts
-#'
-#' @param theta the vector of parameters to fit (numeric, K + 1). First parameter
-#' in the vector is the dispersion of the dstribution, the rest are ordered
-#' in correspondence with the columns in the design matrix
-#' @param dcounts the observed DNA counts (integer, N)
-#' @param logdepth library size correction vector, log scale (numeric, N)
-#' @param design.mat the design matrix (logical, N x K)
-#'
-#' @return the minus log likeihood under the specified model
-ll.lnDNA <- function(theta, dcounts, logdepth, design.mat) {
-    ## this increases speed and prevent warnings, but crashes Hessian computation
-    # theta <- pmax(pmin(theta, 23), -23)
-    
-    # the estimated mean of the distribution
-    est <- as.numeric((design.mat %*% theta[-1]) + logdepth)
-    
-    # the sum of log-likelihoods
-    ll <- sum(dlnorm(x = dcounts,
-                     meanlog = est,
-                     sdlog = theta[1],
-                     log = TRUE))
-    return(-ll)
-}
-
-#' Likelihood objective function for gamma distribution for the DNA counts
+#' likelihood wrapper to compute terms of likelihood with non-zero derivative
+#' with respect to case dna model and rna model 
 #' 
-#' K: number of parameter of enhancer-wise DNA model
-#' N: number of sampkes
-#' C: number of control enhancers fit (C+1: number of all enhancers fit)
-#'
-#' @param theta a vector of parameters to be optimized. First is the shape
-#' parameter (alpha), the rest correspond to columns of the design matrix.
-#' Note that the first column is the inverse of beta, since that makes computing
-#' the estimate easier (numeric, K + 1). If control enhancers are co-fit,
-#' theta, is a matrix of (C+1) x K
-#' @param dcounts the DNA counts (integer, (C+1) x N)
-#' @param logdepth library size correction factors (numeric, (C+1) x N)
-#' @param design.mat the design matrix (logical, N x K)
-#' Note that the design matrix is shared among all enhancers
-#'
-#' @return the minus log likelihood of the specified model
-ll.gammaDNA <- function(theta, dcounts, logdepth, design.mat) {
-    # theta <- pmax(pmin(theta, 23), -23)
-    
-    alpha <- theta[,1]
-    
-    beta.inv <- as.numeric((design.mat %*% theta[,-1]) + logdepth)
-    
-    ll <- sum(dgamma(x = dcounts,
-                     shape = exp(alpha),
-                     rate = exp(-beta.inv),
-                     log = TRUE))
-    
-    return(-ll)
-}
+#' nomenclature cost.[model components to be estimated].[if ctrl obs are included in fitting]
+#' 
+#' @name cost.model
+#' @rdname cost.model
+#' 
+#' @param theta vector of model parameters to evaluate likelihood for
+#' (numeric, parameters)
+#' @param theta.d vector of dna model parameters to condition likelihood on
+#' (numeric, dna parameters)
+#' @param theta.r vector of rna model parameters to condition likelihood on
+#' (numeric, rna parameters)
+#' @param llfnDNA cost function to compute dna likelihood terms on (function)
+#' @param llfnRNA cost function to compute rna likelihood terms on (function)
+#' @param dcounts the observed case DNA counts (integer, enhancers x samples)
+#' @param rcounts the observed RNA counts (integer, enhancers x samples)
+#' @param log.ddepth dna library size correction vector, log scale (numeric, samples)
+#' @param log.rdepth rna library size correction vector, log scale (numeric, samples)
+#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
+#' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
+#' @param rdesign.ctrl.mat the control rna model design matrix 
+#' (logical, samples x rna parameters)
+NULL
 
-#' likelihood objective function for negative binomial RNA counts given a DNA
-#' count estimator
-#'
-#' @param theta the parameter vector being optimized. First value is the
-#' dispersion parameter, afterhich come factors ordered in correspondence
-#' with the columns in the design.mat matrix (numeric, K + 1)
-#' @param rcounts the RNA count vector (integer, N)
-#' @param depth library size correction factors (numeric, N)
-#' @param d.est the DNA point estimator to use, in log space (numeric, N)
-#' @param design.mat the design matrix (logical, N x K)
-#'
-#' @return the minus log likelihood under the specified model
-ll.nbRNA <- function(theta, rcounts, logdepth, log.dest, design.mat) {
-    ## limit theta to avoid model shrinkage\explosion
-    # theta <- pmax(pmin(theta, 23), -23)
-    
-    ## get sample-specific estimators
-    est <- as.numeric((design.mat %*% theta[,-1]) + logdepth + log.dest)
-    
-    ## compute total likelihood
-    ll <- sum(dnbinom(x = rcounts,
-                      size = exp(theta[,1]),
-                      mu = exp(est),
-                      log = TRUE))
-    
-    return(-ll)
-}
+#' likelihood wrapper to compute terms of likelihood with non-zero derivative
+#' with respect to case dna model and rna model without control enhancer observations
+#' 
+#' nomenclature cost.[model components to be estimated]
+#' 
+#' @name cost.model.noctrl
+#' @rdname cost.model.noctrl
+#' 
+#' @aliases 
+#' cost.dnarna
+#' cost.dna
+#' cost.rna
+#' 
+#' @inheritParams cost.model
+#' @param rctrlscale vector of scaling parameters for rna model that correct for 
+#' variation between conditions pre-fit on control enhancers 
+#' (numeric, ctrl rna parameters)
+#' 
+#' @return negative sum of log likelihood terms with non-zero derivative
+#' with respect to case model 
+NULL
 
-#' likelihood objective function for joint gamma-poisson mixture model
-#'
-#' @param theta the parameter vector being optimized (numeric, K + M + 1)
-#' @param dcounts the DNA count vector (integer, N)
-#' @param rcounts the RNA count vector (integer, N)
-#' @param ddepth the DNA library size correction factors (numeric, N)
-#' @param rdepth the RNA library size correction factors (numeric, N)
-#' @param ddesign.mat the DNA design matrix (logical, N x K)
-#' @param rdesign.mat the RNA design matrix (logical, N x M)
-ll.mixture.gammaPoisson <- function(theta, dcounts, rcounts,
-                                    log.ddepth, log.rdepth,
-                                    ddesign.mat, rdesign.mat) {
-    alpha <- theta[1]
-    d.param.idx <- 2:(NCOL(ddesign.mat) + 1)
-    theta.d <- t(matrix(alpha, theta[d.param.idx]))
-    theta.r <- theta[-d.param.idx]
+#' @rdname cost.model.noctrl
+cost.dnarna <- function(theta, theta.d=NULL, theta.r=NULL,
+                        dcounts, rcounts,
+                        llfnDNA, llfnRNA,
+                        log.ddepth, log.rdepth, rctrlscale=NULL,
+                        ddesign.mat, rdesign.mat, rctrldesign.mat=NULL) {
     
+    ## extract parameter vectors by model part
+    # first parameter of DNA model is the variance(-link) parameter
+    theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
+    theta.r <- theta[seq(1+NCOL(ddesign.mat)+1, 
+                         1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
     
-    d.ll <- ll.gammaDNA(theta = theta.d,
-                        dcounts = dcounts,
-                        logdepth = log.ddepth,
-                        design.mat = ddesign.mat)
-    
-    ## ddepth is not accounted for in this estimate since it is a technical
-    ## artifact that does not affect RNA counts
-    log.dest <- alpha + (ddesign.mat %*% theta.d[-1])
-    
-    r.ll <- ll.nbRNA(theta = theta.r,
-                     rcounts = rcounts,
-                     logdepth = log.rdepth,
-                     log.dest = log.dest,
-                     design.mat = rdesign.mat)
+    ## compute likelihood
+    # likelihood of case dna observations
+    d.ll <- llfnDNA(theta = theta.d,
+                    dcounts = dcounts,
+                    log.ddepth = log.ddepth,
+                    ddesign.mat = ddesign.mat)
+    # likelihood of case rna observations
+    r.ll <- llfnRNA(theta = c(theta.r, rctrlscale),
+                    theta.d = theta.d,
+                    rcounts = rcounts,
+                    log.rdepth = log.rdepth,
+                    ddesign.mat = ddesign.mat,
+                    rdesign.mat = rbind(rdesign.mat, rctrldesign.mat) )
     
     return(d.ll + r.ll)
 }
 
-#' likelihood objective function for joint gamma-poisson mixture model
-#' on case and control enhancers
-#' 
-#' TODO: David - I wrote this so that this function can evalute likelihood
-#' for one enhancer or one case together with controls with and without
-#' DNA ctrl models prefit. Check whether this is ok, would be good to just
-#' have one function in terms of code complexity if readability is not too bad?
-#' Everything framed as matrix operations so I think it s still readable ish.
-#' 
-#' K: number of parameter of enhancer-wise DNA model
-#' M: number of parameters of RNA model
-#' Mctrl: number of extra parameters of RNA model for control enhancers
-#' N: number of sampkes
-#' C: number of control enhancers fit (C+1: number of all enhancers fit)
-#'
-#' @param theta the parameter vector that is optimized 
-#' (numeric, (C+1) x K + M + Mctrl + 1)
-#' @param dcounts the DNA count matrix (integer, (C+1) x N)
-#' If control enhancer DNA models were prefit, this matrix only contains
-#' the case enhancer (1 x N) as the LL terms with contribution of 
-#' the control enhancer DNA observations are constant with respect to 
-#' the parameters optimised in this scenario.
-#' @param rcounts the RNA count matrix (integer, (C+1) x N)
-#' @param ddepth the DNA library size correction factors (numeric, N)
-#' @param rdepth the RNA library size correction factors (numeric, N)
-#' @param ddesign.mat the DNA design matrix (logical, N x K)
-#' @param rdesign.mat the RNA design matrix (logical, N x M)
-#' @param rdesign.mat.correction design matrix for prefitconfounding effects
-#' @param theta.r.correction prefit parameters to correct for confounding effects
-ll.dnarna.gammaPoisson.one <- function(theta, dcounts, rcounts,
-                                       log.ddepth, log.rdepth, rctrlscale,
-                                       ddesign.mat, rdesign.mat, rctrldesign.mat) {
-    nsamples <- length(log.ddepth)
-    npar.d.beta <- NCOL(ddesign.mat)
-    npar.r <- NCOL(rdesign.mat)
+#' @rdname cost.model.noctrl
+cost.dna <- function(theta, theta.d=NULL, theta.r,
+                     llfnDNA, llfnRNA,
+                     dcounts, rcounts,
+                     log.ddepth, log.rdepth, rctrlscale=NULL,
+                     ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
     
-    # extract parameter vectors by model part
-    alpha <- theta[npar.d.alpha]
-    theta.d <- cbind(
-        alpha, # alpha
-        matrix(theta[seq(2, npar.d.alpha+npar.d.beta, by=1)],
-               nrow=1, ncol=npar.d.beta, byrow=TRUE))
-    theta.r <- theta[seq(npar.d.alpha+npar.d.beta+1, 
-                         npar.d.alpha+npar.d.beta+npar.r), by=1)]
-    
-    d.ll <- ll.gammaDNA(theta = theta.d,
-                        dcounts = dcounts,
-                        logdepth = log.ddepth,
-                        design.mat = ddesign.mat)
-    
-    ## ddepth is not accounted for in this estimate since it is a technical
-    ## artifact that does not affect RNA counts
-    log.dest <- alpha + ddesign.mat %*% theta.d[,-1]
-    
-    # estimate ll on case enhancer
-    r.ll <- ll.nbRNA(theta = c(theta.r, rctrlscale),
-                     rcounts = rcounts[1,,drop=FALSE],
-                     logdepth = log.rdepth,
-                     log.dest = log.dest[1,,drop=FALSE],
-                     design.mat = rbind(rdesign.mat, rctrldesign.mat) )
+    ## compute likelihood
+    d.ll <- llfnDNA(theta = theta,
+                    dcounts = dcounts,
+                    log.ddepth = log.ddepth,
+                    ddesign.mat = ddesign.mat)
+    r.ll <- llfnRNA(theta = c(theta.r, rctrlscale),
+                    theta.d = theta,
+                    rcounts = rcounts,
+                    log.rdepth = log.rdepth,
+                    ddesign.mat = ddesign.mat,
+                    rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
     
     return(d.ll + r.ll)
 }
 
-ll.dna.gammaPoisson.one <- function(theta, dcounts, rcounts,
-                                    log.ddepth, log.rdepth, rctrlscale,
-                                    ddesign.mat, rdesign.mat, rctrldesign.mat) {
-    nsamples <- length(log.ddepth)
-    npar.d.beta <- NCOL(ddesign.mat)
+#' @rdname cost.model.noctrl
+cost.rna <- function(theta, theta.d, theta.r=NULL, 
+                     llfnDNA=NULL, llfnRNA,
+                     dcounts, rcounts,
+                     log.ddepth=NULL, log.rdepth, rctrlscale=NULL,
+                     ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
     
-    # extract parameter vectors by model part
-    alpha <- theta[npar.d.alpha]
-    theta.d <- cbind(
-        alpha, # alpha
-        matrix(theta[seq(2, npar.d.alpha+npar.d.beta, by=1)],
-               nrow=1, ncol=npar.d.beta, byrow=TRUE))
-    theta.r <- theta[seq(npar.d.alpha+npar.d.beta+1, 
-                         npar.d.alpha+npar.d.beta+npar.r), by=1)]
+    ## compute likelihood
+    r.ll <- llfnRNA(theta = c(theta.r, rctrlscale),
+                    theta.d = theta,
+                    rcounts = rcounts,
+                    log.rdepth = log.rdepth,
+                    ddesign.mat = ddesign.mat,
+                    rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
     
-    d.ll <- ll.gammaDNA(theta = theta.d,
-                        dcounts = dcounts,
-                        logdepth = log.ddepth,
-                        design.mat = ddesign.mat)
-    
-    ## ddepth is not accounted for in this estimate since it is a technical
-    ## artifact that does not affect RNA counts
-    log.dest <- alpha + ddesign.mat %*% theta.d[,-1]
-    
-    # estimate ll on case enhancer
-    r.ll <- ll.nbRNA(theta = c(theta.r, rctrlscale),
-                     rcounts = rcounts[1,,drop=FALSE],
-                     logdepth = log.rdepth,
-                     log.dest = log.dest[1,,drop=FALSE],
-                     design.mat = rbind(rdesign.mat, rctrldesign.mat) )
-    
-    return(d.ll + r.ll)
+    return(r.ll)
 }
 
-#' dcounts matrix 1 x sample: only case enhancer, assume controls are prefit
-#' and given via theta.d.ctrl.prefit
-ll.dnarna.gammaPoisson.wctrl <- function(theta, theta.d.ctrl.prefit,
-                                         dcounts, rcounts,
-                                         log.ddepth, log.rdepth, 
-                                         ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
+
+#' likelihood wrapper to compute terms of likelihood with non-zero derivative
+#' with respect to case dna model and rna model with control enhancer observations
+#' 
+#' nomenclature cost.[model components to be estimated].wctrl
+#' 
+#' @name cost.model.wctrl
+#' @rdname cost.model.wctrl
+#' 
+#' @aliases 
+#' cost.dnarna
+#' cost.dna
+#' cost.rna
+#' 
+#' @inheritParams cost.model
+#' @param theta.d.ctrl.prefit prefit control DNA model parameters
+#' (numeric, control enhancers x dna model parameters)
+#' 
+#' @return negative sum of log likelihood terms with non-zero derivative
+#' with respect to case model 
+NULL
+
+#' @rdname cost.model.wctrl
+cost.dnarna.wctrl <- function(theta, theta.d=NULL, theta.r=NULL, theta.d.ctrl.prefit,
+                              llfnDNA, llfnRNA,
+                              dcounts, rcounts,
+                              log.ddepth, log.rdepth, 
+                              ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
     
-    nenhancers.obs <- NROW(rcounts) 
-    nsamples <- length(log.rdepth)
-    npar.d.beta <- NCOL(ddesign.mat)
-    npar.r <- NCOL(rdesign.mat)
-    npar.r.ctrl <- NCOL(rdesign.ctrl.mat)
-    
-    # extract parameter vectors by model part
-    theta.d <- theta[seq(1, 1+npar.d.beta, by=1)] # alpha and beta
-    theta.r <- theta[seq(1+npar.d.beta+1, 
-                         1+npar.d.beta+npar.r), by=1)]
+    ## extract parameter vectors by model part
+    # first parameter of DNA model is the variance(-link) parameter
+    theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
+    theta.r <- theta[
+        seq(1+NCOL(ddesign.mat)+1, 
+            1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
     theta.r.ctrl <- theta[
-        seq(1+npar.d.beta+npar.r+1, 
-            1+npar.d.beta+npar.r+npar.r.ctrl, by=1)]
+        seq(1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+1, 
+            1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1)]
     
-    d.ll <- ll.gammaDNA(theta = theta.d,
-                        dcounts = dcounts,
-                        logdepth = log.ddepth, 
-                        design.mat = ddesign.mat)
-    
-    ## ddepth is not accounted for in this estimate since it is a technical
-    ## artifact that does not affect RNA counts
-    # dimensions: (C+1) x N + ((C+1) x K) %*% t(N x K) = (C+1) x N
-    # note that irrespective of whether or not control enhancer DNA models were
-    # prefit, this matrix is (C+1) x N
-    log.dest <- matrix(c(theta.d[1], theta.d.ctrl.prefit[,1,drop=FALSE]), 
-                       nrow=nenhancers.obs, ncol=nsamples, byrow=FALSE) +
-        (rbind(theta.d[,-1], theta.d.ctrl.prefit[,-1]) %*% t(ddesign.mat))
-    
-    # compute ll on case enhancer
-    r.ll <- ll.nbRNA(
+    ## compute likelihood
+    # likelihood of case dna observations
+    d.ll <- llfnDNA(theta = theta.d,
+                    dcounts = dcounts,
+                    log.ddepth = log.ddepth, 
+                    ddesign.mat = ddesign.mat)
+    # likelihood of case rna observations
+    r.ll.case <- llfnRNA(
         theta = theta.r,
+        theta.d = theta.d,
         rcounts = rcounts[1,,drop=FALSE],
-        logdepth = log.rdepth,
-        log.dest = log.dest[1,,drop=FALSE],
-        design.mat = rdesign.mat )
-    
-    # compute ll on control enhancers
-    r.ll <- r.ll + ll.nbRNA(
+        log.rdepth = log.rdepth,
+        ddesign.mat = ddesign.mat,
+        rdesign.mat = rdesign.mat )
+    # likelihood of ctrl rna observations
+    r.ll.ctrl <- llfnRNA(
         theta = c(theta.r, theta.r.ctrl),
+        theta.d = theta.d.ctrl.prefit,
         rcounts = rcounts[-1,,drop=FALSE],
-        logdepth = matrix(log.rdepth, nrow=nenhancers.obs-1, 
-                          ncol=nsamples, byrow=TRUE),
-        log.dest = log.dest[-1,,drop=FALSE],
-        design.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
+        log.rdepth = log.rdepth,
+        ddesign.mat = ddesign.mat,
+        rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
+    
+    return(d.ll + r.ll.case + r.ll.ctrl)
+}
+
+#' @rdname cost.model.wctrl
+cost.dna.wctrl <- function(theta, theta.d=NULL, theta.r,  theta.d.ctrl.prefit=NULL,
+                           llfnDNA, llfnRNA,
+                           dcounts, rcounts,
+                           log.ddepth, log.rdepth,
+                           ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
+    
+    ## extract parameter vectors by model part
+    # first parameter of DNA model is the variance(-link) parameter
+    theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
+    
+    ## compute likelihood
+    # likelihood of case dna observations
+    d.ll <- llfnDNA(theta = theta.d,
+                    dcounts = dcounts,
+                    log.ddepth = log.ddepth, 
+                    ddesign.mat = ddesign.mat)
+    # likelihood of case rna observations
+    r.ll <- llfnRNA(theta = theta.r,
+                    theta.d = theta.d,
+                    rcounts = rcounts,
+                    log.rdepth = log.rdepth,
+                    ddesign.mat = ddesign.mat,
+                    rdesign.mat = rdesign.mat)
     
     return(d.ll + r.ll)
 }
 
-#' dcounts matrix 1 x sample: only case enhancer, assume controls are prefit
-#' and given via theta.d.ctrl.prefit
-ll.dna.wctrl <- function(theta, theta.r,
-                         costfnDNA, costfnRNA,
-                         dcounts, rcounts,
-                         log.ddepth, log.rdepth,
-                         ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
+#' @rdname cost.model.wctrl
+cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
+                           llfnDNA=NULL, llfnRNA,
+                           dcounts=NULL, rcounts,
+                           log.ddepth, log.rdepth, 
+                           ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
     
-    # extract parameter vectors by model part
-    theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)] # alpha and beta
+    ## extract parameter vectors by model part
+    theta.r <- theta[seq(1, NCOL(rdesign.mat)), by=1)]
+    theta.r.ctrl <- theta[seq(NCOL(rdesign.mat)+1, 
+                              NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1)]
     
-    d.ll <- costfnDNA(theta = theta.d,
-                      dcounts = dcounts,
-                      logdepth = log.ddepth, 
-                      design.mat = ddesign.mat)
-    
-    # note that only the LL terms with observations of the case
-    # enhancers have non-zero derivatives wrt to the case enhancer
-    # dna model parameters
-    log.dest <- theta.d[1] + ddesign.mat %*% theta.d[,-1]
-    
-    r.ll <- costfnRNA(
+    ## compute liklihood
+    # likelihood of case rna observations
+    r.ll.case <- llfnRNA(
         theta = theta.r,
-        rcounts = rcounts,
-        logdepth = log.rdepth,
-        log.dest = log.dest,
-        design.mat = rdesign.mat )
-    
-    return(d.ll + r.ll)
-}
-
-#' dcounts matrix 1 x sample: only case enhancer, assume controls are prefit
-#' and given via theta.d.ctrl.prefit
-ll.rna.gammaPoisson.wctrl <- function(theta, theta.d, theta.d.ctrl.prefit,
-                                      rcounts,
-                                      log.rdepth, 
-                                      ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
-    
-    nenhancers.obs <- NROW(rcounts) 
-    nsamples <- length(log.rdepth)
-    npar.r <- NCOL(rdesign.mat)
-    npar.r.ctrl <- NCOL(rdesign.ctrl.mat)
-    
-    # extract parameter vectors by model part
-    theta.r <- theta[seq(1, npar.r), by=1)]
-    theta.r.ctrl <- theta[
-        seq(npar.r+1, 
-            npar.r+npar.r.ctrl, by=1)]
-    
-    # LL terms with DNA observation have zero derivative wrt to RNA model
-    # and do not need to be computed here.
-    
-    ## ddepth is not accounted for in this estimate since it is a technical
-    ## artifact that does not affect RNA counts
-    # dimensions: (C+1) x N + ((C+1) x K) %*% t(N x K) = (C+1) x N
-    # note that irrespective of whether or not control enhancer DNA models were
-    # prefit, this matrix is (C+1) x N
-    log.dest <- matrix(c(theta.d[1], theta.d.ctrl.prefit[,1,drop=FALSE]), 
-                       nrow=nenhancers.obs, ncol=nsamples, byrow=FALSE) +
-        (rbind(theta.d[,-1], theta.d.ctrl.prefit[,-1]) %*% t(ddesign.mat))
-    
-    # compute ll on case enhancer
-    r.ll <- ll.nbRNA(
-        theta = theta.r,
+        theta.d = theta.d,
         rcounts = rcounts[1,,drop=FALSE],
-        logdepth = log.rdepth,
-        log.dest = log.dest[1,,drop=FALSE],
-        design.mat = rdesign.mat )
-    
-    # compute ll on control enhancers
-    r.ll <- r.ll + ll.nbRNA(
+        log.rdepth = log.rdepth,
+        ddesign.mat = ddesign.mat,
+        rdesign.mat = rdesign.mat )
+    # likelihood of control rna observations
+    r.ll.ctrl <- llfnRNA(
         theta = c(theta.r, theta.r.ctrl),
+        theta.d = theta.d.ctrl.prefit,
         rcounts = rcounts[-1,,drop=FALSE],
-        logdepth = matrix(log.rdepth, nrow=nenhancers.obs-1, 
-                          ncol=nsamples, byrow=TRUE),
-        log.dest = log.dest[-1,,drop=FALSE],
-        design.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
+        log.rdepth = log.rdepth,
+        ddesign.mat = ddesign.mat,
+        rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
     
-    return(d.ll + r.ll)
+    return(r.ll.case + r.ll.ctrl)
 }
 

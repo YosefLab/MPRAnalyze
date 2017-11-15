@@ -1,201 +1,30 @@
-#' fit a log normal GLM to the DNA count data
-#'
-#' @param dcounts the DNA counts (integer, N)
-#' @param depth library size correction factors (numeric, N)
-#' @param design.mat the design matrix (logical, N x K)
-#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
-#' coefficients to facilitate coefficient-based hypothesis testing
-#'
-#' @return a list with components:
-#' \itemize {
-#'     \item fitval: the fitted values
-#'     \item est: estimate of DNA levels. Differs from the fitval since this
-#'     does not account for library depth. When using DNA estimates for fitting
-#'     RNA models, this value should be used.
-#'     \item coef: the fitted coefficients for the parameters
-#'     \item se: the standard errors of the coefficients
-#'     \item ll: the log likelihood of the model
-#' }
-fit.lnDNA <- function(dcounts, depth, design.mat, compute.hessian=TRUE) {
-    ##TODO: lm does a faster and just as accurate job if depth factors are not
-    ##a consideration. If we can incorporate them or remove the need to account
-    ##for them, using lm will be preferable.
-    
-    ## filter invalid counts (NAs) from data and design
-    valid.c <- (!is.na(dcounts) & dcounts != 0)
-    dcounts.valid <- dcounts[valid.c]
-    logdepth.valid <- log(depth[valid.c])
-    
-    ## clean design matrix from unused factors: note that these should be
-    valid.f <- apply(design.mat[valid.c,], 2, function(x) !all(x==0))
-    dmat.valid <- design.mat[valid.c,valid.f]
-    
-    ## Initialize parameter vector with a guess
-    guess <- rep(1, NCOL(dmat.valid) + 1)
-    
-    ## fit the model
-    fit <- optim(par = guess,
-                 fn = ll.lnDNA,
-                 dcounts = dcounts.valid,
-                 logdepth = logdepth.valid,
-                 design.mat = dmat.valid,
-                 method = "BFGS",
-                 hessian = compute.hessian)
-    
-    ## extract parameters
-    est <- rep(NA, length(dcounts))
-    est[valid.c] <- exp(dmat.valid %*% fit$par[-1])
-    
-    fv <- est * depth
-    
-    coef <- rep(NA, 1 + NCOL(design.mat))
-    coef[c(1, which(valid.f) + 1)] <- fit$par
-    names(coef) <- c("dispersion", colnames(design.mat))
-    
-    if(compute.hessian) {
-        se <- rep(NA, 1 + NCOL(design.mat))
-        se[c(1, 1 + which(valid.f))] <- sqrt(diag(solve(fit$hessian)))
-        names(se) <- c("dispersion", colnames(design.mat))
-    } else {
-        se <- NULL
-    }
-    
-    return(list(fitval = fv, est = est, coef = coef, se = se, ll = -fit$value))
-}
+### Optim wrappers
 
-#' fit a Gamma GLM to the DNA count data
-#'
-#' @param dcounts the DNA counts (integer, N)
-#' @param depth library size correction factors (numeric, N)
-#' @param design.mat the design matrix (logical, N x K)
-#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
-#' coefficients to facilitate coefficient-based hypothesis testing
-#'
-#' @return a list with components:
-#' \itemize {
-#'     \item fitval: the fitted values
-#'     \item est: estimates of actual DNA levels, does not account for library
-#'     depth factors. Should be used in downstream estimation instead of fitval
-#'     \item coef: the fitted coefficients for the parameters
-#'     \item se: the standard errors of the coefficients
-#'     \item ll: the log likelihood of the model
-#' }
-fit.gammaDNA <- function(dcounts, depth, design.mat, compute.hessian=TRUE) {
-    ## filter invalid counts (NAs) from data and design
-    valid.c <- (!is.na(dcounts) & dcounts != 0)
-    dcounts.valid <- dcounts[valid.c]
-    logdepth.valid <- log(depth[valid.c])
-    
-    ## clean design matrix from unused factors: note that these should be
-    valid.f <- apply(design.mat[valid.c,], 2, function(x) !all(x==0))
-    dmat.valid <- design.mat[valid.c,valid.f]
-    
-    ## Initialize parameter vector with a guess
-    guess <- rep(1, NCOL(dmat.valid) + 1)
-    
-    ## fit the model
-    fit <- optim(par = guess,
-                 fn = ll.gammaDNA,
-                 dcounts = dcounts.valid,
-                 logdepth = logdepth.valid,
-                 design.mat = dmat.valid,
-                 method = "BFGS",
-                 hessian = compute.hessian)
-    
-    ## extract parameters
-    est <- rep(NA, length(dcounts))
-    est[valid.c] <- exp((dmat.valid %*% fit$par[-1]) + fit$par[1])
-    
-    fv <- est * depth
-    
-    coef <- rep(NA, 1 + NCOL(design.mat))
-    coef[c(1, which(valid.f) + 1)] <- fit$par
-    ##TODO: name the parameters!
-    
-    if(compute.hessian) {
-        se <- rep(NA, 1 + NCOL(design.mat))
-        se[c(1, which(valid.f) + 1)] <- sqrt(diag(solve(fit$hessian)))
-        ##TODO: name the parameters!
-    } else {
-        se <- NULL
-    }
-    
-    return(list(fitval = fv, est = est, coef = coef, se = se, ll = -fit$value))
-}
-
-#' fit a negative binomial model to the RNA counts using a point estimator for
-#' the DNA counts
-#'
-#' @param rcounts RNA counts
-#' @param depth library size correction factors
-#' @param d.est point estimates of the DNA base counts
-#' @param design.mat the RNA design matrix
-#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
-#' coefficients to facilitate coefficient-based hypothesis testing
-#'
-#' @return a list with components:
-#' \itemize {
-#'     \item fitval: the fitten values
-#'     \item est: the estimated RNA levels (controled for library size)
-#'     \item coed: the fitted coefficients for the parameters
-#'     \item se: the standard errors of the coefficients
-#'     \item ll: the log likelihood of the model
-#' }
-fit.nbRNA <- function(rcounts, depth, d.est, design.mat, compute.hessian=TRUE) {
-    ## filter invalid counts (NAs) from data and design
-    valid.c <- !is.na(rcounts) & !is.na(d.est)
-    rcounts.valid <- rcounts[valid.c]
-    logdepth.valid <- log(depth[valid.c])
-    logd.est.valid <- log(d.est[valid.c])
-    
-    ## clean design matrix from unused factors: note that these should be
-    valid.f <- apply(design.mat[valid.c,], 2, function(x) !all(x==0))
-    dmat.valid <- design.mat[valid.c,valid.f]
-    
-    ## Initialize parameter vector with a guess
-    guess <- rep(0, NCOL(dmat.valid) + 1)
-    
-    ## fit the model
-    fit <- optim(par = guess,
-                 fn = ll.nbRNA,
-                 rcounts = rcounts.valid,
-                 logdepth = logdepth.valid,
-                 log.dest = logd.est.valid,
-                 design.mat = dmat.valid,
-                 method = "BFGS",
-                 hessian = compute.hessian)
-    
-    ## extract parameters
-    est <- rep(NA, length(dcounts))
-    est[valid.c] <- exp((dmat.valid %*% fit$par[-1]) + logd.est.valid)
-    
-    fv <- est * depth
-    
-    coef <- rep(NA, 1 + NCOL(design.mat))
-    coef[c(1, which(valid.f) + 1)] <- fit$par
-    
-    if(compute.hessian) {
-        se <- rep(NA, 1 + NCOL(design.mat))
-        se[c(1, which(valid.f) + 1)] <- sqrt(diag(solve(fit$hessian)))
-    } else {
-        se <- NULL
-    }
-    
-    return(list(fitval = fv, est = est, coef = coef, se = se, ll = -fit$value))
-    
-}
-
-#' Fit a gamma-poisson mixture model to the DNA-RNA counts. A gamma distribution
-#' is fitted to the DNA counts and a Poisson noise is added for the RNA counts
-#' which results in a Negative Binomial distribution for the RNA. The model is
-#' fit simultaneously.
-#'
+#' Fit dna and rna model to a given enhancer
+#' 
+#' Optim wrapper that performs numerical optimisation and extracts results.
+#' Depending on the function chosen, a single optimisation or iterative estimation
+#' are performed.
+#' 
+#' @name fit.dnarna
+#' @rdname fit.dnarna
+#' 
+#' @aliases 
+#' fit.dnarna.noctrlobs
+#' fit.dnarna.wctrlobs.iter
+#' fit.dnarna.onlyctrl.iter
+#' 
+#' @model noise model
 #' @param dcounts the DNA counts
 #' @param rcounts the RNA counts
-#' @param ddepth DNA library size correction factors
-#' @param rdepth RNA library size correction factors
-#' @param ddesign.mat the design matrix for the DNA
-#' @param rdesign.mat the design matrix for the RNA
+#' @param ddepth dna library size correction vector (numeric, samples)
+#' @param rdepth rna library size correction vector (numeric, samples)
+#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
+#' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
+#' @param rdesign.ctrl.mat the control rna model design matrix 
+#' (logical, samples x rna parameters)
+#' @param theta.d.ctrl.prefit ctrl dna model parameters to condition likelihood on
+#' (numeric, control enhancers x dna parameters)
 #' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
 #' coefficients to facilitate coefficient-based hypothesis testing
 #'
@@ -211,18 +40,23 @@ fit.nbRNA <- function(rcounts, depth, d.est, design.mat, compute.hessian=TRUE) {
 #'     \item r.se: the standard errors of the estimates of the RNA counts
 #'     \item ll: the log likelihood of the model
 #' }
-fit.dnarna.noctrlobs <- function(dcounts, rcounts,
-                              ddepth, rdepth,
-                              ddesign.mat, rdesign.mat,
-                              compute.hessian) {
+NULL
+
+#' @rdname fit.dnarna
+fit.dnarna.noctrlobs <- function(model,
+                                 dcounts, rcounts,
+                                 ddepth, rdepth, rctrlscale,
+                                 ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
+                                 theta.d.ctrl.prefit,
+                                 compute.hessian) {
     
     ## set cost function
     if(model == "gamma.pois"){
-        costfnDNA <- ll.dna.gamma.pois
-        costfnRNA <- ll.rna.gamma.pois
+        llfnDNA <- ll.dna.gamma.pois
+        llfnRNA <- ll.rna.gamma.pois
     } else if(model == "ln.nb"){
-        costfnDNA <- ll.dna.ln.nb
-        costfnRNA <- ll.rna.ln.nb
+        llfnDNA <- ll.dna.ln.nb
+        llfnRNA <- ll.rna.ln.nb
     } else {
         stop("model ", model, " not available in fit.dnarna.wctrl.iter()")
     }
@@ -245,106 +79,77 @@ fit.dnarna.noctrlobs <- function(dcounts, rcounts,
     guess <- rep(0, 1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
     
     fit <- optim(par = guess,
-                 fn = ll.dnarna.noctrl,
-                 costfnDNA = costfnDNA,
-                 costfnRNA = costfnRNA,
-                 dcounts = dcounts.valid,
-                 rcounts = rcounts.valid,
-                 log.ddepth = log.ddepth.valid,
-                 log.rdepth = log.rdepth.valid,
+                 fn = cost.dnarna, llfnDNA = llfnDNA, llfnRNA = llfnRNA,
+                 dcounts = dcounts.valid, rcounts = rcounts.valid,
+                 log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid,
                  rctrlscale = rctrlscale.valid,
-                 ddesign.mat = ddmat.valid,
-                 rdesign.mat = rdmat.valid,
+                 ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
                  rctrldesign.mat = rdmat.ctrl.valid,
-                 method = "BFGS",
-                 hessian = compute.hessian)
+                 method = "BFGS", hessian = compute.hessian)
     
     ## split parameters to the two parts of the model
-    d.par <- fit$par[2:(NCOL(ddmat.valid) + 1)]
-    r.par <- fit$par[-(1:(NCOL(ddmat.valid) + 1))]
+    d.par <- fit$par[seq(1, 1+NCOL(ddmat.valid))]
+    r.par <- fit$par[seq(1+NCOL(ddmat.valid)+1,
+                         1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1)]
     
-    d.est <- rep(NA, length(dcounts))
-    d.est[valid.c] <- exp(fit$par[1] + (ddmat.valid %*% d.par))
+    #d.est <- rep(NA, length(dcounts))
+    #d.est[valid.c] <- exp(d.par[1] + (ddmat.valid %*% d.par[-1]))
     
-    d.fitval <- d.est * ddepth
+    #d.fitval <- d.est * ddepth
     
-    r.est <- rep(NA, length(rcounts))
-    r.est[valid.c] <- exp(rdmat.valid %*% r.par)
-    r.est <- r.est * d.est
+    #r.est <- rep(NA, length(rcounts))
+    #r.est[valid.c] <- exp(rdmat.valid %*% r.par)
+    #r.est <- r.est * d.est
     
-    r.fitval <- r.est * rdepth
+    #r.fitval <- r.est * rdepth
     
     d.coef <- c(fit$par[1], rep(NA, NCOL(ddesign.mat)))
     d.coef[1 + which(valid.df)] <- d.par
+    d.df <- length(d.par)
     
-    r.coef <- c(fit$par[1], rep(NA, NCOL(rdesign.mat)))
-    r.coef[1 + which(valid.rf)] <- r.par
+    r.coef <- rep(NA, NCOL(rdesign.mat))
+    r.coef[which(valid.rf)] <- r.par
+    r.df <- length(r.par)
     
     ## standard error of the estimates
     if (compute.hessian) {
         se <- sqrt(diag(solve(fit$hessian)))
         
         d.se <- rep(NA, 1 + NCOL(ddesign.mat))
-        d.se[c(1, 1 + which(valid.df))] <- se[1:(NCOL(ddmat.valid) + 1)]
+        d.se[c(1, 1 + which(valid.df))] <- se[seq(1, 1+NCOL(ddmat.valid))]
         
-        r.se <- rep(NA, 1 + NCOL(rdesign.mat))
-        r.se[c(1, 1 + which(valid.rf))] <- se[-(2:(NCOL(rdmat.valid) + 1))]
+        r.se <- rep(NA, NCOL(rdesign.mat))
+        r.se[which(valid.rf)] <- se[seq(1+NCOL(ddmat.valid)+1,
+                                        1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1)]
     } else {
         d.se <- NULL
         r.se <- NULL
     }
     
     return(list(
-        d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = d.se,
-        r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = r.se,
+        #d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = d.se,
+        #r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = r.se,
+        d.coef = d.coef, d.se = d.se, d.df = d.df,
+        r.coef = r.coef, r.se = r.se, r.df = r.df,
+        r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = NULL,
+        converged = fit$convergence,
         ll = -fit$value))
 }
 
-#' Fit a gamma-poisson mixture model to the DNA-RNA counts 
-#' with control enhancers. 
-#' 
-#' A gamma distribution
-#' is fitted to the DNA counts and a Poisson noise is added for the RNA counts
-#' which results in a Negative Binomial distribution for the RNA. The model is
-#' fit simultaneously.
-#'
-#' @param dcounts the DNA counts of case and control enhancers
-#' (matrix enhancers x samples)
-#' @param rcounts the RNA counts of case and control enhancers
-#' (matrix enhancers x samples)
-#' @param ddepth DNA library size correction factors
-#' @param rdepth RNA library size correction factors
-#' @param ddesign.mat the design matrix for the DNA
-#' @param rdesign.mat the design matrix for the RNA
-#' @param rdesign.ctrl.mat the design matrix with additional factors for
-#' the control RNA enhancers, beyond rdesign.mat
-#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
-#' coefficients to facilitate coefficient-based hypothesis testing
-#'
-#' @return a list with components:
-#' \itemize {
-#'     \item d.fitval: the fitted values of the DNA counts
-#'     \item d.est: the estimated true DNA levels (corrected for library size)
-#'     \item d.coef: the fitted mode parameters for the DNA counts
-#'     \item d.se: the standard errors of the estimates of the DNA counts
-#'     \item r.est: the fitted values of the RNA counts
-#'     \item r.fitval: the fitted mode parameters for the RNA counts
-#'     \item r.est: the estimated true RNA levels (corrected for library size)
-#'     \item r.se: the standard errors of the estimates of the RNA counts
-#'     \item ll: the log likelihood of the model
-#' }
-fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
-                                  ddepth, rdepth, rctrlscale=NULL,
-                                  ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
-                                  theta.d.ctrl.prefit,
-                                  compute.hessian) {
+#' @rdname fit.dnarna
+fit.dnarna.wctrlobs.iter <- function(model,
+                                     dcounts, rcounts,
+                                     ddepth, rdepth, rctrlscale,
+                                     ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
+                                     theta.d.ctrl.prefit,
+                                     compute.hessian) {
     ## set cost function
     if(model == "gamma.pois"){
-        costfnDNA <- ll.dna.gamma.pois
-        costfnRNA <- ll.rna.gamma.pois
+        llfnDNA <- ll.dna.gamma.pois
+        llfnRNA <- ll.rna.gamma.pois
     } else if(model == "ln.nb"){
-        costfnDNA <- ll.dna.ln.nb
-        costfnRNA <- ll.rna.ln.nb
+        llfnDNA <- ll.dna.ln.nb
+        llfnRNA <- ll.rna.ln.nb
     } else {
         stop("model ", model, " not available in fit.dnarna.wctrl.iter()")
     }
@@ -367,185 +172,159 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
     
     ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
     rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
-    rdmat.ctrl.valid <- rdesign.ctrl.mat[valid.c,valid.rf,drop=FALSE]
+    rdmat.ctrl.valid <- rdesign.ctrl.mat[valid.c,valid.rf.ctrl,drop=FALSE]
     
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation
     # Initialize DNA model parameter vector with a guess
     d.par <- rep(0, 1 + NCOL(ddmat.valid))
-    r.par <- rep(0, 1 + NCOL(rdmat.valid))
-    r.ctrl.par <- rep(0, 1 + NCOL(rdmat.ctrl.valid))
+    r.par <- rep(0, NCOL(rdmat.valid))
+    r.ctrl.par <- rep(0, NCOL(rdmat.ctrl.valid))
     
     llold <- -Inf
     llnew <- 0
     iter <- 1
     converged <- TRUE
-    RELTOL <- 10^(-4)
+    RELTOL <- 10^(-8)
     MAXITER <- 1000
     while(llnew > llold+llold*RELTOL & iter < MAXITER) {
         ## estimate dna model condition on rna model
-        fit <- optim(par = d.par,
-                     fn = ll.dna.wctrl,
-                     costfnDNA = costfnDNA,
-                     costfnRNA = costfnRNA,
-                     theta.d.ctrl.prefit = theta.d.ctrl.prefit,
-                     theta.r = r.par,
+        dfit <- optim(par = d.par, fn = cost.dna.wctrl,
+                     llfnDNA = llfnDNA, llfnRNA = llfnRNA,
+                     theta.d.ctrl.prefit = theta.d.ctrl.prefit, theta.r = r.par,
                      theta.r.ctrl = r.ctrl.par,
-                     dcounts = dcounts.valid,
-                     rcounts = rcounts.valid,
-                     log.ddepth = log.ddepth.valid,
-                     log.rdepth = log.rdepth.valid,
+                     dcounts = dcounts.valid, rcounts = rcounts.valid,
+                     log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid,
                      rctrlscale = rctrlscale.valid,
-                     ddesign.mat = ddmat.valid,
-                     rdesign.mat = rdmat.valid,
+                     ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
                      rdesign.ctrl.mat = rdmat.ctrl.valid,
-                     method = "BFGS",
-                     hessian = compute.hessian)
+                     method = "BFGS", hessian = compute.hessian)
         
-        d.par <- fit$par[seq(1, 1+length(d.par))]
+        d.par <- dfit$par[seq(1, length(d.par))]
         
         ## estimate rna model conditioned on dna model
-        fit <- optim(par = c(r.par, r.ctrl.par),
-                     fn = ll.rna.wctrl,
-                     costfnDNA = costfnDNA,
-                     costfnRNA = costfnRNA,
-                     theta.d = d.par,
-                     theta.d.ctrl.prefit = theta.d.ctrl.prefit,
-                     rcounts = rcounts.valid,
-                     log.rdepth = log.rdepth.valid,
-                     rctrlscale = rctrlscale.valid,
-                     ddesign.mat = ddmat.valid,
-                     rdesign.mat = rdmat.valid,
-                     rdesign.ctrl.mat = rdmat.ctrl.valid,
-                     method = "BFGS",
-                     hessian = compute.hessian)
+        rfit <- optim(par = c(r.par, r.ctrl.par), 
+                      fn = cost.rna.wctrl, llfnRNA = llfnRNA,
+                      theta.d = d.par, theta.d.ctrl.prefit = theta.d.ctrl.prefit,
+                      rcounts = rcounts.valid,
+                      log.rdepth = log.rdepth.valid, rctrlscale = rctrlscale.valid,
+                      ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
+                      rdesign.ctrl.mat = rdmat.ctrl.valid,
+                      method = "BFGS", hessian = compute.hessian)
         
-        r.par <- fit$par[seq(1, 1+length(r.par))]
-        r.ctrl.par <- fit$par[seq(1+length(r.par)+1, 
-                                  1+length(r.par)+length(r.ctrl.par))]
+        r.par <- rfit$par[seq(1, 1+length(r.par))]
+        r.ctrl.par <- rfit$par[seq(1+length(r.par)+1, 
+                                   1+length(r.par)+length(r.ctrl.par))]
         
         ## update iteration convergence reporters
         llold <- llnew
-        # need to compute because ll.rna.gammaPoisson.wctrl does not evaluate 
-        # the full likelihood
-        llnew <- fncost3(
-            theta = c(d.par, r.par, r.par.ctrl), 
+        llnew <- -cost.dnarna.wctrl(
+            theta = c(d.par, r.par, r.ctrl.par),
             theta.d.ctrl.prefit = theta.d.ctrl.prefit,
-            dcounts = dcounts.valid, rcounts = rcounts.valid,
-            log.ddepth = log.ddepth.valid,
-            log.rdepth = log.rdepth.valid,
-            rctrlscale = rctrlscale.valid,
-            ddesign.mat = ddmat.valid,
-            rdesign.mat = rdmat.valid,
-            rdesign.ctrl.mat = rdmat.ctrl.valid)
+            llfnDNA = llfnDNA, llfnRNA = llfnRNA,
+            dcounts = dcounts, rcounts = rcounts,
+            log.ddepth = log.ddepth, log.rdepth = log.rdepth, 
+            ddesign.mat = ddesign.mat, rdesign.mat = rdesign.mat, 
+            rdesign.ctrl.mat = rdesign.ctrl.mat)
         iter <- iter + 1
         if(iter == MAXITER & llnew > llold+llold*RELTOL) {
             converged <- FALSE
         }
     }
     
-    d.est <- rep(NA, length(dcounts))
-    d.est[valid.c] <- exp(fit$par[1] + (ddmat.valid %*% d.par))
+    #d.est <- rep(NA, NCOL(dcounts))
+    #d.est[valid.c] <- exp(fit$par[1] + (ddmat.valid %*% d.par))
     
-    d.fitval <- d.est * ddepth
+    #d.fitval <- d.est * ddepth
     
-    r.est <- rep(NA, length(rcounts))
-    r.est[valid.c] <- exp(rdmat.valid %*% r.par)
-    r.est <- r.est * d.est
+    #r.est <- rep(NA, length(rcounts))
+    #r.est[valid.c] <- exp(rdmat.valid %*% r.par)
+    #r.est <- r.est * d.est
     
-    r.fitval <- r.est * rdepth
+    #r.fitval <- r.est * rdepth
     
-    d.coef <- c(fit$par[1], rep(NA, NCOL(ddesign.mat)))
-    d.coef[1 + which(valid.df)] <- d.par
+    d.coef <- c(d.par[1], rep(NA, NCOL(ddesign.mat)))
+    d.coef[1 + which(valid.df)] <- d.par[seq(2, length(d.par))]
+    d.df <- length(d.par)
     
-    r.coef <- c(fit$par[1], rep(NA, NCOL(rdesign.mat)))
-    r.coef[1 + which(valid.rf)] <- r.par
+    r.coef <- rep(NA, NCOL(rdesign.mat))
+    r.coef[which(valid.rf)] <- r.par
+    r.df <- length(r.par)
+    
+    r.ctrl.coef <- rep(NA, NCOL(rdesign.ctrl.mat))
+    r.ctrl.coef[which(valid.rf.ctrl)] <- r.ctrl.par
+    r.ctrl.df <- length(r.ctrl.par)
     
     ## standard error of the estimates
     if (compute.hessian) {
         se <- sqrt(diag(solve(fit$hessian)))
         
         d.se <- rep(NA, 1 + NCOL(ddesign.mat))
-        d.se[c(1, 1 + which(valid.df))] <- se[1:(NCOL(ddmat.valid) + 1)]
+        d.se[c(1, 1 + which(valid.df))] <- se[seq(1, 1+NCOL(ddmat.valid))]
         
-        r.se <- rep(NA, 1 + NCOL(rdesign.mat))
-        r.se[c(1, 1 + which(valid.rf))] <- se[-(2:(NCOL(rdmat.valid) + 1))]
+        r.se <- rep(NA, NCOL(rdesign.mat))
+        r.se[which(valid.rf)] <- 
+            se[seq(1+NCOL(ddmat.valid)+1,
+                   1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
+        
+        r.ctrl.se <- rep(NA, NCOL(rdesign.ctrl.mat))
+        r.ctrl.se[which(valid.rf.ctrl)] <- 
+            se[seq(1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1,
+                   1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+NCOL(rdmat.ctrl.valid))]
     } else {
         d.se <- NULL
         r.se <- NULL
     }
     
     return(list(
-        d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = d.se,
-        r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = r.se,
+        #d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = d.se,
+        #r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = r.se,
+        d.coef = d.coef, d.se = d.se, d.df = d.df,
+        r.coef = r.coef, r.se = r.se, r.df = r.df,
+        r.ctrl.coef = r.ctrl.coef, r.ctrl.se = r.ctrl.se, r.ctrl.df = r.ctrl.df,
         converged = converged,
-        ll = -fit$value))
+        ll = llnew))
 }
 
-#' Fit DNA models of control enhancers
-#' 
-#' For later usage in case enhancer models.
-#'
-#' @param dcounts the DNA counts of case and control enhancers
-#' (matrix ctrl enhancers x samples)
-#' @param rcounts the RNA counts of case and control enhancers
-#' (matrix ctrl enhancers x samples)
-#' @param ddepth DNA library size correction factors
-#' @param rdepth RNA library size correction factors
-#' @param ddesign.mat the design matrix for the DNA
-#' @param rdesign.mat the design matrix for the RNA
-#' @param rdesign.ctrl.mat the design matrix with additional factors for
-#' the control RNA enhancers, beyond rdesign.mat
-#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
-#' coefficients to facilitate coefficient-based hypothesis testing
-#'
-#' @return a list with components:
-#' \itemize {
-#'     \item d.fitval: the fitted values of the DNA counts
-#'     \item d.est: the estimated true DNA levels (corrected for library size)
-#'     \item d.coef: the fitted mode parameters for the DNA counts
-#'     \item d.se: the standard errors of the estimates of the DNA counts
-#'     \item r.est: the fitted values of the RNA counts
-#'     \item r.fitval: the fitted mode parameters for the RNA counts
-#'     \item r.est: the estimated true RNA levels (corrected for library size)
-#'     \item r.se: the standard errors of the estimates of the RNA counts
-#'     \item ll: the log likelihood of the model
-#' }
-fit.dnactrl.wctrl.iter <- function(model, dcounts, rcounts,
-                                   ddepth, rdepth, 
-                                   ddesign.mat, rdesign.mat) {
+#' @rdname fit.dnarna
+fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
+                                     ddepth, rdepth, rctrlscale=NULL,
+                                     ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL,
+                                     theta.d.ctrl.prefit=NULL, compute.hessian=NULL) {
     
     ## set cost function
     if(model == "gamma.pois"){
-        fncost1 <- ll.dna.gammaPoisson.wctrl
-        fncost2 <- ll.rna.gammaPoisson.wctrl
-        fncost3 <- ll.dnarna.gammaPoisson.wctrl
+        llfnDNA <- ll.dna.gamma.pois
+        llfnRNA <- ll.rna.gamma.pois
+    } else if(model == "ln.nb"){
+        llfnDNA <- ll.dna.ln.nb
+        llfnRNA <- ll.rna.ln.nb
     } else {
-        stop("model ", model, " not available in fit.dnactlr.wctrl.iter()")
+        stop("model ", model, " not available in fit.dnarna.wctrl.iter()")
     }
     
     ## filter invalid counts (NAs) from data and design
-    # this operation is performed on the case enhancer, the first row
-    valid.c <- (dcounts[1,] > 0) & !is.na(dcounts[1,]) & !is.na(rcounts[1,])
-    dcounts.valid <- dcounts[,valid.c]
-    rcounts.valid <- rcounts[,valid.c]
-    log.ddepth.valid <- log(ddepth[valid.c])
-    log.rdepth.valid <- log(rdepth[valid.c])
+    valid.c.d <- (dcounts > 0) & !is.na(dcounts) & !is.na(rcounts) 
+    valid.c.r <- apply((dcounts > 0) & !is.na(dcounts) & !is.na(rcounts), 2, any) 
+    #dcounts.valid <- dcounts[,valid.c]
+    #rcounts.valid <- rcounts[,valid.c]
+    #log.ddepth.valid <- log(ddepth[valid.c])
+    #log.rdepth.valid <- log(rdepth[valid.c])
+    log.ddepth <- log(ddepth)
+    log.rdepth <- log(rdepth)
     
     ## clean design matrix from unused factors: note that these should be
-    valid.df <- apply(ddesign.mat[valid.c,,drop=FALSE], 2, 
-                      function(x) !all(x==0))
-    valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, 
+    valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2, 
                       function(x) !all(x==0))
     
-    ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
-    rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
+    #ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
+    #rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
     
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation
     # Initialize DNA model parameter vector with a guess
-    d.par <- rep(0, 1 + NCOL(ddmat.valid))
-    r.par <- rep(0, 1 + NCOL(rdmat.valid))
+    d.par <- matrix(0, nrow=NROW(dcounts), ncol=1+NCOL(ddesign.mat))
+    r.par <- matrix(0, nrow=1, ncol=1+NCOL(ddesign.mat))
     
     llold <- -Inf
     llnew <- 0
@@ -555,130 +334,82 @@ fit.dnactrl.wctrl.iter <- function(model, dcounts, rcounts,
     MAXITER <- 1000
     while(llnew > llold+llold*RELTOL & iter < MAXITER) {
         ## estimate dna model for each control enhancer
-        fits <- bplappyl(seq_len(NROW(dcounts)), function(i) {
-            optim(par = d.par[i,],
-                  fn = fncost1,
-                  theta.r = r.par,
-                  dcounts = dcounts.valid[i,],
-                  rcounts = rcounts.valid[i,],
-                  log.ddepth = log.ddepth.valid,
-                  log.rdepth = log.rdepth.valid,
-                  ddesign.mat = ddmat.valid,
-                  rdesign.mat = rdmat.valid,
-                  method = "BFGS",
-                  hessian = compute.hessian)
+        dfits <- bplappyl(seq_len(NROW(dcounts)), function(i) {
+            valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
+                              function(x) !all(x==0))I
+            fit <- optim(par = d.par[i,], fn = cost.dna, theta.r = r.par,
+                         llfnDNA = llfnDNA, llfnRNA = llfnRNA,
+                         dcounts = dcounts[i,valid.c.d[i,]], 
+                         rcounts = rcounts[i,valid.c.d[i,]], 
+                         log.ddepth = log.ddepth[valid.c.d[i,]], 
+                         log.rdepth = log.rdepth[valid.c.d[i,]],
+                         ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
+                         rdesign.mat = rdesign.mat[valid.c.d[i,],valid.rf,drop=FALSE], 
+                         method = "BFGS", hessian = FALSE)
+            return(fit)
         })
         
-        d.par <- do.call(cbind, lapply(fits, function(x) {
-            $par[seq(1, NCOL(d.par))]
-        }))
+        
+        d.par <- matrix(0, nrow=length(dfits),
+                        ncol=NCOL(ddesign.mat)+1)
+        d.par[,1] <- sapply(dfits, function(x) x$par[1] )
+        for(i in seq_len(NROW(dcounts)){
+            d.par[i, 1 + which(valid.c.d[i,])] <- dfits[[i]]$par
+        }
         
         ## estimate rna model conditioned on dna model
-        fit <- optim(par = r.par,
-                     fn = fncost2,
-                     theta.d = d.par,
-                     theta.d.ctrl.prefit = theta.d.ctrl.prefit,
-                     rcounts = rcounts.valid,
-                     log.rdepth = log.rdepth.valid,
-                     rctrlscale = rctrlscale.valid,
-                     ddesign.mat = ddmat.valid,
-                     rdesign.mat = rdmat.valid,
-                     method = "BFGS",
-                     hessian = compute.hessian)
+        rfit <- optim(par = r.par, fn = cost.rna, theta.d = d.par,
+                     llfnRNA = llfnRNA, 
+                     rcounts = rcounts[,valid.c.r], 
+                     log.rdepth = log.rdepth[valid.c.r],
+                     ddesign.mat = ddesign.mat[valid.c.r,,drop=FALSE], 
+                     rdesign.mat = rdesign.mat[valid.c.r,,drop=FALSE], 
+                     method = "BFGS", hessian = FALSE)
         
-        r.par <- fit$par[seq(1, 1+length(r.par))]
+        r.par <- rfit$par
+        names(r.par) <- NULL
         
         ## update iteration convergence reporters
         llold <- llnew
-        # need to compute because ll.rna.gammaPoisson.wctrl does not evaluate 
-        # the full likelihood
-        llnew <- fncost3(
-            theta = c(d.par, r.par, r.par.ctrl), 
-            dcounts = dcounts.valid, rcounts = rcounts.valid,
-            log.ddepth = log.ddepth.valid,
-            log.rdepth = log.rdepth.valid,
-            ddesign.mat = ddmat.valid,
-            rdesign.mat = rdmat.valid)
+        llnew <- -cost.dnarna(
+            theta = c(d.par, theta.r = r.par),
+            llfnDNA = llfnDNA, llfnRNA = llfnRNA,
+            log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid, 
+            rctrlscale = NULL,
+            ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
+            rctrldesign.mat = NULL)
         iter <- iter + 1
         if(iter == MAXITER & llnew > llold+llold*RELTOL) {
             converged <- FALSE
         }
     }
     
-    d.est <- rep(NA, length(dcounts))
-    d.est[valid.c] <- exp(fit$par[1] + (ddmat.valid %*% d.par))
+    #d.est <- matrix(NA, nrow = NROW(dcounts), ncol = NCOL(dcounts))
+    #d.est[valid.c] <- exp(fit$par[1] + (ddmat.valid %*% d.par))
     
-    d.fitval <- d.est * ddepth
+    #d.fitval <- d.est * ddepth
     
-    r.est <- rep(NA, length(rcounts))
-    r.est[valid.c] <- exp(rdmat.valid %*% r.par)
-    r.est <- r.est * d.est
+    #r.est <- matrix(NA, nrow = NROW(rcounts), ncol = NCOL(rcounts))
+    #r.est[valid.c] <- exp(rdmat.valid %*% r.par)
+    #r.est <- r.est * d.est
     
-    r.fitval <- r.est * rdepth
+    #r.fitval <- r.est * rdepth
     
-    d.coef <- c(fit$par[1], rep(NA, NCOL(ddesign.mat)))
-    d.coef[1 + which(valid.df)] <- d.par
+    d.coef <- d.par
+    d.df <- sapply(dfits, function(x) length(x$fit) )
     
-    r.coef <- c(fit$par[1], rep(NA, NCOL(rdesign.mat)))
-    r.coef[1 + which(valid.rf)] <- r.par
+    r.coef <- rep(NA, NCOL(rdesign.mat))
+    r.coef[which(valid.rf)] <- r.par
+    r.df <- length(r.par)
     
-    return(list(
-        d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = NULL,
-        r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = NULL,
-        converged = converged,
-        ll = -fit$value))
-}
-
-#' A wrapper function for fitting a point-estimation based model, where a
-#' point estimate for DNA levels is fitted from DNA counts, then used for RNA
-#' estimation, without joint fitting.
-#'
-#' @param dnaFn the fitting function for the DNA counts. Should have the same API
-#' as fit.gammaDNA (default) and fit.lnDNA
-#' @param rnaFn the fitting function for the RNA counts, should have the same API
-#' as fit.nbRNA (default)
-#' @param dcounts the DNA count data
-#' @param rcounts the RNA count data
-#' @param ddepth the DNA library size correction factors
-#' @param rdepth the RNA library size correction factors
-#' @param ddesign.mat the DNA design matrix
-#' @param rdesign.mat the RNA design matrix
-#' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
-#' coefficients to facilitate coefficient-based hypothesis testing
-#'
-#' @return a list:
-#' \itemize{
-#'     \item d.fitval: the fitted values of the DNA counts
-#'     \item d.est: the estimated true DNA levels (corrected for library size)
-#'     \item d.coef: the fitted mode parameters for the DNA counts
-#'     \item d.se: the standard errors of the estimates of the DNA counts
-#'     \item r.est: the fitted values of the RNA counts
-#'     \item r.fitval: the fitted mode parameters for the RNA counts
-#'     \item r.est: the estimated true RNA levels (corrected for library size)
-#'     \item r.se: the standard errors of the estimates of the RNA counts
-#'     \item ll: the log likelihood of the model
-#' }
-fit.separate <- function(dnaFn=fit.gammaDNA, rnaFn=fit.nbRNA,
-                         dcounts, rcounts,
-                         ddepth, rdepth,
-                         ddesign.mat, rdesign.mat,
-                         compute.hessian) {
-    
-    dna.fit <- dnaFn(dcounts = dcounts,
-                     depth = ddepth,
-                     design.mat = ddesign.mat,
-                     compute.hessian = compute.hessian)
-    
-    rna.fit <- rnaFn(rcounts = rcounts,
-                     depth = rdepth,
-                     d.est = dna.fit$est,
-                     design.mat = rdesign.mat,
-                     compute.hessian = compute.hessian)
-    
-    return(list(
-        d.fitval = dna.fit$fitval, d.est = dna.fit$est,
-        d.coef = dna.fit$coef, d.se = dna.fit$se,
-        r.fitval = rna.fit$fitval, r.est = rna.fit$est,
-        r.coef = rna.fit$coef, r.se = rna.fit$se,
-        ll = -(rna.fit$ll + dna.fit$ll)))
+    return(lapply(seq_len(NROW(d.coef), function(i){
+        list(
+            #d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = NULL,
+            #r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = NULL,
+            d.coef = d.coef[i,], d.se = NULL, d.df = d.df[i],
+            r.coef = r.coef, r.se = NULL, r.df = r.df,
+            r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = NULL,
+            converged = converged,
+            ll = NA))
+    })
 }

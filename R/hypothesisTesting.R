@@ -1,4 +1,3 @@
-
 #' Calculate likelihood ratio test for the specific nested model
 #'
 #' @note Must be run after running fit.differential
