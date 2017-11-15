@@ -334,7 +334,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         ## estimate dna model for each control enhancer
         dfits <- bplappyl(seq_len(NROW(dcounts)), function(i) {
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
-                              function(x) !all(x==0))I
+                              function(x) !all(x==0))
             fit <- optim(par = d.par[i,], fn = cost.dna, theta.r = r.par,
                          llfnDNA = llfnDNA, llfnRNA = llfnRNA,
                          dcounts = dcounts[i,valid.c.d[i,]], 
@@ -351,7 +351,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         d.par <- matrix(0, nrow=length(dfits),
                         ncol=NCOL(ddesign.mat)+1)
         d.par[,1] <- sapply(dfits, function(x) x$par[1] )
-        for(i in seq_len(NROW(dcounts)){
+        for(i in seq_len(NROW(dcounts))){
             d.par[i, 1 + which(valid.c.d[i,])] <- dfits[[i]]$par
         }
         
@@ -400,7 +400,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     r.coef[which(valid.rf)] <- r.par
     r.df <- length(r.par)
     
-    return(lapply(seq_len(NROW(d.coef), function(i){
+    return(lapply(seq_len(NROW(d.coef)), function(i){
         list(
             #d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = NULL,
             #r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = NULL,
@@ -408,6 +408,6 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             r.coef = r.coef, r.se = NULL, r.df = r.df,
             r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = NULL,
             converged = converged,
-            ll = NA))
-    })
+            ll = NA)
+    }))
 }

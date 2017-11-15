@@ -217,7 +217,7 @@ cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
                            ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
     
     ## extract parameter vectors by model part
-    theta.r <- theta[seq(1, NCOL(rdesign.mat)), by=1)]
+    theta.r <- theta[seq(1, NCOL(rdesign.mat), by=1)]
     theta.r.ctrl <- theta[seq(NCOL(rdesign.mat)+1, 
                               NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1)]
     

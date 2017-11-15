@@ -20,21 +20,24 @@ Imports:
     S4Vectors,
     stats,
     utils
+Collate: 
+    'hypothesisTesting.R'
+    'libraryDepth.R'
+    'likelihoodFunctions.R'
+    'modelFitting.R'
+    'modelSelection.R'
+    'mpraObject.R'
+    'objectiveFunctions.R'
+    'optimizers.R'
+    'plotresults.R'
+    'simulateMPRA.R'
 biocViews: Software,
     StatisticalMethod,
     Sequencing,
     GeneExpression,
     CellBiology,
     CellBasedAssays
-RoxygenNote: 6.0.1
-VignetteBuilder: knitr
 ByteCompile: true
 BugReports: https://github.com/YosefLab/MPRAnalyze
-Collate: 
-    'hypothesisTesting.R'
-    'libraryDepth.R'
-    'optimizers.R'
-    'modelFitting.R'
-    'modelSelection.R'
-    'mpraObject.R'
-    'objectiveFunctions.R'
+RoxygenNote: 6.0.1
+VignetteBuilder: knitr

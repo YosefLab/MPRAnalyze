@@ -55,7 +55,7 @@ plot.boxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
         ratio=log(dfit)-log(rfit),
         cond=obj@colAnnot[,condition],
         batch=obj@colAnnot[,batch],
-        enhancer="model_fit"
+        enhancer="model_fit",
         stringsAsFactors=FALSE
     )
     
@@ -97,7 +97,7 @@ plot.volcano <- function(obj){
         ratio=log(dfit)-log(rfit),
         cond=obj@colAnnot[,condition],
         batch=obj@colAnnot[,batch],
-        enhancer="model_fit"
+        enhancer="model_fit",
         stringsAsFactors=FALSE
     )
     
