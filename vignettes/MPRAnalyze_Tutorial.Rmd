@@ -1,0 +1,329 @@
+---
+title: "MPRAnalyze Tutorial"
+date: "`r Sys.Date()`"
+output:
+  BiocStyle::html_document:
+    toc: true
+vignette: >
+  %\VignetteEncoding{UTF-8}
+---
+
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{MPRAnalyze Vignette}
+-->
+
+```{r options, cache=FALSE, include=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+knitr::opts_chunk$set(fig.align="center", 
+                      cache=FALSE,
+                      error=FALSE,
+                      fig.width=6,fig.height=6,
+                      autodep=TRUE,
+                      out.width="600px", 
+                      out.height="600px",
+                      message=FALSE,
+                      warning=FALSE,
+                      results="hide", 
+                      echo=TRUE, 
+                      eval=TRUE)
+
+options(getClass.msg=FALSE)
+```
+
+# Introduction
+
+MPRAnalyze is an analysis framework for MPRA data that aims at translating the main scientific questions arising in the context of MPRA data into statistical problems. Such questions include variations of ranking enhancers by caused expression magnitude and testing for differential enhancer activity between conditions. Thereby, MPRAnalyze allows the user to answer those questions as part of a likelihood-based framework based on p-values and expression strength scores.
+
+The general idea is that most questions below can be answered based on hypothesis testing or significance testing of coefficients within a model:
+A log-likelihood ratio test to compare a full and a reduced model or a t-test to test the significance of coefficients in a "full" model.
+One can specifiy the factors included in the full and the reduced model in the wrapper function input, similar to a differential expression test.
+The additional complexity lies in the fact that separately, additional model factors for the set of control/scrambled enhancers have to be defined in many scenarios.
+Moreover, one has to supply factors which define the DNA model which is shared between full and reduced expression model.
+The remaining questions which cannot be answered with a hypothesis test which are covered below can be answered by a quantitative comparison of the transcriptional activity / expression strength induced by an enhancer, which is also possible in this framework.
+
+# Barcodes
+MPRA experiments can be conducted with barcoded plasmids such that multiple plasmids with multiple barcodes are measured for each enhancer sequence (i.e. the plasmids are identitcal except for the barcode).
+These barcodes are additional to the UMI barcodes.
+Such plasmid barcoding may increase the reliability of the data and the added information can be used with MPRAnalyze.
+We suggest to NOT MERGE the plasmid counts by barcode but to treat them as separate samples and to add the barcode identity into the DNA model as done below.
+
+# Input
+
+Please be aware that the model input interface via vectors of model elements may not be very straight forward for the user right now, I am working on that.
+Please consult me to discuss these after looking at the examples below and thinking about which scenario might be applicable to your case.
+
+MPRAnalyze requires a matrix of transcript/RNA counts
+and a matrix of plasmid/DNA counts.
+Both matrices must contain integers or NA only and have the same shape and dimension names.
+Secondly, sample metadata and an estimation scheme ID must be provided.
+The user should consider the minimal parameter set for the wrapper function runMPRAnalyze:
+
+* matRNACounts Count matrix RNA (enhancers x samples). No normalisation or transformations, the entries must be integers!
+* matDNACounts Count matrix DNA (enhancers x samples). No normalisation or transformations, the entries must be integers!
+* dfAnnotation Data frame with sample meta data
+* strModel Model name. {"lnDNAnbRNA", "gammaDNApoisRNA", "gammaDNApoisRNA_coordascent"} and
+boolPreFitCtrlDNA.
+Model and estimation scheme to be used. Currently, we suggest the use of 
+strModel=lnDNAnbRNA,boolPreFitCtrlDNA=FALSE for DNA point estimator-based models, 
+strModel=gammaDNApoisRNA,boolPreFitCtrlDNA=FALSE for marginalisation-based models with few or no control enhancers (<10) and
+strModel=gammaDNApoisRNA,boolPreFitCtrlDNA=TRUE for marginalisation-based models with many control enhancers.
+strModel=gammaDNApoisRNA_coordascent,boolPreFitCtrlDNA=FALSE is an alternative if many control enhancers are used.
+lnDNAnbRNA: DNA point estimators are pre-estimated based on a lognormal model.
+The expression model is then fit based on a negative binomial likelihood of the RNA counts.
+gammaDNApoisRNA: DNA and expression model are co-estimated, exloiting a closed
+form marginalisation. The DNA counts are modeled with a beta distribution
+and the RNA counts with a poisson distribution. If boolPreFitCtrlDNA==TRUE,
+the estimation is conditioned on a pre-fit model
+gammaDNApoisRNA_coordascent: As gammaDNApoisRNA but can be used to estimate
+models with many control enhancers. The problem is broken up into iterative
+DNA and expression model estimation until it converges to a local optimum of
+the likelihood function.
+
+Additionally, one can provide:
+
+* vecCtrlIDs Vector of strings: Rownames of sequences which are scrambled/control enhancers in count matrices.
+* strModelFull Currently not applicable.
+* strModelRed Currently not applicable.
+* vecModelFacRNAFull (vector of strings lenght number of factors in FULL expression model) [Default NULL] The model factors (columns in dfAnnotation) which are to be used in the FULL expression model. The expression model will have batch adjustment for these factors.
+* vecModelFacRNAFullCtrl (vector of strings lenght number of additional factors in FULL expression model for control enhancers) [Default NULL] The model factors (columns in dfAnnotation) which are to be used in the FULL control expression model. The expression model will have batch adjustment for these factors.
+* vecModelFacRNARed (vector of strings lenght number of factors in REDUCED expression model) [Default NULL] The model factors (columns in dfAnnotation) which are to be used in the REDUCED expression model. The expression model will have batch adjustment for these factors.
+* vecModelFacRNARedCtrl (vector of strings lenght number of additional factors in REDUCED expression model for control enhancers) [Default NULL] The model factors (columns in dfAnnotation) which are to be used in the REDUCED control expression model. The expression model will have batch adjustment for these factors.
+* vecModelFacDNA (vector of strings lenght number of factors in DNA model) [Default NULL] The model factors (columns in dfAnnotation) which are to be used  in the DNA model. The DNA model will have batch adjustment for these factors.
+* scaNProc Number of processes to use during parallelisation.
+* vecDispersionsExternal Currently not applicable.
+* vecRNADepthExternal Externally supplied RNA sample sequencing depth factors.
+* vecDNADepthExternal Externally supplied DNA sample sequencing depth factors.
+* boolVerbose Control output of package.
+
+# Without scrambled sequences
+## Compare the strength of enhancers
+Enhancers can be compared without a reference set based on their induced expression rates.
+The analysis consists of the comparison of the scalar expression rate of each enhancer.
+Enhancers can for example be ranked or compared to a reference (such as wild type) enhancer.
+
+```{r without_scrambles_without_conditions, results='markdown'}
+library(MPRAnalyze)
+# Produce example data: lognormal distributed DNA and poisson distributed RNA
+vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
+vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
+vecMuDNA <- sample(x=100, size=20)
+matDNACounts <- do.call(rbind, lapply(vecMuDNA, function(mu) {
+    round(rlnorm(n=100, meanlog = log(mu), sdlog = 1)*vecSampleEffect)
+}))
+matDNACounts[matDNACounts <= 1] <- 1
+rownames(matDNACounts) <- c(
+    paste0("Seq_", 1:20)
+)
+colnames(matDNACounts) <- paste0("S", 1:100)
+vecExprRates <- seq(0.5,2, length.out = 20)
+matCondEffect <- matrix(1, nrow=20, ncol=100)
+matRNACounts <- do.call(rbind, lapply(1:20, function(i) {
+    sapply(matDNACounts[i,]*matCondEffect[i,], function(x) 
+        round(rpois(n=1, lambda = x*vecExprRates[i])) )
+}))
+rownames(matRNACounts) <- rownames(matDNACounts)
+colnames(matRNACounts) <- colnames(matDNACounts)
+dfAnnotation <- data.frame(
+    sample=rownames(matRNACounts),
+    barcode=rep(paste0("BC",1:25),4),
+    stringsAsFactors = FALSE
+)
+# Run MPRAnalyze
+objMPRA <- runMPRAnalyze(
+  matRNACounts=matRNACounts, 
+  matDNACounts=matDNACounts, 
+  dfAnnotation=dfAnnotation,
+  vecCtrlIDs=NULL,
+  vecModelFacRNAFull=c("1"),
+  vecModelFacRNAFullCtrl=NULL,
+  vecModelFacRNARed=NULL,
+  vecModelFacRNARedCtrl=NULL,
+  vecModelFacDNA=c("barcode"),
+  strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
+  boolPreFitCtrlDNA=FALSE,
+  scaNProc=1, 
+  boolVerbose=FALSE )
+lsExprModels <- getExprModelFull(obj=objMPRA)
+print(data.frame(inferred=lsExprModels$baseline,
+                 simulated=vecExprRates))
+```
+
+## Test the effect of an condition
+A hypothesis test is conducted to test whether expression varies significantly (= is non-constant) as a function of the given conditions(s).
+The test does not take a "base line variation" into account which could be caputred with control enhancers.
+Such a base line variation could be overall transcriptional activity.
+
+```{r without_scrambles_with_conditions, results='markdown'}
+# Produce example data: lognormal distributed DNA and poisson distributed RNA
+vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
+vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
+vecMuDNA <- sample(x=100, size=20)
+matDNACounts <- do.call(rbind, lapply(vecMuDNA, function(mu) {
+    round(rlnorm(n=100, meanlog = log(mu), sdlog = 1)*vecSampleEffect)
+}))
+matDNACounts[matDNACounts <= 1] <- 1
+rownames(matDNACounts) <- c(
+    paste0("Seq_", 1:20)
+)
+colnames(matDNACounts) <- paste0("S", 1:100)
+vecExprRates <- seq(0.5,2, length.out = 20)
+matCondEffect <- matrix(1, nrow=20, ncol=100)
+vecCondEffect <- c(rep(1,50), rep(2,50))
+vecidxAfftectedEnhancers <- c(1,2,5,10)
+for(i in vecidxAfftectedEnhancers) {
+    matCondEffect[i,] <- vecCondEffect
+}
+matRNACounts <- do.call(rbind, lapply(1:20, function(i) {
+    sapply(matDNACounts[i,]*matCondEffect[i,], function(x) 
+        round(rpois(n=1, lambda = x*vecExprRates[i])) )
+}))
+rownames(matRNACounts) <- rownames(matDNACounts)
+colnames(matRNACounts) <- colnames(matDNACounts)
+dfAnnotation <- data.frame(
+    sample=rownames(matRNACounts),
+    time=c(rep("start", 50),rep("end", 50)),
+    barcode=rep(paste0("BC",1:25),4),
+    stringsAsFactors = FALSE
+)
+# Run MPRAnalyze
+objMPRA <- runMPRAnalyze(
+  matRNACounts=matRNACounts, 
+  matDNACounts=matDNACounts, 
+  dfAnnotation=dfAnnotation,
+  vecCtrlIDs=NULL,
+  vecModelFacRNAFull=c("1","time"),
+  vecModelFacRNAFullCtrl=NULL,
+  vecModelFacRNARed=c("1"),
+  vecModelFacRNARedCtrl=NULL,
+  vecModelFacDNA=c("barcode", "time"),
+  strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
+  boolPreFitCtrlDNA=FALSE,
+  scaNProc=1, 
+  boolVerbose=FALSE )
+objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$p),]
+```
+
+# With scrambled/control enhancers
+## Test the strength of enhancers
+If control sequences are given and only one condition is analysed,
+two approaches are possible:
+Firstly, as without control sequences, enhancers can be compared by their induced expression rates.
+Secondly, one can test whether the expression rates of the "case enhancers" differ significantly from the rates of the control enhancers.
+
+```{r with_scrambles_without_conditions, results='markdown'}
+# Produce example data: lognormal distributed DNA and poisson distributed RNA
+vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
+vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
+vecMuDNA <- sample(x=100, size=20)
+matDNACounts <- do.call(rbind, lapply(vecMuDNA, function(mu) {
+    round(rlnorm(n=100, meanlog = log(mu), sdlog = 1)*vecSampleEffect)
+}))
+matDNACounts[matDNACounts <= 1] <- 1
+rownames(matDNACounts) <- c(
+    paste0("Seq_", 1:10), paste0("Ctrl_", 1:10)
+)
+colnames(matDNACounts) <- paste0("S", 1:100)
+vecExprRates <- c(rep(1.5, 5), rep(0.5, 15))
+matCondEffect <- matrix(1, nrow=20, ncol=100)
+matRNACounts <- do.call(rbind, lapply(1:20, function(i) {
+    sapply(matDNACounts[i,]*matCondEffect[i,], function(x) 
+        round(rpois(n=1, lambda = x*vecExprRates[i])) )
+}))
+rownames(matRNACounts) <- rownames(matDNACounts)
+colnames(matRNACounts) <- colnames(matDNACounts)
+dfAnnotation <- data.frame(
+    sample=rownames(matRNACounts),
+    barcode=rep(paste0("BC",1:25),4),
+    stringsAsFactors = FALSE
+)
+# Run MPRAnalyze
+objMPRA <- runMPRAnalyze(
+  matRNACounts=matRNACounts, 
+  matDNACounts=matDNACounts, 
+  dfAnnotation=dfAnnotation,
+  vecCtrlIDs=paste0("Ctrl_", 1:10),
+  vecModelFacRNAFull=c("1"),
+  vecModelFacRNAFullCtrl=c("1"),
+  vecModelFacRNARed=c("1"),
+  vecModelFacRNARedCtrl=NULL,
+  vecModelFacDNA=c("barcode"),
+  strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
+  boolPreFitCtrlDNA=TRUE,
+  scaNProc=1, 
+  boolVerbose=FALSE )
+objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),]
+```
+
+
+## Test the effect of an condition
+A hypothesis test is conducted to test whether expression varies significantly (= is non-constant) as a function of the given conditions(s)
+taking account for baseline variation captured be the control sequences.
+
+```{r with_scrambles_with_conditions, results='markdown'}
+# Produce example data: lognormal distributed DNA and poisson distributed RNA
+vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
+vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
+vecMuDNA <- sample(x=100, size=20)
+matDNACounts <- do.call(rbind, lapply(vecMuDNA, function(mu) {
+    round(rlnorm(n=100, meanlog = log(mu), sdlog = 1)*vecSampleEffect)
+}))
+matDNACounts[matDNACounts <= 1] <- 1
+rownames(matDNACounts) <- c(
+    paste0("Seq_", 1:10), paste0("Ctrl_", 1:10)
+)
+colnames(matDNACounts) <- paste0("S", 1:100)
+vecExprRates <- c(rep(0.5,10), rep(1.5,10))
+matCondEffect <- matrix(1, nrow=20, ncol=100)
+vecCondEffect <- c(rep(1,50), rep(2,50))
+vecidxAfftectedEnhancers <- c(1,2,5,10)
+for(i in vecidxAfftectedEnhancers) {
+    matCondEffect[i,] <- vecCondEffect
+}
+matRNACounts <- do.call(rbind, lapply(1:20, function(i) {
+    sapply(matDNACounts[i,]*matCondEffect[i,], function(x) 
+        round(rpois(n=1, lambda = x*vecExprRates[i])) )
+}))
+rownames(matRNACounts) <- rownames(matDNACounts)
+colnames(matRNACounts) <- colnames(matDNACounts)
+dfAnnotation <- data.frame(
+    sample=rownames(matRNACounts),
+    time=c(rep("start", 50),rep("end", 50)),
+    barcode=rep(paste0("BC",1:25),4),
+    stringsAsFactors = FALSE
+)
+# Run MPRAnalyze
+objMPRA <- runMPRAnalyze(
+  matRNACounts=matRNACounts, 
+  matDNACounts=matDNACounts, 
+  dfAnnotation=dfAnnotation,
+  vecCtrlIDs=paste0("Ctrl_", 1:10),
+  vecModelFacRNAFull=c("1","time"),
+  vecModelFacRNAFullCtrl=c("1","time"),
+  vecModelFacRNARed=c("1","time"),
+  vecModelFacRNARedCtrl=c("1"),
+  vecModelFacDNA=c("barcode", "time"),
+  strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
+  boolPreFitCtrlDNA=TRUE,
+  scaNProc=1, 
+  boolVerbose=FALSE )
+objMPRA$dfMPRAnalyzeResults[order(objMPRA$dfMPRAnalyzeResults$padj),]
+```
+
+# Plotting
+MPRAnalyze compores distribution with each other and the results can be visualised using boxplots.
+```{r boxplots, results='markdown'}
+id <- rownames(objMPRA$dfMPRAnalyzeResults)[order(objMPRA$dfMPRAnalyzeResults$padj)[1]]
+gplotBoxplots <- plot.boxplots(objMPRA,id)
+print(gplotBoxplots)
+```
+A useful reference for the overall results is also a histogram of the log10 FDR-corrected p-values:
+```{r q-value histogram, results='markdown'}
+hist(log(objMPRA$dfMPRAnalyzeResults$padj)/log(10))
+```
+
+# Session information
+
+```{r session}
+sessionInfo()
+```
