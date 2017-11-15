@@ -54,7 +54,7 @@ setClass("MpraObject", validity = validateMpraObject,
     modelFits.red = "list", ##only used for LRT diff mode
     modelPreFits.dna.ctrl = "list", ##only used for LRT_iter diff mode 
 
-    hyptestResults = "data.frame",
+    results = "data.frame",
 
     BPPARAM = "BiocParallelParam"
 ))

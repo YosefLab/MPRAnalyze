@@ -52,6 +52,6 @@ test.lrt <- function(obj, dnaDesign.reduced=NULL, rnaDesign.reduced) {
     res$p.val <- pchisq(res$lrt.statistic, df = df.full-df.red)
     res$fdr <- p.adjust(res$p.val, 'BH')
 
-    obj@hyptestResults <- res
+    obj@results <- res
     return(obj)
 }
