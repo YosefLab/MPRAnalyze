@@ -1,11 +1,11 @@
 setClassUnion('Design', members = c('matrix', 'formula'))
 
 setClass("Designs", slots = c(
-    dnaFull = "Design",
+    dna = "Design",
+    
     rnaFull = "Design",
-
+    rnaCtrlFull = "Design",
     ## only used in differential LRT mode
-    dnaRed = "Design",
     rnaRed = "Design"
 ))
 
@@ -23,7 +23,8 @@ setClass("MpraObject", slots = c(
     model = "character",
     designs = "Designs",
     modelFits = "list",
-    modelFits.reduced = "list", ##only used for LRT diff mode
+    modelFits.red = "list", ##only used for LRT diff mode
+    modelPreFits.dna.ctrl = "list", ##only used for LRT_iter diff mode 
 
     ##TODO: analysis results containers?
     hyptestResults = "data.frame"
@@ -57,4 +58,68 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
                colAnnot=colAnnot, controls=controls, BPPARAM=BPPARAM)
     return(obj)
+}
+
+
+#' Get DNA model fits from an MpraObject
+#' 
+#' @param obj MpraObject to extract from
+#' @param enhancers enhancer to extract 
+#' @param depth include depth correction
+#' @param full whether to extract from full model
+#' 
+#' @return DNA fits (numeric, enhancers x samples)
+getDNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
+    if(full == TRUE){
+        fit <- obj@modelFits
+    } else {
+        fit <- obj@modelFits.red
+    }
+    if(obj@model == "gamma.poisson") {
+        dfit <- do.call(rbind, lapply(enhancers, function(i) {
+            fit[[i]]$d.par[1] + 
+                exp(sum(fit[[i]]$d.par[-1] * t(obj@designs$dna[i,]), na.rm = TRUE))
+        }))
+    } else if(obj@model == "ln.nb") {
+        dfit <- do.call(rbind, lapply(enhancers, function(i) {
+            exp(sum(fit[[i]]$d.par[-1] * t(obj@designs$dna[i,]), na.rm = TRUE))
+        }))
+    }
+    if(depth == TRUE){
+        dfit <- dfit * obj@dnaDepth
+    }
+    return(dfit)
+}
+
+#' Get RNA full model fits from an MpraObject
+#' 
+#' @param obj MpraObject to extract from
+#' @param enhancers enhancer to extract 
+#' @param depth include depth correction
+#' @param full whether to extract from full model
+#' 
+#' @return RNA fits (numeric, enhancers x samples)
+getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
+    if(full == TRUE){
+        fit <- obj@modelFits
+        rdesign <- obj@designs$rnaFull
+    } else {
+        fit <- obj@modelFits.red
+        rdesign <- obj@designs$rnaRed
+    }
+    dfit <- getDNAFits(obj=obj, enhancers=enhancers, 
+                       depth=FALSE, full=full)
+    if(obj@model == "gamma.poisson") {
+        rfit <- dfit * do.call(rbind, lapply(enhancers, function(i) {
+                exp(sum(fit[[i]]$r.par * t(rdesign[i,]), na.rm = TRUE))
+        }))
+    } else if(obj@model == "ln.nb") {
+        rfit <- dfit * do.call(rbind, lapply(enhancers, function(j) {
+            exp(sum(fit[[i]]$r.par[-1] * t(rdesign[i,]), na.rm = TRUE))
+        }))
+    }
+    if(depth == TRUE){
+        rfit <- rfit * obj@rnaDepth
+    }
+    return(rfit)
 }

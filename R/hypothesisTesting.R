@@ -2,11 +2,12 @@
 #' Calculate likelihood ratio test for the specific nested model
 #'
 #' @note Must be run after running fit.differential
+#' TODO: adatapt this to only perform test and not fit reduced model
 #'
 #' @param obj the MpraObject containing the full model
 #' @param dnaDesign.reduced the design of the DNA reduced model. If NULL, DNA is
 #' assumed to follow same model as the full model - and raDesign.reduced must be
-#' provided
+#' provided 
 #' @param rnaDesign.reduced the design of the RNA reduced model. If NULL, RNA is
 #' assumed to follow same model as the full model, and dnaDesign.reduced must be
 #' provided
