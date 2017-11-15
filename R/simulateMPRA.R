@@ -1,4 +1,27 @@
 #' Simulate MPRA data
+#' 
+#' @param n.case number of case enhancers
+#' @param n.ctrl number of control/scrambled enhancers
+#' @param n.cond number of conditions
+#' @param n.bc number of barcodes observed per condition
+#' @param mu.dna mean dna level
+#' @param sd.dna.cond stddev to draw dna fold change 
+#' by condition from (centred at 1)
+#' @param sd.dna.bc stddev to draw dna fold change 
+#' by barcode from (centred at 1)
+#' @param mu.rna mean to draw dna fold change from
+#' @param sd.rna stddev to draw rna slope from (centred at mu.rna)
+#' @param sd.rna.cond stddev to draw rna slope fold change 
+#' by condition from (centred at 1)
+#' 
+#' @return (list)
+#' \itemize{
+#' \item dna dna count matrix
+#' \item rna rna count matrix
+#' \item colData column annotation
+#' }
+#' 
+#' @export
 simulate.mpra <- function(n.case=100, n.ctrl=20,
                           n.cond=2, n.bc=25,
                           mu.dna=100, sd.dna.cond=2, sd.dna.bc=0.1,
