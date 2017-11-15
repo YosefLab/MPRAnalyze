@@ -6,7 +6,8 @@ setClass("Designs", slots = c(
     rnaFull = "Design",
     rnaCtrlFull = "Design",
     ## only used in differential LRT mode
-    rnaRed = "Design"
+    rnaRed = "Design",
+    rnaCtrlRed = "Design"
 ))
 
 setClass("MpraObject", slots = c(
@@ -27,7 +28,7 @@ setClass("MpraObject", slots = c(
     modelPreFits.dna.ctrl = "list", ##only used for LRT_iter diff mode 
 
     ##TODO: analysis results containers?
-    hyptestResults = "data.frame"
+    results = "data.frame"
 
     BPPARAM = "BiocParallelParam"
 ))

@@ -118,9 +118,17 @@ ll.rna.ln.nb <- function(theta, theta.d,
 
 #' likelihood wrapper to compute terms of likelihood with non-zero derivative
 #' with respect to case dna model and rna model 
-#' if control enhancers are not used
 #' 
-#' @param theta the vector of rna model parameters to evaluate likelihood for
+#' nomenclature cost.[model components to be estimated].[if ctrl obs are included in fitting]
+#' 
+#' @name cost.model
+#' @rdname cost.model
+#' 
+#' @param theta vector of model parameters to evaluate likelihood for
+#' (numeric, parameters)
+#' @param theta.d vector of dna model parameters to condition likelihood on
+#' (numeric, dna parameters)
+#' @param theta.r vector of rna model parameters to condition likelihood on
 #' (numeric, rna parameters)
 #' @param llfnDNA cost function to compute dna likelihood terms on (function)
 #' @param llfnRNA cost function to compute rna likelihood terms on (function)
@@ -128,21 +136,40 @@ ll.rna.ln.nb <- function(theta, theta.d,
 #' @param rcounts the observed RNA counts (integer, enhancers x samples)
 #' @param log.ddepth dna library size correction vector, log scale (numeric, samples)
 #' @param log.rdepth rna library size correction vector, log scale (numeric, samples)
-#' @param rctrlscale vector of scaling parameters for rna model that correct for 
-#' variation between conditions pre-fit on control enhancers 
-#' (numeric, ctrl rna parameters)
 #' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
 #' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
 #' @param rdesign.ctrl.mat the control rna model design matrix 
 #' (logical, samples x rna parameters)
+NULL
+
+#' likelihood wrapper to compute terms of likelihood with non-zero derivative
+#' with respect to case dna model and rna model without control enhancer observations
+#' 
+#' nomenclature cost.[model components to be estimated]
+#' 
+#' @name cost.model.noctrl
+#' @rdname cost.model.noctrl
+#' 
+#' @aliases 
+#' cost.dnarna
+#' cost.dna
+#' cost.rna
+#' 
+#' @inheritParams cost.model
+#' @param rctrlscale vector of scaling parameters for rna model that correct for 
+#' variation between conditions pre-fit on control enhancers 
+#' (numeric, ctrl rna parameters)
 #' 
 #' @return negative sum of log likelihood terms with non-zero derivative
-#' with respect to case dna model and rna model 
-#' if control enhancers are not used
-cost.dnarna <- function(theta, dcounts, rcounts,
+#' with respect to case model 
+NULL
+
+#' @rdname cost.model.noctrl
+cost.dnarna <- function(theta, theta.d=NULL, theta.r=NULL,
+                        dcounts, rcounts,
                         llfnDNA, llfnRNA,
-                        log.ddepth, log.rdepth, rctrlscale,
-                        ddesign.mat, rdesign.mat, rctrldesign.mat) {
+                        log.ddepth, log.rdepth, rctrlscale=NULL,
+                        ddesign.mat, rdesign.mat, rctrldesign.mat=NULL) {
     
     ## extract parameter vectors by model part
     # first parameter of DNA model is the variance(-link) parameter
@@ -167,67 +194,70 @@ cost.dnarna <- function(theta, dcounts, rcounts,
     return(d.ll + r.ll)
 }
 
-# this is for pre-fitting
-cost.dna <- function(theta, theta.r,
+#' @rdname cost.model.noctrl
+cost.dna <- function(theta, theta.d=NULL, theta.r,
                      llfnDNA, llfnRNA,
                      dcounts, rcounts,
-                     log.ddepth, log.rdepth,
-                     ddesign.mat, rdesign.mat) {
+                     log.ddepth, log.rdepth, rctrlscale=NULL,
+                     ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
     
     ## compute likelihood
     d.ll <- llfnDNA(theta = theta,
                     dcounts = dcounts,
                     log.ddepth = log.ddepth,
                     ddesign.mat = ddesign.mat)
-    r.ll <- llfnRNA(theta = theta.r,
+    r.ll <- llfnRNA(theta = c(theta.r, rctrlscale),
                     theta.d = theta,
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
-                    rdesign.mat = rdesign.mat )
+                    rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
     
     return(d.ll + r.ll)
 }
-# this is for pre-fitting
-cost.rna <- function(theta, theta.d,
-                     llfnRNA,
-                     rcounts,
-                     log.rdepth,
-                     ddesign.mat, rdesign.mat) {
+
+#' @rdname cost.model.noctrl
+cost.rna <- function(theta, theta.d, theta.r=NULL, 
+                     llfnDNA=NULL, llfnRNA,
+                     dcounts, rcounts,
+                     log.ddepth=NULL, log.rdepth, rctrlscale=NULL,
+                     ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
     
     ## compute likelihood
-    r.ll <- llfnRNA(theta = theta,
+    r.ll <- llfnRNA(theta = c(theta.r, rctrlscale),
                     theta.d = theta,
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
-                    rdesign.mat = rdesign.mat )
+                    rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
     
     return(r.ll)
 }
 
 
 #' likelihood wrapper to compute terms of likelihood with non-zero derivative
-#' with respect to case dna model and rna model if control enhancers are used
+#' with respect to case dna model and rna model with control enhancer observations
 #' 
-#' @param theta the vector of rna model parameters to evaluate likelihood for
-#' (numeric, rna parameters)
-#' @param theta.d.ctrl.prefit ctrl dna model parameters to condition likelihood on
-#' (numeric, control enhancers x dna parameters)
-#' @param llfnDNA cost function to compute dna likelihood terms on (function)
-#' @param llfnRNA cost function to compute rna likelihood terms on (function)
-#' @param dcounts the observed case DNA counts (integer, 1 x samples)
-#' @param rcounts the observed RNA counts (integer, enhancers x samples)
-#' @param log.ddepth dna library size correction vector, log scale (numeric, samples)
-#' @param log.rdepth rna library size correction vector, log scale (numeric, samples)
-#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
-#' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
-#' @param rdesign.ctrl.mat the control rna model design matrix 
-#' (logical, samples x rna parameters)
+#' nomenclature cost.[model components to be estimated].wctrl
+#' 
+#' @name cost.model.wctrl
+#' @rdname cost.model.wctrl
+#' 
+#' @aliases 
+#' cost.dnarna
+#' cost.dna
+#' cost.rna
+#' 
+#' @inheritParams cost.model
+#' @param theta.d.ctrl.prefit prefit control DNA model parameters
+#' (numeric, control enhancers x dna model parameters)
 #' 
 #' @return negative sum of log likelihood terms with non-zero derivative
-#' with respect to case dna model and rna model if control enhancers are used
-cost.dnarna.wctrl <- function(theta, theta.d.ctrl.prefit,
+#' with respect to case model 
+NULL
+
+#' @rdname cost.model.wctrl
+cost.dnarna.wctrl <- function(theta, theta.d=NULL, theta.r=NULL, theta.d.ctrl.prefit,
                               llfnDNA, llfnRNA,
                               dcounts, rcounts,
                               log.ddepth, log.rdepth, 
@@ -269,29 +299,8 @@ cost.dnarna.wctrl <- function(theta, theta.d.ctrl.prefit,
     return(d.ll + r.ll.case + r.ll.ctrl)
 }
 
-#' likelihood wrapper to compute terms of likelihood with non-zero derivative
-#' with respect to case dna model if control enhancers are used
-#' 
-#' This is conditioned on RNA model.
-#' 
-#' @param theta the vector of rna model parameters to evaluate likelihood for
-#' (numeric, rna parameters)
-#' @param theta.r rna model parameters to condition likelihood on 
-#' (numeric, rna parameters)
-#' @param llfnDNA cost function to compute dna likelihood terms on (function)
-#' @param llfnRNA cost function to compute rna likelihood terms on (function)
-#' @param dcounts the observed case DNA counts (integer, 1 x samples)
-#' @param rcounts the observed case RNA counts (integer, 1 x samples)
-#' @param log.ddepth dna library size correction vector, log scale (numeric, samples)
-#' @param log.rdepth rna library size correction vector, log scale (numeric, samples)
-#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
-#' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
-#' @param rdesign.ctrl.mat the control rna model design matrix 
-#' (logical, samples x rna parameters)
-#' 
-#' @return negative sum of log likelihood terms with non-zero derivative
-#' with respect to case dna model if control enhancers are used
-cost.dna.wctrl <- function(theta, theta.r,
+#' @rdname cost.model.wctrl
+cost.dna.wctrl <- function(theta, theta.d=NULL, theta.r,  theta.d.ctrl.prefit=NULL,
                            llfnDNA, llfnRNA,
                            dcounts, rcounts,
                            log.ddepth, log.rdepth,
@@ -318,30 +327,11 @@ cost.dna.wctrl <- function(theta, theta.r,
     return(d.ll + r.ll)
 }
 
-#' likelihood wrapper to compute terms of likelihood with non-zero derivative
-#' with respect to rna model if control enhancers are used
-#' 
-#' This is conditioned on DNA models.
-#' @param theta the vector of rna model parameters to evaluate likelihood for
-#' (numeric, rna parameters)
-#' @param theta.d dna model parameters to condition likelihood on 
-#' (numeric, dna parameters)
-#' @param theta.d.ctrl.prefit ctrl dna model parameters to condition likelihood on
-#' (numeric, control enhancers x dna parameters)
-#' @param llfnRNA cost function to compute likelihood on (function)
-#' @param rcounts the observed RNA counts (integer, enhancers x samples)
-#' @param log.rdepth rna library size correction vector, log scale (numeric, samples)
-#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
-#' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
-#' @param rdesign.ctrl.mat the control rna model design matrix 
-#' (logical, samples x rna parameters)
-#' 
-#' @return negative sum of log likelihood terms with non-zero derivative
-#' with respect to rna model if control enhancers are used
-cost.rna.wctrl <- function(theta, theta.d, theta.d.ctrl.prefit,
-                           llfnRNA,
-                           rcounts,
-                           log.rdepth, 
+#' @rdname cost.model.wctrl
+cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
+                           llfnDNA=NULL, llfnRNA,
+                           dcounts=NULL, rcounts,
+                           log.ddepth, log.rdepth, 
                            ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
     
     ## extract parameter vectors by model part

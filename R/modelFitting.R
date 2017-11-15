@@ -9,10 +9,9 @@ FITTING_FUNCTIONS <- list(
         fit.separate(dnaFn=fit.gammaDNA, rnaFn=fit.nbRNA, ...)
     })
 
-#' fit models for a differential activity analysis. 
+#' fit models and performs a differential activity analysis by condition
 #' 
-#' This function fit both full and reduced model and 
-#' performs the hypothesis test.
+#' test condition effect
 #'
 #' @param obj the MpraObject
 #' @param model the model to use (TODO: if nul?)
@@ -27,9 +26,9 @@ FITTING_FUNCTIONS <- list(
 #'
 #' @details TODO - explain mode
 #'
-#' @return the MpraObject with fitted models
-fit.differential.lrt <- function(obj, model="gamma.pois", mode=NULL
-                                 dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL, ) {
+#' @return the MpraObject with fitted models and condition test
+analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL
+                                  dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL, ) {
     ## check mode
     if(!is.null(obj@controls)) {
         # set default
@@ -56,25 +55,26 @@ fit.differential.lrt <- function(obj, model="gamma.pois", mode=NULL
     if(is.null(obj@controls)) {
         obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest)
         obj@designs@rnaCtrlFull <- NULL
+        obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- NULL
         fitfun <- fit.dnarna.noctrlobs
     } else {
         obj@designs@rnaRed <- obj@designs@rnaFull
         obj@designs@rnaCtrlFull <- getDesignMat(obj, condition_totest) #?
+        obj@designs@rnaCtrlRed <- NULL
+        obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
+            model=model,
+            dcounts = obj@dnaCounts[obj@controls,], 
+            rcounts = obj@rnaCounts[obj@controls,],
+            ddepth=obj@dnaDepth,
+            rdepth=obj@rnaDepth,
+            ddesign.mat=obj@designs@dna,
+            rdesign.mat=obj@designs@rnaFull)
         if(obj@mode == "scaled") {
-            obj@rnaCtrlScale <- prefit.rctrlscale(obj)
-            obj@modelPreFits.dna.ctrl <- NULL
+            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.par
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
             obj@rnaCtrlScale <- NULL
-            obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
-                model=model,
-                dcounts = obj@dnaCounts[obj@controls,], 
-                rcounts = obj@rnaCounts[obj@controls,],
-                ddepth=obj@dnaDepth,
-                rdepth=obj@rnaDepth,
-                ddesign.mat=obj@designs@dna,
-                rdesign.mat=obj@designs@rnaFull)
             fitfun <- fit.dnarna.wctrlobs.iter
         }
     }
@@ -99,7 +99,7 @@ fit.differential.lrt <- function(obj, model="gamma.pois", mode=NULL
     }, BPPARAM = obj@BPPARAM)
     
     ## fit reduced models
-    obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
+    obj@modelFits.red <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=model,
                       dcounts=obj@dnaCounts[rn,],
                       rcounts=obj@rnaCounts[rn,],
@@ -116,20 +116,155 @@ fit.differential.lrt <- function(obj, model="gamma.pois", mode=NULL
     }, BPPARAM = obj@BPPARAM)
     
     ## run lrt
-    obj@modelFits <- test.lrt(obj)
+    obj@results <- test.lrt(obj)
     
     return(obj)
 }
 
 #' fit model for quantitative activity analysis
+#' 
+#' test for difference between case and control enhancers.
+#' If no ctrl enhancers are given, only compute magnitude of effect.
+#' 
 #' @param obj the MpraObject
 #' @param model the model to fit
 #' @param dnaDesign the design for the DNA model
 #' @param rnaDesign the design for the RNA model
-fit.quantitative <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL) {
-    obj@mode = "Quant"
-    ##TODO: fit a single model per enhancer
+analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL, rnaDesign=~1) {
+    
+    ## check mode
+    if(!is.null(obj@controls)) {
+        # set default
+        if(is.null(mode)) {
+            mode <- "scaled"
+        } else if(!mode %in% c("scaled", "full") ) {
+            stop("Only mode 'scaled' and 'full' are supported if control enhancers are supplied")
+        }
+    } else {
+        # set default
+        if(is.null(mode)) {
+            mode <- "quant"
+        }
+        else if(!mode %in% c("quant") ) {
+            stop("Only mode 'quant' is sensible if no control enhancers are supplied")
+        }
+    }
+    
+    obj <- estimateDepthFactors(obj)
+    
+    ## get design matrices
+    obj@designs@dna <- getDesignMat(obj, dnaDesign)
+    obj@designs@rnaFull <- getDesignMat(obj, rnaDesign)
+    if(is.null(obj@controls)) {
+        stop("nothing to test against")
+    } else {
+        obj@designs@rnaRed <- NULL
+        obj@designs@rnaCtrlFull <- obj@designs@rnaFull
+        obj@designs@rnaCtrlRed <- NULL
+        obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
+            model=model,
+            dcounts = obj@dnaCounts[obj@controls,], 
+            rcounts = obj@rnaCounts[obj@controls,],
+            ddepth=obj@dnaDepth,
+            rdepth=obj@rnaDepth,
+            ddesign.mat=obj@designs@dna,
+            rdesign.mat=obj@designs@rnaFull)
+        if(obj@mode == "scaled") {
+            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.par
+            fitfun <- fit.dnarna.noctrlobs
+        } else if(obj@mode == "full") {
+            obj@rnaCtrlScale <- NULL
+            fitfun <- fit.dnarna.wctrlobs.iter
+        }
+    }
+    
+    obj@model <- model
+    
+    ## fit full models
+    obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
+        return(fitfun(model=model,
+                      dcounts=obj@dnaCounts[rn,],
+                      rcounts=obj@rnaCounts[rn,],
+                      ddepth=obj@dnaDepth,
+                      rdepth=obj@rnaDepth,
+                      rctrlscale=obj@rnaCtrlScale,
+                      ddesign.mat=obj@designs@dna,
+                      rdesign.mat=obj@designs@rnaFull,
+                      rdesign.ctrl.mat=obj@designs@rnaFull,
+                      theta.d.ctrl.prefit=
+                          do.call(cbind, lappyl(obj@modelPreFits.dna.ctrl,
+                                                function(x) x$d.coef)),
+                      compute.hessian=FALSE))
+    }, BPPARAM = obj@BPPARAM)
+    
+    ## fit reduced models
+    obj@modelFits.red <- bplapply(rownames(obj@dnaCounts), function(rn) {
+        return(fitfun(model=model,
+                      dcounts=obj@dnaCounts[rn,],
+                      rcounts=obj@rnaCounts[rn,],
+                      ddepth=obj@dnaDepth,
+                      rdepth=obj@rnaDepth,
+                      rctrlscale=obj@rnaCtrlScale,
+                      ddesign.mat=obj@designs@dna,
+                      rdesign.mat=obj@designs@rnaRed,
+                      rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
+                      theta.d.ctrl.prefit=
+                          do.call(cbind, lappyl(obj@modelPreFits.dna.ctrl,
+                                                function(x) x$d.coef)),
+                      compute.hessian=FALSE))
+    }, BPPARAM = obj@BPPARAM)
+    
+    ## run lrt
+    obj@results <- test.lrt(obj)
+    
+    # TODO rank based on strength of effect
 }
+
+#' fit model for quantitative activity analysis
+#' 
+#' test for difference between case and control enhancers.
+#' If no ctrl enhancers are given, only compute magnitude of effect.
+#' 
+#' @param obj the MpraObject
+#' @param model the model to fit
+#' @param dnaDesign the design for the DNA model
+#' @param rnaDesign the design for the RNA model
+analyse.casectrl.zscore <- function(obj, mode="quant", model=NULL, dnaDesign=NULL, rnaDesign=~1) {
+    
+    ## check mode
+    if(!mode %in% c("quant")) {
+        stop("Only mode 'quant' is sensible if no control enhancers are supplied")
+    }
+    
+    obj <- estimateDepthFactors(obj)
+    
+    ## get design matrices
+    obj@designs@dna <- getDesignMat(obj, dnaDesign)
+    obj@designs@rnaFull <- getDesignMat(obj, rnaDesign)
+    
+    obj@model <- model
+    
+    ## fit full models
+    fitfun <- fit.dnarna.noctrlobs
+    obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
+        return(fitfun(model=model,
+                      dcounts=obj@dnaCounts[rn,],
+                      rcounts=obj@rnaCounts[rn,],
+                      ddepth=obj@dnaDepth,
+                      rdepth=obj@rnaDepth,
+                      rctrlscale=NULL,
+                      ddesign.mat=obj@designs@dna,
+                      rdesign.mat=obj@designs@rnaFull,
+                      rdesign.ctrl.mat=NULL,
+                      theta.d.ctrl.prefit=NULL,
+                      compute.hessian=FALSE))
+    }, BPPARAM = obj@BPPARAM)
+    
+    # TODO add test against lower quantile here (zscore)
+    
+    # TODO rank based on strength of effect
+}
+
 
 #' get a design matrix from the input design
 #'
@@ -137,7 +272,7 @@ fit.quantitative <- function(obj, model=NULL, dnaDesign=NULL, rnaDesign=NULL) {
 #' @param design the input design. A matrix is returned as is, a formula is
 #' expanded to a model matrix using the object colAnnot. If design is NULL, an
 #' intercept-only design matrix is created and returned
-#' @param testcondition condition to substract from formulae TODO
+#' @param testcondition condition to substract from formulae TODO this
 #'
 #' @return a design matrix
 getDesignMat <- function(obj, design, testcondition=NULL) {
