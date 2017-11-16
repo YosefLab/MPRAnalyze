@@ -23,6 +23,8 @@ fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth,
   theta.d.ctrl.prefit = NULL, compute.hessian = NULL)
 }
 \arguments{
+\item{model}{noise model}
+
 \item{dcounts}{the DNA counts}
 
 \item{rcounts}{the RNA counts}
@@ -46,7 +48,7 @@ coefficients to facilitate coefficient-based hypothesis testing}
 }
 \value{
 a list with components:
-\itemize {
+\itemize{
     \item d.fitval: the fitted values of the DNA counts
     \item d.est: the estimated true DNA levels (corrected for library size)
     \item d.coef: the fitted mode parameters for the DNA counts

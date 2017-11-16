@@ -12,7 +12,7 @@
 #' fit.dnarna.wctrlobs.iter
 #' fit.dnarna.onlyctrl.iter
 #' 
-#' @model noise model
+#' @param model noise model
 #' @param dcounts the DNA counts
 #' @param rcounts the RNA counts
 #' @param ddepth dna library size correction vector (numeric, samples)
@@ -27,7 +27,7 @@
 #' coefficients to facilitate coefficient-based hypothesis testing
 #'
 #' @return a list with components:
-#' \itemize {
+#' \itemize{
 #'     \item d.fitval: the fitted values of the DNA counts
 #'     \item d.est: the estimated true DNA levels (corrected for library size)
 #'     \item d.coef: the fitted mode parameters for the DNA counts

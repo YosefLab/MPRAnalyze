@@ -36,5 +36,7 @@ test condition effect
 \details{
 TODO - explain input designs (either formula or model matrices)
 
+TODO rna control usage
+
 TODO - explain mode
 }

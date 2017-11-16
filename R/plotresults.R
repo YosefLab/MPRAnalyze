@@ -15,7 +15,7 @@
 #' @param batch (string)
 #' Column of colAnnot that contains batch allocation of confounding variable
 #' that was corrected for during fitting.
-#' @paran full (bool)
+#' @param full (bool)
 #' Whether to plot full or reduced model fits.
 #' 
 #' @return (gplot) Boxplot graphic.

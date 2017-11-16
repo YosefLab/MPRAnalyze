@@ -23,6 +23,9 @@ via analyse.condition.*()}
 \item{batch}{(string)
 Column of colAnnot that contains batch allocation of confounding variable
 that was corrected for during fitting.}
+
+\item{full}{(bool)
+Whether to plot full or reduced model fits.}
 }
 \value{
 (gplot) Boxplot graphic.

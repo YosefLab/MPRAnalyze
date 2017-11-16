@@ -18,7 +18,7 @@
 #'
 #' @details TODO - explain input designs (either formula or model matrices)
 #' 
-#' @detils TODO rna control usage
+#' @details TODO rna control usage
 #'
 #' @details TODO - explain mode
 #'

@@ -105,30 +105,8 @@ Enhancers can for example be ranked or compared to a reference (such as wild typ
 ```{r without_scrambles_without_conditions, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-vecSampleEffect <- rep(rnorm(n = 25, mean = 1, sd = 0.1), 4) # Could be barcode effects
-vecSampleEffect[vecSampleEffect < 0.2] <- 0.2 # Threshold
-vecMuDNA <- sample(x=100, size=20)
-matDNACounts <- do.call(rbind, lapply(vecMuDNA, function(mu) {
-    round(rlnorm(n=100, meanlog = log(mu), sdlog = 1)*vecSampleEffect)
-}))
-matDNACounts[matDNACounts <= 1] <- 1
-rownames(matDNACounts) <- c(
-    paste0("Seq_", 1:20)
-)
-colnames(matDNACounts) <- paste0("S", 1:100)
-vecExprRates <- seq(0.5,2, length.out = 20)
-matCondEffect <- matrix(1, nrow=20, ncol=100)
-matRNACounts <- do.call(rbind, lapply(1:20, function(i) {
-    sapply(matDNACounts[i,]*matCondEffect[i,], function(x) 
-        round(rpois(n=1, lambda = x*vecExprRates[i])) )
-}))
-rownames(matRNACounts) <- rownames(matDNACounts)
-colnames(matRNACounts) <- colnames(matDNACounts)
-dfAnnotation <- data.frame(
-    sample=rownames(matRNACounts),
-    barcode=rep(paste0("BC",1:25),4),
-    stringsAsFactors = FALSE
-)
+library(MPRAnalyze)
+sim <- simulate
 # Run MPRAnalyze
 objMPRA <- runMPRAnalyze(
   matRNACounts=matRNACounts, 
