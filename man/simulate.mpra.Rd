@@ -37,7 +37,8 @@ by condition from (centred at 1)}
 \itemize{
 \item dna dna count matrix
 \item rna rna count matrix
-\item colData column annotation
+\item colData column annotation of samples (meta data)
+\item rowAnnot row annotation of enhancers (meta data)
 }
 }
 \description{

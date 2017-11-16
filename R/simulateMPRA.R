@@ -18,7 +18,8 @@
 #' \itemize{
 #' \item dna dna count matrix
 #' \item rna rna count matrix
-#' \item colData column annotation
+#' \item colData column annotation of samples (meta data)
+#' \item rowAnnot row annotation of enhancers (meta data)
 #' }
 #' 
 #' @export
@@ -71,8 +72,15 @@ simulate.mpra <- function(n.case=100, n.ctrl=20,
         barcode=rep(paste0("BC", seq(1, n.bc)), n.cond),
         stringsAsFactors = FALSE
     )
+    colAnnot$experiment <- colAnnot$cond # for depth factors
+    rowAnnot <- data.frame(
+        type=c(rep("case", n.case),
+               rep("ctrl", n.ctrl)),
+        stringsAsFactors = FALSE
+    )
     
     return(list( dna=dcounts,
                  rna=rcounts,
-                 colAnnot=colAnnot ))
+                 colAnnot=colAnnot,
+                 rowAnnot=rowAnnot))
 }

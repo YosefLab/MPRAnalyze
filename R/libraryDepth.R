@@ -15,6 +15,8 @@
 #' have 0 counts)
 #'
 #' @return the MpraObject with estimated values for sequencing depth factors
+#' 
+#' @export
 estimateDepthFactors <- function(obj, lib.factor=NULL, depthEstimator='uq') {
     ## library size already set
     if(length(obj@dnaDepth) > 0) {
@@ -78,6 +80,8 @@ DEPTH_EST_FUNCTIONS = list(
 #' of the number of columns in the RNA data matrix
 #'
 #' @return the MpraObject with library depth factors
+#' 
+#' @export
 setDepthFactors <- function(obj, dnaDepth, rnaDepth) {
     ##TODO: validate lengths, etc
     obj@dnaDepth <- dnaDepth

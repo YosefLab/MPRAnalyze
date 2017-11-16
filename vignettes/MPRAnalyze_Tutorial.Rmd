@@ -105,23 +105,15 @@ Enhancers can for example be ranked or compared to a reference (such as wild typ
 ```{r without_scrambles_without_conditions, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-library(MPRAnalyze)
-sim <- simulate
+sim <- simulate.mpra()
 # Run MPRAnalyze
-objMPRA <- runMPRAnalyze(
-  matRNACounts=matRNACounts, 
-  matDNACounts=matDNACounts, 
-  dfAnnotation=dfAnnotation,
-  vecCtrlIDs=NULL,
-  vecModelFacRNAFull=c("1"),
-  vecModelFacRNAFullCtrl=NULL,
-  vecModelFacRNARed=NULL,
-  vecModelFacRNARedCtrl=NULL,
-  vecModelFacDNA=c("barcode"),
-  strModel="gammaDNApoisRNA",#"pointlnDNAnbRNA"
-  boolPreFitCtrlDNA=FALSE,
-  scaNProc=1, 
-  boolVerbose=FALSE )
+ctrls <- which(sim$rowAnnot$type == "ctrl")
+mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, 
+                      colAnnot=sim$colAnnot, controls=ctrls)
+estimateDepthFactors(mpraobj, lib.factor = sim$colAnnot$experiment, depthEstimator = "rle")
+mpraobj <- analyse.condition.lrt(
+    mpraobj, model="gamma.pois", mode="scaled",
+    dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest=~cond)
 lsExprModels <- getExprModelFull(obj=objMPRA)
 print(data.frame(inferred=lsExprModels$baseline,
                  simulated=vecExprRates))
