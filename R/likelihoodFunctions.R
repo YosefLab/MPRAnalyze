@@ -48,7 +48,7 @@ ll.dna.ln.nb <- function(theta,
                          dcounts, log.ddepth,
                          ddesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
-    # theta <- pmax(pmin(theta, 23), -23)
+    theta <- pmax(pmin(theta, 23), -23)
     
     d.est <- ddesign.mat %*% theta[-1] + log.ddepth
     
@@ -125,7 +125,7 @@ ll.rna.ln.nb <- function(theta, theta.d,
                          rcounts, log.rdepth,
                          ddesign.mat, rdesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
-    # theta <- pmax(pmin(theta, 23), -23)
+    theta <- pmax(pmin(theta, 23), -23)
     
     log.d.est <- theta.d[,-1] %*% t(ddesign.mat)
     log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth

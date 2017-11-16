@@ -19,12 +19,12 @@ Imports:
     stats,
     utils
 Collate: 
+    'mpraObject.R'
     'hypothesisTesting.R'
     'libraryDepth.R'
     'likelihoodFunctions.R'
     'modelFitting.R'
     'modelSelection.R'
-    'mpraObject.R'
     'objectiveFunctions.R'
     'optimizers.R'
     'plotresults.R'

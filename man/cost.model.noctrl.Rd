@@ -63,3 +63,8 @@ with respect to case model
 \description{
 nomenclature cost.[model components to be estimated]
 }
+\details{
+Each of these function can only be called to optimise a single (enhancer) model:
+cost.dnarna and cost.dna can only be used on observations from one enhancer
+cost.rna can be used on observation from multiple enhancers under the same rna model
+}

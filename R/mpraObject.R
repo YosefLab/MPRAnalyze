@@ -1,3 +1,4 @@
+setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
 setClassUnion('Design', members = c('matrix', 'formula', 'NULL'))
 
 setClass("Designs", slots = c(
@@ -46,7 +47,8 @@ setClass("MpraObject", validity = validateMpraObject,
 
     dnaDepth = "numeric",
     rnaDepth = "numeric",
-
+    rnaCtrlScale = "numericORNULL",
+    
     mode = "character",
     model = "character",
     designs = "Designs",
