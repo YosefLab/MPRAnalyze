@@ -62,8 +62,8 @@ simulateMPRA <- function(n.case=100, n.ctrl=20,
         sapply(dcounts[i,]*fc.rna.cond[i,idx.cond], function(x) 
             round(rpois(n=1, lambda = x*fc.rna[i])) )
     }))
-    rownames(dcounts) <- rownames(dcounts)
-    colnames(rcounts) <- colnames(rcounts)
+    rownames(rcounts) <- rownames(dcounts)
+    colnames(rcounts) <- colnames(dcounts)
     
     ## create annotation
     colAnnot <- data.frame(
