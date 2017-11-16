@@ -79,7 +79,7 @@ setClass("MpraObject", validity = validateMpraObject,
 MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_,
                        BPPARAM=NULL) {
     if(is.null(BPPARAM)) {
-        BPPARAM <- bpparam()
+        BPPARAM <- SerialParam()
     }
 
     if(is(controls, "character")) {

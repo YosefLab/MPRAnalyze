@@ -2,10 +2,10 @@
 
 S3method(plot,boxplots)
 S3method(plot,volcano)
-S3method(simulate,mpra)
 export(MpraObject)
 export(estimateDepthFactors)
 export(plotModelPerformance)
 export(setDepthFactors)
+export(simulateMPRA)
 import(BiocParallel)
 import(ggplot2)
