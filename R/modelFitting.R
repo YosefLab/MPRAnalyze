@@ -50,6 +50,8 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             stop("Only mode 'full' is supported and sensible if no control enhancers are supplied")
         }
     }
+    obj@mode <- mode
+    obj@model <- model
     
     ## get design matrices
     obj@designs@dna <- getDesignMat(obj, dnaDesign)
@@ -80,8 +82,6 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             fitfun <- fit.dnarna.wctrlobs.iter
         }
     }
-    
-    obj@model <- model
     
     ## fit full models
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
@@ -148,6 +148,8 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
             stop("Only mode 'full' is supported and sensible if no control enhancers are supplied")
         }
     }
+    obj@mode <- mode
+    obj@model <- model
     
     ## get design matrices
     obj@designs@dna <- getDesignMat(obj, dnaDesign)
@@ -174,8 +176,6 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
             fitfun <- fit.dnarna.wctrlobs.iter
         }
     }
-    
-    obj@model <- model
     
     ## fit full models
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
@@ -245,6 +245,8 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
             stop("Only mode 'quant' is sensible if no control enhancers are supplied")
         }
     }
+    obj@mode <- mode
+    obj@model <- model
     
     ## get design matrices
     obj@designs@dna <- getDesignMat(obj, dnaDesign)
@@ -271,8 +273,6 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
             fitfun <- fit.dnarna.wctrlobs.iter
         }
     }
-    
-    obj@model <- model
     
     ## fit full models
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
@@ -326,12 +326,12 @@ analyse.quant <- function(obj, mode="quant", model=NULL, dnaDesign=NULL, rnaDesi
     if(!mode %in% c("quant")) {
         stop("Only mode 'quant' is sensible if no control enhancers are supplied")
     }
+    obj@mode <- mode
+    obj@model <- model
     
     ## get design matrices
     obj@designs@dna <- getDesignMat(obj, dnaDesign)
     obj@designs@rnaFull <- getDesignMat(obj, rnaDesign)
-    
-    obj@model <- model
     
     ## fit full models
     fitfun <- fit.dnarna.noctrlobs

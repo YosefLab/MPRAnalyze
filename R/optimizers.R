@@ -373,15 +373,16 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         
         ## update iteration convergence reporters
         llold <- llnew
-        llnew <- -sum(sapply(seq_len(NROW(dcounts)), function(i) {cost.dnarna(
-            theta = c(d.par[i,], theta.r = r.par),
-            llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-            dcounts = dcounts[i,], 
-            rcounts = rcounts[i,], 
-            log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid, 
-            rctrlscale = NULL,
-            ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
-            rctrldesign.mat = NULL)
+        llnew <- -sum(sapply(seq_len(NROW(dcounts)), function(i) {
+            cost.dnarna(
+                theta = c(d.par[i,], r.par),
+                llfnDNA = llfnDNA, llfnRNA = llfnRNA,
+                dcounts = dcounts[i,], 
+                rcounts = rcounts[i,], 
+                log.ddepth = log.ddepth, log.rdepth = log.rdepth, 
+                rctrlscale = NULL,
+                ddesign.mat = ddesign.mat, rdesign.mat = rdesign.mat,
+                rctrldesign.mat = NULL)
         }))
         iter <- iter + 1
         if(iter == MAXITER & llnew > llold+llold*RELTOL) {

@@ -29,6 +29,10 @@ NULL
 #' 
 #' nomenclature cost.[model components to be estimated]
 #' 
+#' Each of these function can only be called to optimise a single (enhancer) model:
+#' cost.dnarna and cost.dna can only be used on observations from one enhancer
+#' cost.rna can be used on observation from multiple enhancers under the same rna model
+#' 
 #' @name cost.model.noctrl
 #' @rdname cost.model.noctrl
 #' 
@@ -67,7 +71,7 @@ cost.dnarna <- function(theta, theta.d=NULL, theta.r=NULL,
                     ddesign.mat = ddesign.mat)
     # likelihood of case rna observations
     r.ll <- llfnRNA(theta = c(theta.r, rctrlscale),
-                    theta.d = theta.d,
+                    theta.d = t(matrix(theta.d)),
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
