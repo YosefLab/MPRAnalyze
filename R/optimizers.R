@@ -332,7 +332,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     MAXITER <- 1000
     while(llnew > llold+llold*RELTOL & iter < MAXITER) {
         ## estimate dna model for each control enhancer
-        dfits <- bplappyl(seq_len(NROW(dcounts)), function(i) {
+        # TODO: parallelize
+        dfits <- lapply(seq_len(NROW(dcounts)), function(i) {
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
                               function(x) !all(x==0))
             fit <- optim(par = d.par[i,], fn = cost.dna, theta.r = r.par,

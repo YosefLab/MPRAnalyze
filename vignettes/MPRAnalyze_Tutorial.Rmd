@@ -113,7 +113,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
 mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- analyse.condition.lrt(
     mpraobj, model="gamma.pois", mode="scaled",
-    dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest=~cond)
+    dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
 lsExprModels <- getExprModelFull(obj=objMPRA)
 print(data.frame(inferred=lsExprModels$baseline,
                  simulated=vecExprRates))

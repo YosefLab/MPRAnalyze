@@ -1,4 +1,4 @@
-setClassUnion('Design', members = c('matrix', 'formula'))
+setClassUnion('Design', members = c('matrix', 'formula', 'NULL'))
 
 setClass("Designs", slots = c(
     dna = "Design",
@@ -79,13 +79,7 @@ setClass("MpraObject", validity = validateMpraObject,
 MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_,
                        BPPARAM=NULL) {
     if(is.null(BPPARAM)) {
-        BPPARAM <- SerialParam()
-    }
-
-    if(is(controls, "character")) {
-        controls <- which(rownames(dnaCounts) %in% controls)
-    } else if(is(controls, "logical")) {
-        controls <- which(controls)
+        BPPARAM <- bpparam()
     }
 
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,

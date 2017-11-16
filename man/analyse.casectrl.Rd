@@ -3,7 +3,7 @@
 \name{analyse.casectrl}
 \alias{analyse.casectrl}
 \alias{analyse.casectrl.lrt}
-\alias{analyse.casectrl.zscore}
+\alias{analyse.quant}
 \alias{analyse.casectrl.lrt}
 \alias{analyse.quant}
 \title{quantitative/case-control analysis}
@@ -22,6 +22,9 @@ analyse.quant(obj, mode = "quant", model = NULL, dnaDesign = NULL,
 \item{dnaDesign}{the design for the DNA model}
 
 \item{rnaDesign}{the design for the RNA model}
+}
+\value{
+the MpraObject with fitted models and condition test
 }
 \description{
 test for difference between case and control enhancers or 

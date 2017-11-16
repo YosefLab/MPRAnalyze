@@ -4,7 +4,7 @@
 \alias{getDesignMat}
 \title{get a design matrix from the input design}
 \usage{
-getDesignMat(obj, design, mode)
+getDesignMat(obj, design, testcondition = NULL)
 }
 \arguments{
 \item{obj}{the MpraObject}
@@ -13,12 +13,10 @@ getDesignMat(obj, design, mode)
 expanded to a model matrix using the object colAnnot. If design is NULL, an
 intercept-only design matrix is created and returned}
 
-\item{testcondition}{condition to substract from formulae TODO this}
+\item{testcondition}{condition to substract from formulae}
 }
 \value{
 a design matrix
-
-##TODO: this should take the mode into account
 }
 \description{
 get a design matrix from the input design

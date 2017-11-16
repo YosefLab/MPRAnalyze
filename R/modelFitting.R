@@ -26,6 +26,7 @@
 NULL
 
 #' @rdname analyse.condition
+#' @export
 analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
                                   dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL) {
     ## check depth is set
@@ -61,7 +62,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
         fitfun <- fit.dnarna.noctrlobs
     } else {
         obj@designs@rnaRed <- obj@designs@rnaFull
-        obj@designs@rnaCtrlFull <- getDesignMat(obj, condition_totest) #?
+        obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign, condition_totest) #?
         obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
             model=model,
@@ -123,6 +124,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
 }
 
 #' @rdname analyse.condition
+#' @export
 analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
                                   dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL) {
     ## check depth is set
@@ -155,7 +157,7 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
         obj@modelPreFits.dna.ctrl <- NULL
         fitfun <- fit.dnarna.noctrlobs
     } else {
-        obj@designs@rnaCtrlFull <- getDesignMat(obj, condition_totest) #?
+        obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign, condition_totest) #?
         obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
             model=model,
             dcounts = obj@dnaCounts[obj@controls,], 
@@ -208,15 +210,18 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
 #' 
 #' @aliases 
 #' analyse.casectrl.lrt
-#' analyse.casectrl.zscore
+#' analyse.quant
 #' 
 #' @param obj the MpraObject
 #' @param model the model to fit
 #' @param dnaDesign the design for the DNA model
 #' @param rnaDesign the design for the RNA model
+#' 
+#' @return the MpraObject with fitted models and condition test
 NULL
 
 #' @rdname analyse.casectrl
+#' @export
 analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL, rnaDesign=~1) {
     
     ## check depth is set
@@ -310,6 +315,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
 }
 
 #' @rdname analyse.casectrl
+#' @export
 analyse.quant <- function(obj, mode="quant", model=NULL, dnaDesign=NULL, rnaDesign=~1) {
     
     ## check depth is set
@@ -354,18 +360,26 @@ analyse.quant <- function(obj, mode="quant", model=NULL, dnaDesign=NULL, rnaDesi
 #' @param design the input design. A matrix is returned as is, a formula is
 #' expanded to a model matrix using the object colAnnot. If design is NULL, an
 #' intercept-only design matrix is created and returned
-#' @param testcondition condition to substract from formulae TODO this
+#' @param testcondition condition to substract from formulae
 #'
 #' @return a design matrix
-#'
-#' ##TODO: this should take the mode into account
-getDesignMat <- function(obj, design, mode) {
+getDesignMat <- function(obj, design, testcondition=NULL) {
     if (is.matrix(design)) {
         return(design)
     } else if (is.null(design)) {
         return(matrix(rep(1,NCOL(obj@dnaCounts)), ncol = 1,
                       dimnames = list(colnames(obj@dnaCounts), "(intercept)")))
     } else if (is(design, "formula")) {
+        if(!is.null(testcondition)){
+            # substract this condition from formula
+            terms <- attr(terms.formula(design), "term.labels")
+            termsnew <- terms[terms != testcondition]
+            if(length(termsnew) >= 1) {
+                design <- as.formula(paste0("~", paste(termsnew, collapse="+")))
+            } else {
+                design <- ~1
+            }
+        }
         return(model.matrix(design, obj@colAnnot))
     } else {
         stop("invalid design")
