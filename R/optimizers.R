@@ -74,7 +74,7 @@ fit.dnarna.noctrlobs <- function(model,
     rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
     
     ## Initialize parameter vector with a guess
-    guess <- rep(0, 1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
+    guess <- matrix(0, nrow=1, ncol=1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
     
     fit <- optim(par = guess,
                  fn = cost.dnarna, llfnDNA = llfnDNA, llfnRNA = llfnRNA,
@@ -175,9 +175,9 @@ fit.dnarna.wctrlobs.iter <- function(model,
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation
     # Initialize DNA model parameter vector with a guess
-    d.par <- rep(0, 1 + NCOL(ddmat.valid))
-    r.par <- rep(0, NCOL(rdmat.valid))
-    r.ctrl.par <- rep(0, NCOL(rdmat.ctrl.valid))
+    d.par <- matrix(0, nrow=1, ncol=1 + NCOL(ddmat.valid))
+    r.par <- matrix(0, nrow=1, ncol=NCOL(rdmat.valid))
+    r.ctrl.par <- matrix(0, nrow=1, ncol=NCOL(rdmat.ctrl.valid))
     
     llold <- -Inf
     llnew <- 0
@@ -322,7 +322,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     # Iterate DNA and RNA model estimation
     # Initialize DNA model parameter vector with a guess
     d.par <- matrix(0, nrow=NROW(dcounts), ncol=1+NCOL(ddesign.mat))
-    r.par <- matrix(0, nrow=1, ncol=1+NCOL(ddesign.mat))
+    r.par <- rep(0, NCOL(rdesign.mat))
     
     llold <- -Inf
     llnew <- 0
@@ -336,7 +336,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         dfits <- lapply(seq_len(NROW(dcounts)), function(i) {
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
                               function(x) !all(x==0))
-            fit <- optim(par = d.par[i,], fn = cost.dna, theta.r = r.par,
+            fit <- optim(par = d.par[i,], 
+                         fn = cost.dna, theta.r = r.par,
                          llfnDNA = llfnDNA, llfnRNA = llfnRNA,
                          dcounts = dcounts[i,valid.c.d[i,]], 
                          rcounts = rcounts[i,valid.c.d[i,]], 
@@ -353,7 +354,9 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                         ncol=NCOL(ddesign.mat)+1)
         d.par[,1] <- sapply(dfits, function(x) x$par[1] )
         for(i in seq_len(NROW(dcounts))){
-            d.par[i, 1 + which(valid.c.d[i,])] <- dfits[[i]]$par
+            valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
+                              function(x) !all(x==0))
+            d.par[i, 1 + which(valid.df)] <- dfits[[i]]$par[-1]
         }
         
         ## estimate rna model conditioned on dna model
@@ -361,8 +364,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                      llfnRNA = llfnRNA, 
                      rcounts = rcounts[,valid.c.r], 
                      log.rdepth = log.rdepth[valid.c.r],
-                     ddesign.mat = ddesign.mat[valid.c.r,,drop=FALSE], 
-                     rdesign.mat = rdesign.mat[valid.c.r,,drop=FALSE], 
+                     ddesign.mat = ddesign.mat[valid.rf,,drop=FALSE], 
+                     rdesign.mat = rdesign.mat[valid.rf,,drop=FALSE], 
                      method = "BFGS", hessian = FALSE)
         
         r.par <- rfit$par
@@ -370,13 +373,16 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         
         ## update iteration convergence reporters
         llold <- llnew
-        llnew <- -cost.dnarna(
-            theta = c(d.par, theta.r = r.par),
+        llnew <- -sum(sapply(seq_len(NROW(dcounts)), function(i) {cost.dnarna(
+            theta = c(d.par[i,], theta.r = r.par),
             llfnDNA = llfnDNA, llfnRNA = llfnRNA,
+            dcounts = dcounts[i,], 
+            rcounts = rcounts[i,], 
             log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid, 
             rctrlscale = NULL,
             ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
             rctrldesign.mat = NULL)
+        }))
         iter <- iter + 1
         if(iter == MAXITER & llnew > llold+llold*RELTOL) {
             converged <- FALSE

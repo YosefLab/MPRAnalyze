@@ -21,14 +21,13 @@ ll.dna.gamma.pois <- function(theta,
                               dcounts, log.ddepth,
                               ddesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
-    # theta <- pmax(pmin(theta, 23), -23)
+    theta <- pmax(pmin(theta, 23), -23)
     
-    # (enhancers x parameters) x (parameters x  samples) = (enhancers x samples)
-    beta.inv <- theta[,1] + theta[,-1] %*% t(ddesign.mat) + log.ddepth
+    d.est <- theta[1] + ddesign.mat %*% theta[-1] + log.ddepth
     
     ll <- sum(dgamma(x = dcounts,
-                     shape = exp(theta[,1]), # alpha
-                     rate = exp(-beta.inv),
+                     shape = exp(theta[1]), # alpha
+                     rate = exp(d.est),
                      log = TRUE))
     
     return(-ll)
@@ -41,13 +40,12 @@ ll.dna.ln.nb <- function(theta,
     ## limit theta to avoid model shrinkage\explosion
     # theta <- pmax(pmin(theta, 23), -23)
     
-    # (enhancers x parameters) x (parameters x  samples) = (enhancers x samples)
-    d.est <- theta[,-1] %*% t(ddesign.mat) + log.ddepth
+    d.est <- ddesign.mat %*% theta[-1] + log.ddepth
     
     # the sum of log-likelihoods
     ll <- sum(dlnorm(x = dcounts,
-                     meanlog = d.est,
-                     sdlog = theta[,1],
+                     meanlog = exp(d.est),
+                     sdlog = exp(theta[1]),
                      log = TRUE))
     
     return(-ll)
@@ -78,15 +76,18 @@ ll.rna.gamma.pois <- function(theta, theta.d,
                               rcounts, log.rdepth,
                               ddesign.mat, rdesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
-    # theta <- pmax(pmin(theta, 23), -23)
+    theta <- pmax(pmin(theta, 23), -23)
     
-    # (enhancers x parameters) x (parameters x  samples) = (enhancers x samples)
-    log.d.est <- log(theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat))
-    log.r.est <- theta[,-1] %*% t(rdesign.mat) + log.rdepth + log.d.est
+    log.d.est <- theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat)
+    if(NROW(theta.d)>1) {
+        print(dim(theta.d)) 
+        print(dim(t(rdesign.mat)))
+    }
+    log.r.est <- theta %*% t(rdesign.mat) + log.rdepth + log.d.est
     
     ## compute likelihood
     ll <- sum(dnbinom(x = rcounts,
-                      size = exp(theta[,1]),
+                      size = exp(theta[1]),
                       mu = exp(log.r.est),
                       log = TRUE))
     
@@ -100,12 +101,11 @@ ll.rna.ln.nb <- function(theta, theta.d,
     ## limit theta to avoid model shrinkage\explosion
     # theta <- pmax(pmin(theta, 23), -23)
     
-    # (enhancers x parameters) x (parameters x  samples) = (enhancers x samples)
-    r.est <- theta.d[,-1] %*% t(ddesign.mat) + theta[,-1] %*% t(rdesign.mat) + log.rdepth
+    r.est <- ddesign.mat %*% theta.d[,-1] + rdesign.mat %*% theta + log.rdepth
     
     ## compute likelihood
     ll <- sum(dnbinom(x = rcounts,
-                      size = exp(theta[,1]),
+                      size = exp(theta[1]),
                       mu = exp(r.est),
                       log = TRUE))
     

@@ -110,7 +110,8 @@ sim <- simulateMPRA()
 ctrls <- which(sim$rowAnnot$type == "ctrl")
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, 
                       colAnnot=sim$colAnnot, controls=ctrls)
-mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
+#mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
+mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.condition.lrt(
     mpraobj, model="gamma.pois", mode="scaled",
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
