@@ -14,8 +14,6 @@ Description: MPRAnalyze is an analysis framework for MPRA data that aims at tran
 License: GPL-3
 Encoding: UTF-8
 Imports:
-    compiler,
-    Matrix,
     methods,
     S4Vectors,
     stats,
