@@ -65,7 +65,7 @@ fit.dnarna.noctrlobs <- function(model,
     rcounts.valid <- rcounts[valid.c]
     log.ddepth.valid <- log(ddepth[valid.c])
     log.rdepth.valid <- log(rdepth[valid.c])
-    
+
     ## clean design matrix from unused factors: note that these should be
     valid.df <- apply(ddesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
     valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
@@ -80,9 +80,9 @@ fit.dnarna.noctrlobs <- function(model,
                  fn = cost.dnarna, llfnDNA = llfnDNA, llfnRNA = llfnRNA,
                  dcounts = dcounts.valid, rcounts = rcounts.valid,
                  log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid,
-                 rctrlscale = rctrlscale.valid,
+                 rctrlscale = rctrlscale,
                  ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
-                 rctrldesign.mat = rdmat.ctrl.valid,
+                 rctrldesign.mat = rdesign.ctrl.mat,
                  method = "BFGS", hessian = compute.hessian)
     
     ## split parameters to the two parts of the model
@@ -137,7 +137,7 @@ fit.dnarna.noctrlobs <- function(model,
 #' @rdname fit.dnarna
 fit.dnarna.wctrlobs.iter <- function(model,
                                      dcounts, rcounts,
-                                     ddepth, rdepth, rctrlscale,
+                                     ddepth, rdepth, rctrlscale=NULL,
                                      ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
                                      theta.d.ctrl.prefit,
                                      compute.hessian) {
@@ -155,10 +155,12 @@ fit.dnarna.wctrlobs.iter <- function(model,
     ## filter invalid counts (NAs) from data and design
     # this operation is performed on the case enhancer, the first row
     valid.c <- (dcounts[1,] > 0) & !is.na(dcounts[1,]) & !is.na(rcounts[1,])
-    dcounts.valid <- dcounts[,valid.c]
-    rcounts.valid <- rcounts[,valid.c]
-    log.ddepth.valid <- log(ddepth[valid.c])
-    log.rdepth.valid <- log(rdepth[valid.c])
+    dcounts.valid <- dcounts[,valid.c,drop=FALSE]
+    rcounts.valid <- rcounts[,valid.c,drop=FALSE]
+    log.ddepth <- log(ddepth)
+    log.rdepth <- log(rdepth)
+    log.ddepth.valid <- log.ddepth[valid.c]
+    log.rdepth.valid <- log.ddepth[valid.c]
     
     ## clean design matrix from unused factors: note that these should be
     valid.df <- apply(ddesign.mat[valid.c,,drop=FALSE], 2, 
@@ -190,12 +192,9 @@ fit.dnarna.wctrlobs.iter <- function(model,
         dfit <- optim(par = d.par, fn = cost.dna.wctrl,
                      llfnDNA = llfnDNA, llfnRNA = llfnRNA,
                      theta.d.ctrl.prefit = theta.d.ctrl.prefit, theta.r = r.par,
-                     theta.r.ctrl = r.ctrl.par,
                      dcounts = dcounts.valid, rcounts = rcounts.valid,
                      log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid,
-                     rctrlscale = rctrlscale.valid,
                      ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
-                     rdesign.ctrl.mat = rdmat.ctrl.valid,
                      method = "BFGS", hessian = compute.hessian)
         
         d.par <- dfit$par[seq(1, length(d.par))]
@@ -205,7 +204,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       fn = cost.rna.wctrl, llfnRNA = llfnRNA,
                       theta.d = d.par, theta.d.ctrl.prefit = theta.d.ctrl.prefit,
                       rcounts = rcounts.valid,
-                      log.rdepth = log.rdepth.valid, rctrlscale = rctrlscale.valid,
+                      log.rdepth = log.rdepth.valid, 
                       ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
                       rdesign.ctrl.mat = rdmat.ctrl.valid,
                       method = "BFGS", hessian = compute.hessian)
@@ -272,6 +271,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
     } else {
         d.se <- NULL
         r.se <- NULL
+        r.ctrl.se <- NULL
     }
     
     return(list(
@@ -339,8 +339,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             fit <- optim(par = d.par[i,], 
                          fn = cost.dna, theta.r = r.par,
                          llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-                         dcounts = dcounts[i,valid.c.d[i,]], 
-                         rcounts = rcounts[i,valid.c.d[i,]], 
+                         dcounts = dcounts[i,valid.c.d[i,],drop=FALSE], 
+                         rcounts = rcounts[i,valid.c.d[i,],drop=FALSE], 
                          log.ddepth = log.ddepth[valid.c.d[i,]], 
                          log.rdepth = log.rdepth[valid.c.d[i,]],
                          ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
@@ -362,7 +362,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         ## estimate rna model conditioned on dna model
         rfit <- optim(par = r.par, fn = cost.rna, theta.d = d.par,
                      llfnRNA = llfnRNA, 
-                     rcounts = rcounts[,valid.c.r], 
+                     rcounts = rcounts[,valid.c.r,drop=FALSE], 
                      log.rdepth = log.rdepth[valid.c.r],
                      ddesign.mat = ddesign.mat[valid.rf,,drop=FALSE], 
                      rdesign.mat = rdesign.mat[valid.rf,,drop=FALSE], 
@@ -377,8 +377,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             cost.dnarna(
                 theta = c(d.par[i,], r.par),
                 llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-                dcounts = dcounts[i,], 
-                rcounts = rcounts[i,], 
+                dcounts = dcounts[i,,drop=FALSE], 
+                rcounts = rcounts[i,,drop=FALSE], 
                 log.ddepth = log.ddepth, log.rdepth = log.rdepth, 
                 rctrlscale = NULL,
                 ddesign.mat = ddesign.mat, rdesign.mat = rdesign.mat,

@@ -75,7 +75,7 @@ cost.dnarna <- function(theta, theta.d=NULL, theta.r=NULL,
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
-                    rdesign.mat = rbind(rdesign.mat, rctrldesign.mat) )
+                    rdesign.mat = cbind(rdesign.mat, rctrldesign.mat) )
     
     return(d.ll + r.ll)
 }
@@ -151,13 +151,14 @@ cost.dnarna.wctrl <- function(theta, theta.d=NULL, theta.r=NULL, theta.d.ctrl.pr
     
     ## extract parameter vectors by model part
     # first parameter of DNA model is the variance(-link) parameter
-    theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
+    theta.d <- theta[
+        seq(1, 1+NCOL(ddesign.mat), by=1)]
     theta.r <- theta[
-        1,seq(1+NCOL(ddesign.mat)+1, 
-              1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
+        seq(1+NCOL(ddesign.mat)+1, 
+            1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
     theta.r.ctrl <- theta[
-        1,seq(1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+1, 
-              1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1)]
+        seq(1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+1, 
+            1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1)]
     
     ## compute likelihood
     # likelihood of case dna observations
@@ -167,7 +168,7 @@ cost.dnarna.wctrl <- function(theta, theta.d=NULL, theta.r=NULL, theta.d.ctrl.pr
                     ddesign.mat = ddesign.mat)
     # likelihood of case rna observations
     r.ll.case <- llfnRNA(theta = theta.r,
-                         theta.d = theta.d,
+                         theta.d = t(as.matrix(theta.d)),
                          rcounts = rcounts[1,],
                          log.rdepth = log.rdepth,
                          ddesign.mat = ddesign.mat,
@@ -188,21 +189,17 @@ cost.dna.wctrl <- function(theta, theta.d=NULL, theta.r,  theta.d.ctrl.prefit=NU
                            llfnDNA, llfnRNA,
                            dcounts, rcounts,
                            log.ddepth, log.rdepth,
-                           ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
-    
-    ## extract parameter vectors by model part
-    # first parameter of DNA model is the variance(-link) parameter
-    theta.d <- t(as.matrix(theta))#[seq(1, 1+NCOL(ddesign.mat), by=1)]
+                           ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
     
     ## compute likelihood
     # likelihood of case dna observations
-    d.ll <- llfnDNA(theta = theta.d,
+    d.ll <- llfnDNA(theta = theta,
                     dcounts = dcounts,
                     log.ddepth = log.ddepth, 
                     ddesign.mat = ddesign.mat)
     # likelihood of case rna observations
     r.ll <- llfnRNA(theta = theta.r,
-                    theta.d = theta.d,
+                    theta.d = t(matrix(theta)),
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
@@ -228,7 +225,7 @@ cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
     # likelihood of case rna observations
     r.ll.case <- llfnRNA(
         theta = theta.r,
-        theta.d = theta.d,
+        theta.d = t(as.matrix(theta.d)),
         rcounts = rcounts[1,],
         log.rdepth = log.rdepth,
         ddesign.mat = ddesign.mat,

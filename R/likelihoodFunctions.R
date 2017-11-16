@@ -108,6 +108,13 @@ ll.rna.gamma.pois <- function(theta, theta.d,
     ## limit theta to avoid model shrinkage\explosion
     theta <- pmax(pmin(theta, 23), -23)
     
+    if(FALSE) {
+        print(dim(theta.d))
+        print(dim(ddesign.mat))
+        print(dim(theta.d[,-1] %*% t(ddesign.mat)))
+        print(length(theta))
+        print(dim(rdesign.mat))
+    }
     log.d.est <- theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat)
     log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth
     

@@ -63,6 +63,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
         obj@modelPreFits.dna.ctrl <- NULL
         fitfun <- fit.dnarna.noctrlobs
     } else {
+        message("Fit control enhancer background models")
         obj@designs@rnaRed <- obj@designs@rnaFull
         obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign, condition_totest) #?
         obj@designs@rnaCtrlRed <- NULL
@@ -84,10 +85,11 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
     }
     
     ## fit full models
-    obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
+    message("Fit full models")
+    obj@modelFits <- lapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=model,
-                      dcounts=obj@dnaCounts[rn,],
-                      rcounts=obj@rnaCounts[rn,],
+                      dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                      rcounts=obj@rnaCounts[rn,,drop=FALSE],
                       ddepth=obj@dnaDepth,
                       rdepth=obj@rnaDepth,
                       rctrlscale=obj@rnaCtrlScale,
@@ -95,16 +97,17 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
                       rdesign.mat=obj@designs@rnaFull,
                       rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
                       theta.d.ctrl.prefit=
-                          do.call(cbind, lappyl(obj@modelPreFits.dna.ctrl,
+                          do.call(rbind, lapply(obj@modelPreFits.dna.ctrl,
                                                 function(x) x$d.coef)),
                       compute.hessian=FALSE))
-    }, BPPARAM = obj@BPPARAM)
+    })#, BPPARAM = obj@BPPARAM)
     
     ## fit reduced models
+    message("Fit reduced models")
     obj@modelFits.red <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=model,
-                      dcounts=obj@dnaCounts[rn,],
-                      rcounts=obj@rnaCounts[rn,],
+                      dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                      rcounts=obj@rnaCounts[rn,,drop=FALSE],
                       ddepth=obj@dnaDepth,
                       rdepth=obj@rnaDepth,
                       rctrlscale=obj@rnaCtrlScale,
@@ -112,7 +115,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
                       rdesign.mat=obj@designs@rnaRed,
                       rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
                       theta.d.ctrl.prefit=
-                          do.call(cbind, lappyl(obj@modelPreFits.dna.ctrl,
+                          do.call(rbind, lapply(obj@modelPreFits.dna.ctrl,
                                                 function(x) x$d.coef)),
                       compute.hessian=FALSE))
     }, BPPARAM = obj@BPPARAM)
@@ -189,7 +192,7 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
                       rdesign.mat=obj@designs@rnaFull,
                       rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
                       theta.d.ctrl.prefit=
-                          do.call(cbind, lappyl(obj@modelPreFits.dna.ctrl,
+                          do.call(rbind, lapply(obj@modelPreFits.dna.ctrl,
                                                 function(x) x$d.coef)),
                       compute.hessian=FALSE))
     }, BPPARAM = obj@BPPARAM)
@@ -286,7 +289,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
                       rdesign.mat=obj@designs@rnaFull,
                       rdesign.ctrl.mat=obj@designs@rnaFull,
                       theta.d.ctrl.prefit=
-                          do.call(cbind, lappyl(obj@modelPreFits.dna.ctrl,
+                          do.call(rbind, lapply(obj@modelPreFits.dna.ctrl,
                                                 function(x) x$d.coef)),
                       compute.hessian=FALSE))
     }, BPPARAM = obj@BPPARAM)
@@ -303,7 +306,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
                       rdesign.mat=obj@designs@rnaRed,
                       rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
                       theta.d.ctrl.prefit=
-                          do.call(cbind, lappyl(obj@modelPreFits.dna.ctrl,
+                          do.call(rbind, lapply(obj@modelPreFits.dna.ctrl,
                                                 function(x) x$d.coef)),
                       compute.hessian=FALSE))
     }, BPPARAM = obj@BPPARAM)
