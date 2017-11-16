@@ -28,3 +28,15 @@ negative log likelihood of dna  observations under the specified model
 \description{
 likelihood of dna observations
 }
+\details{
+matrix multiplications: object dimensions
+theta: (dna param)
+ddesign.mat: (samples x dna param-1)
+log.ddepth, dcounts: (samples)
+
+matrix multiplications: d.est
+d.est <- theta[1] + ddesign.mat %*% theta[-1] + log.ddepth (gamma.pois)
+d.est <- ddesign.mat %*% theta[-1] + log.ddepth (ln.nb)
+dimensions( ddesign.mat %*% theta[-1] )
+=(samples x dna param-1) x (dna param -1)
+}

@@ -14,6 +14,16 @@
 #' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
 #'
 #' @return negative log likelihood of dna  observations under the specified model
+#' 
+#' @details matrix multiplications: object dimensions
+#' theta: (dna param)
+#' ddesign.mat: (samples x dna param-1)
+#' log.ddepth, dcounts: (samples)
+#' @details matrix multiplications: d.est
+#' d.est <- theta[1] + ddesign.mat %*% theta[-1] + log.ddepth (gamma.pois)
+#' d.est <- ddesign.mat %*% theta[-1] + log.ddepth (ln.nb)
+#' dimensions( ddesign.mat %*% theta[-1] )
+#' =(samples x dna param-1) x (dna param -1)
 NULL
 
 #' @rdname ll.dna
@@ -69,6 +79,26 @@ ll.dna.ln.nb <- function(theta,
 #' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
 #'
 #' @return negative log likelihood of rna observations under the specified model
+#' 
+#' @details matrix multiplications: object dimensions
+#' theta: (rna param)
+#' theta.d: (enhancers x dna param)
+#' ddesign.mat: (samples x dna param-1)
+#' rdesign.mat: (samples x rna param-1)
+#' dcounts, rcounts, log.ddepth, log.rdepth: (samples)
+#' @details matrix multiplications: log.d.est
+#' log.d.est <- theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat) (gamma.pois)
+#' log.d.est <- theta.d[,-1] %*% t(ddesign.mat) (ln.nb)
+#' dimensions( theta.d[,-1] %*% t(ddesign.mat) )
+#' =(enhancers x dna param -1) x (samples x dna param-1)^T
+#' =(enhancers x dna param -1) x (dna param-1 x samples)
+#' =(enhancers x samples)
+#' @details matrix multiplication: log.r.est
+#' log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth (gamma.pois)
+#' log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth (ln.nb)
+#' dimensions( (theta %*% t(rdesign.mat))[1,] )
+#' =((rna param) x (samples x rna param)^T)[1,]
+#' =(1 x samples)[1,] = (samples)
 NULL
 
 #' @rdname ll.rna
@@ -79,11 +109,7 @@ ll.rna.gamma.pois <- function(theta, theta.d,
     theta <- pmax(pmin(theta, 23), -23)
     
     log.d.est <- theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat)
-    if(NROW(theta.d)>1) {
-        print(dim(theta.d)) 
-        print(dim(t(rdesign.mat)))
-    }
-    log.r.est <- theta %*% t(rdesign.mat) + log.rdepth + log.d.est
+    log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth
     
     ## compute likelihood
     ll <- sum(dnbinom(x = rcounts,
@@ -101,12 +127,13 @@ ll.rna.ln.nb <- function(theta, theta.d,
     ## limit theta to avoid model shrinkage\explosion
     # theta <- pmax(pmin(theta, 23), -23)
     
-    r.est <- ddesign.mat %*% theta.d[,-1] + rdesign.mat %*% theta + log.rdepth
+    log.d.est <- theta.d[,-1] %*% t(ddesign.mat)
+    log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth
     
     ## compute likelihood
     ll <- sum(dnbinom(x = rcounts,
                       size = exp(theta[1]),
-                      mu = exp(r.est),
+                      mu = exp(log.r.est),
                       log = TRUE))
     
     return(-ll)

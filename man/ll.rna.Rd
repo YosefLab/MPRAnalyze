@@ -32,3 +32,26 @@ negative log likelihood of rna observations under the specified model
 \description{
 likelihood of rna observations
 }
+\details{
+matrix multiplications: object dimensions
+theta: (rna param)
+theta.d: (enhancers x dna param)
+ddesign.mat: (samples x dna param-1)
+rdesign.mat: (samples x rna param-1)
+dcounts, rcounts, log.ddepth, log.rdepth: (samples)
+
+matrix multiplications: log.d.est
+log.d.est <- theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat) (gamma.pois)
+log.d.est <- theta.d[,-1] %*% t(ddesign.mat) (ln.nb)
+dimensions( theta.d[,-1] %*% t(ddesign.mat) )
+=(enhancers x dna param -1) x (samples x dna param-1)^T
+=(enhancers x dna param -1) x (dna param-1 x samples)
+=(enhancers x samples)
+
+matrix multiplication: log.r.est
+log.r.est <- log.d.est + theta %*% t(rdesign.mat) + log.rdepth (gamma.pois)
+log.r.est <- log.d.est + theta %*% t(rdesign.mat) + log.rdepth (ln.nb)
+dimensions( theta %*% t(rdesign.mat) )
+=(rna param) x (samples x rna param)^T
+=(1 x samples)
+}
