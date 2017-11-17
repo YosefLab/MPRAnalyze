@@ -193,13 +193,14 @@ fit.dnarna.wctrlobs.iter <- function(model,
         r.ctrl.par <- NULL
     }
     
-    llold <- -Inf
+    llold <- 0
     llnew <- 0
     iter <- 1
     converged <- TRUE
-    RELTOL <- 10^(-8)
+    RELTOL <- 10^(-6)
     MAXITER <- 1000
-    while(llnew > llold+llold*RELTOL & iter < MAXITER) {
+    while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
+        print(paste0(iter, ": ", llnew, " ", llold))
         ## estimate dna model condition on rna model
         dfit <- optim(par = d.par, fn = cost.dna.wctrl,
                       llfnDNA = llfnDNA, llfnRNA = llfnRNA,
@@ -238,7 +239,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
             ddesign.mat = ddesign.mat, rdesign.mat = rdesign.mat, 
             rdesign.ctrl.mat = rdesign.ctrl.mat)
         iter <- iter + 1
-        if(iter == MAXITER & llnew > llold+llold*RELTOL) {
+        if(iter == MAXITER & llnew > llold-llold*RELTOL) {
             converged <- FALSE
         }
     }
@@ -347,13 +348,14 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     d.par <- matrix(0, nrow=NROW(dcounts), ncol=1+NCOL(ddesign.mat))
     r.par <- rep(0, NCOL(rdesign.mat))
     
-    llold <- -Inf
+    llold <- 0
     llnew <- 0
     iter <- 1
     converged <- TRUE
-    RELTOL <- 10^(-4)
+    RELTOL <- 10^(-4) # down to -6 or -8?
     MAXITER <- 1000
-    while(llnew > llold+llold*RELTOL & iter < MAXITER) {
+    while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
+        print(paste0(iter, ": ", llnew, " ", llold))
         ## estimate dna model for each control enhancer
         # TODO: parallelize
         dfits <- bplapply(seq_len(NROW(dcounts)), function(i) {
@@ -407,7 +409,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                 rctrldesign.mat = NULL)
         }))
         iter <- iter + 1
-        if(iter == MAXITER & llnew > llold+llold*RELTOL) {
+        if(iter == MAXITER & llnew > llold-llold*RELTOL) {
             converged <- FALSE
         }
     }

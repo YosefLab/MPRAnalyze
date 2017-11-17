@@ -113,15 +113,15 @@ ctrls <- which(sim$rowAnnot$type == "ctrl")
 if(length(ctrls)  == 0) {
     ctrls <- NULL
 }
-mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 3,
+mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = NULL,
                       colAnnot=sim$colAnnot, controls=ctrls)
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.condition.lrt(
-    mpraobj, model="ln.nb", mode="full", 
+    mpraobj, model="gamma.pois", mode="full", 
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
 print(mpraobj@results)
-plot(sim$rowAnnot$cond_2, log(mpraobj@results$pval))
+plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
 ```
 
 ## Test the effect of an condition

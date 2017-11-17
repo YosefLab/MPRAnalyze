@@ -57,16 +57,25 @@ simulateMPRA <- function(n.case=100, n.ctrl=20,
     dcounts[dcounts <= 1] <- 1
     
     ## draw rna counts
-    fc.rna <- rnorm(n=n.enhancers, mean=mu.rna, sd=sd.rna)
+    fc.rna <- rnorm(n=n.case, mean=mu.rna, sd=sd.rna)
     fc.rna[fc.rna < 0.1] <- 0.1 # Threshold
-    fc.rna.cond <- matrix(1, nrow=n.enhancers, ncol=n.cond)
-    fc.rna.cond[,-1] <- rnorm(n=n.enhancers*(n.cond-1), 
+    fc.rna.cond <- matrix(1, nrow=n.case, ncol=n.cond)
+    fc.rna.cond[,-1] <- rnorm(n=n.case*(n.cond-1), 
                               mean=mu.rna, sd=sd.rna)
     fc.rna.cond[fc.rna.cond < 0.1] <- 0.1 # Threshold
-    rcounts <- do.call(rbind, lapply(seq_len(n.enhancers), function(i) {
+    rcounts <- do.call(rbind, lapply(seq_len(n.case), function(i) {
         sapply(dcounts[i,]*fc.rna.cond[i,idx.cond], function(x) 
             round(rpois(n=1, lambda = x*fc.rna[i])) )
     }))
+    if(n.ctrl > 0){
+        fc.rna.ctrl <- rnorm(n=1, mean=mu.rna, sd=sd.rna)
+        fc.rna.ctrl[fc.rna.ctrl < 0.1] <- 0.1 # Threshold
+        rcounts.ctrl <- do.call(rbind, lapply(n.case+seq_len(n.ctrl), function(i) {
+            sapply(dcounts[i,]*fc.rna.ctrl, function(x) 
+                round(rpois(n=1, lambda=x )) )
+        }))
+        rcounts <- rbind(rcounts, rcounts.ctrl)
+    }
     rownames(rcounts) <- rownames(dcounts)
     colnames(rcounts) <- colnames(dcounts)
     
@@ -82,11 +91,12 @@ simulateMPRA <- function(n.case=100, n.ctrl=20,
     rowAnnot <- data.frame(
         type=c(rep("case", n.case),
                rep("ctrl", n.ctrl)),
+        cond2_effect=1,
         stringsAsFactors = FALSE
     )
-    condEffect <- as.data.frame(fc.rna.cond)
-    colnames(condEffect) <- paste0("cond_", seq_len(NCOL(condEffect)))
-    rowAnnot <- cbind(rowAnnot, condEffect)
+    if(n.cond > 1) {
+        rowAnnot[rowAnnot$type == "case",]$cond2_effect <- fc.rna.cond[,2]
+    }
     
     return(list( dna=dcounts,
                  rna=rcounts,

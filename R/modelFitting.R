@@ -81,8 +81,8 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
             obj@designs@rnaRed <- obj@designs@rnaFull
-            obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign, condition_totest)
-            obj@designs@rnaCtrlRed <- NULL
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
+            obj@designs@rnaCtrlRed <- getDesignMat(obj, rnaDesign, condition_totest)
             obj@rnaCtrlScale <- NULL
             fitfun <- fit.dnarna.wctrlobs.iter
         }
