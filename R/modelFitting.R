@@ -89,7 +89,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
     
     ## fit full models
     message("Fit full models")
-    obj@modelFits <- lapply(rownames(obj@dnaCounts), function(rn) {
+    obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=model,
                       dcounts=obj@dnaCounts[rn,,drop=FALSE],
                       rcounts=obj@rnaCounts[rn,,drop=FALSE],
@@ -103,7 +103,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
                           do.call(rbind, lapply(obj@modelPreFits.dna.ctrl,
                                                 function(x) x$d.coef)),
                       compute.hessian=FALSE))
-    })#, BPPARAM = obj@BPPARAM)
+    }, BPPARAM = obj@BPPARAM)
     
     ## fit reduced models
     message("Fit reduced models")

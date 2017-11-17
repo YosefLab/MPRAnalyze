@@ -82,6 +82,9 @@ simulateMPRA <- function(n.case=100, n.ctrl=20,
                rep("ctrl", n.ctrl)),
         stringsAsFactors = FALSE
     )
+    condEffect <- as.data.frame(fc.rna.cond)
+    colnames(condEffect) <- paste0("cond_", seq_len(NCOL(condEffect)))
+    rowAnnot <- cbind(rowAnnot, condEffect)
     
     return(list( dna=dcounts,
                  rna=rcounts,
