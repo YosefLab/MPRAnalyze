@@ -1,3 +1,4 @@
+setClassUnion('listORNULL', members=c('list', 'NULL'))
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
 setClassUnion('integerORNULL', members=c('integer', 'NULL'))
 setClassUnion('Design', members = c('matrix', 'formula', 'NULL'))
@@ -55,7 +56,7 @@ setClass("MpraObject", validity = validateMpraObject,
     designs = "Designs",
     modelFits = "list",
     modelFits.red = "list", ##only used for LRT diff mode
-    modelPreFits.dna.ctrl = "list", ##only used for LRT_iter diff mode 
+    modelPreFits.dna.ctrl = "listORNULL", ##only used for LRT_iter diff mode 
 
     results = "data.frame",
 
