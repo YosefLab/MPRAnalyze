@@ -42,11 +42,15 @@ simulateMPRA <- function(n.case=100, n.ctrl=20,
             round(rlnorm(n=n.samples, meanlog = log(mu), sdlog = sd.dna.cond)*fc.bc)
         }))
     rownames(dcounts.case) <- paste0("case_", seq_len(n.case))
-    dcounts.ctrl <- do.call(rbind, lapply(
-        sample(x=mu.dna, size=n.ctrl), function(mu) {
-            round(rlnorm(n=n.samples, meanlog = log(mu), sdlog = sd.dna.cond)*fc.bc)
-        }))
-    rownames(dcounts.ctrl) <- paste0("ctrl_", seq_len(n.ctrl))
+    if(n.ctrl > 0){
+        dcounts.ctrl <- do.call(rbind, lapply(
+            sample(x=mu.dna, size=n.ctrl), function(mu) {
+                round(rlnorm(n=n.samples, meanlog = log(mu), sdlog = sd.dna.cond)*fc.bc)
+            }))
+        rownames(dcounts.ctrl) <- paste0("ctrl_", seq_len(n.ctrl))
+    } else {
+        dcounts.ctrl <- NULL
+    }
     dcounts <- rbind(dcounts.case, dcounts.ctrl)
     colnames(dcounts) <- paste0("S", seq_len(n.samples))
     dcounts[dcounts <= 1] <- 1

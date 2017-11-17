@@ -4,10 +4,10 @@
 \alias{test.lrt}
 \title{Calculate likelihood ratio test for the specific nested model}
 \usage{
-test.lrt(obj, dnaDesign.reduced = NULL, rnaDesign.reduced)
+test.lrt(obj)
 }
 \arguments{
-\item{obj}{the MpraObject containing the full model}
+\item{obj}{the MpraObject containing the full and reduced}
 
 \item{dnaDesign.reduced}{the design of the DNA reduced model. If NULL, DNA is
 assumed to follow same model as the full model - and raDesign.reduced must be
@@ -16,6 +16,9 @@ provided}
 \item{rnaDesign.reduced}{the design of the RNA reduced model. If NULL, RNA is
 assumed to follow same model as the full model, and dnaDesign.reduced must be
 provided}
+}
+\value{
+results data frame
 }
 \description{
 Calculate likelihood ratio test for the specific nested model

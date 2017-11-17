@@ -17,7 +17,7 @@ cost.dnarna.wctrl(theta, theta.d = NULL, theta.r = NULL,
 
 cost.dna.wctrl(theta, theta.d = NULL, theta.r, theta.d.ctrl.prefit = NULL,
   llfnDNA, llfnRNA, dcounts, rcounts, log.ddepth, log.rdepth, ddesign.mat,
-  rdesign.mat, rdesign.ctrl.mat)
+  rdesign.mat, rdesign.ctrl.mat = NULL)
 
 cost.rna.wctrl(theta, theta.d, theta.r = NULL, theta.d.ctrl.prefit,
   llfnDNA = NULL, llfnRNA, dcounts = NULL, rcounts, log.ddepth, log.rdepth,
