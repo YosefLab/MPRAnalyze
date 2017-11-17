@@ -92,7 +92,7 @@ fit.dnarna.noctrlobs <- function(model,
     r.par <- fit$par[seq(1+NCOL(ddmat.valid)+1,
                          1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
     
-    d.coef <- c(d.par[1], rep(NA, 1+NCOL(ddesign.mat)))
+    d.coef <- c(d.par[1], rep(NA, NCOL(ddesign.mat)))
     d.coef[1 + which(valid.df)] <- d.par[-1]
     d.df <- length(d.par)
     

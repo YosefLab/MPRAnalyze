@@ -115,12 +115,12 @@ getDNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
     }
     if(obj@model == "gamma.pois") {
         dfit <- do.call(rbind, lapply(enhancers, function(i) {
-            fit[[i]]$d.par[1] + 
-                exp(sum(fit[[i]]$d.par[-1] * t(obj@designs@dna), na.rm = TRUE))
+            fit[[i]]$d.coef[1] + 
+                exp(sum(fit[[i]]$d.coef[-1] %*% t(obj@designs@dna), na.rm = TRUE))
         }))
     } else if(obj@model == "ln.nb") {
         dfit <- do.call(rbind, lapply(enhancers, function(i) {
-            exp(sum(fit[[i]]$d.par[-1] * t(obj@designs@dna), na.rm = TRUE))
+            exp(sum(fit[[i]]$d.coef[-1] * t(obj@designs@dna), na.rm = TRUE))
         }))
     }
     if(depth == TRUE){
@@ -151,11 +151,11 @@ getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
                        depth=FALSE, full=full)
     if(obj@model == "gamma.pois") {
         rfit <- dfit * do.call(rbind, lapply(enhancers, function(i) {
-                exp(sum(fit[[i]]$r.par * t(rdesign), na.rm = TRUE))
+                exp(sum(fit[[i]]$r.coef * t(rdesign), na.rm = TRUE))
         }))
     } else if(obj@model == "ln.nb") {
         rfit <- dfit * do.call(rbind, lapply(enhancers, function(j) {
-            exp(sum(fit[[i]]$r.par[-1] * t(rdesign), na.rm = TRUE))
+            exp(sum(fit[[i]]$r.coef[-1] * t(rdesign), na.rm = TRUE))
         }))
     }
     if(depth == TRUE){

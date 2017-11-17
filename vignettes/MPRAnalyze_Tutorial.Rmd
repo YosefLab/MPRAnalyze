@@ -209,7 +209,7 @@ print(mpraobj@results)
 
 ```{r }
 plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
-plot(mpraobj@dnaCounts["ctrl_1",], getDNAFits(mpraobj, enhancers=c("ctrl_1"), full=TRUE))
+plot(mpraobj@dnaCounts["case_1",], getDNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
 ```
 
 ### Full

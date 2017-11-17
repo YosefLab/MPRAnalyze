@@ -113,6 +113,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
                                                 function(x) x$d.coef)),
                       compute.hessian=FALSE))
     }, BPPARAM = obj@BPPARAM)
+    names(obj@modelFits) <- rownames(obj@dnaCounts)
     
     ## fit reduced models
     message("Fit reduced models")
@@ -131,6 +132,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
                                                 function(x) x$d.coef)),
                       compute.hessian=FALSE))
     }, BPPARAM = obj@BPPARAM)
+    names(obj@modelFits.red) <- rownames(obj@dnaCounts)
     
     ## run lrt
     obj@results <- test.lrt(obj)
