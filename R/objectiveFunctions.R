@@ -173,7 +173,7 @@ cost.dnarna.wctrl <- function(theta, theta.d=NULL, theta.r=NULL, theta.d.ctrl.pr
     # likelihood of case rna observations
     r.ll.case <- llfnRNA(theta = theta.r,
                          theta.d = t(as.matrix(theta.d)),
-                         rcounts = rcounts[1,],
+                         rcounts = rcounts[1,,drop=FALSE],
                          log.rdepth = log.rdepth,
                          ddesign.mat = ddesign.mat,
                          rdesign.mat = rdesign.mat )
@@ -204,7 +204,7 @@ cost.dna.wctrl <- function(theta, theta.d=NULL, theta.r,  theta.d.ctrl.prefit=NU
     # likelihood of case rna observations
     r.ll <- llfnRNA(theta = theta.r,
                     theta.d = t(matrix(theta)),
-                    rcounts = rcounts,
+                    rcounts = rcounts[1,,drop=FALSE],
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
                     rdesign.mat = rdesign.mat)
@@ -234,7 +234,7 @@ cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
     r.ll.case <- llfnRNA(
         theta = theta.r,
         theta.d = t(as.matrix(theta.d)),
-        rcounts = rcounts[1,],
+        rcounts = rcounts[1,,drop=FALSE],
         log.rdepth = log.rdepth,
         ddesign.mat = ddesign.mat,
         rdesign.mat = rdesign.mat )
@@ -242,7 +242,7 @@ cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
     r.ll.ctrl <- llfnRNA(
         theta = c(theta.r, theta.r.ctrl),
         theta.d = theta.d.ctrl.prefit,
-        rcounts = rcounts[-1,],
+        rcounts = rcounts[-1,,drop=FALSE],
         log.rdepth = log.rdepth,
         ddesign.mat = ddesign.mat,
         rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )

@@ -61,6 +61,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
         obj@designs@rnaCtrlFull <- NULL
         obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- NULL
+        obj@controls.forfit <- NULL
         fitfun <- fit.dnarna.noctrlobs
     } else {
         message("Fit control enhancer background models")
@@ -80,6 +81,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull # used to correct prefit 
             obj@designs@rnaCtrlRed <- obj@designs@rnaFull # used to correct prefit 
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
+            obj@controls.forfit <- NULL
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
             # cs: case-control identity of enhancer
@@ -89,6 +91,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             obj@designs@rnaCtrlFull <- getDesignMat(obj, ~1)
             obj@designs@rnaCtrlRed <- NULL
             obj@rnaCtrlScale <- NULL
+            obj@controls.forfit <- obj@controls
             fitfun <- fit.dnarna.wctrlobs.iter
         }
     }
@@ -98,7 +101,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=model,
                       dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=obj@rnaCounts[rn,,drop=FALSE],
+                      rcounts=rbind(obj@rnaCounts[rn,], obj@rnaCounts[obj@controls.forfit,]),
                       ddepth=obj@dnaDepth,
                       rdepth=obj@rnaDepth,
                       rctrlscale=obj@rnaCtrlScale,
@@ -116,7 +119,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
     obj@modelFits.red <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=model,
                       dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=obj@rnaCounts[rn,,drop=FALSE],
+                      rcounts=rbind(obj@rnaCounts[rn,], obj@rnaCounts[obj@controls.forfit,]),
                       ddepth=obj@dnaDepth,
                       rdepth=obj@rnaDepth,
                       rctrlscale=obj@rnaCtrlScale,
@@ -197,7 +200,7 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=model,
                       dcounts=obj@dnaCounts[rn,],
-                      rcounts=obj@rnaCounts[rn,],
+                      rcounts=rbind(obj@rnaCounts[rn,], obj@rnaCounts[obj@controls,]),
                       ddepth=obj@dnaDepth,
                       rdepth=obj@rnaDepth,
                       rctrlscale=obj@rnaCtrlScale,
@@ -303,7 +306,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=model,
                       dcounts=obj@dnaCounts[rn,],
-                      rcounts=obj@rnaCounts[rn,],
+                      rcounts=rbind(obj@rnaCounts[rn,], obj@rnaCounts[obj@controls,]),
                       ddepth=obj@dnaDepth,
                       rdepth=obj@rnaDepth,
                       rctrlscale=obj@rnaCtrlScale,
@@ -320,7 +323,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
     obj@modelFits.red <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=model,
                       dcounts=obj@dnaCounts[rn,],
-                      rcounts=obj@rnaCounts[rn,],
+                      rcounts=rbind(obj@rnaCounts[rn,], obj@rnaCounts[obj@controls,]),
                       ddepth=obj@dnaDepth,
                       rdepth=obj@rnaDepth,
                       rctrlscale=obj@rnaCtrlScale,

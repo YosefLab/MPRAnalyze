@@ -46,6 +46,7 @@ setClass("MpraObject", validity = validateMpraObject,
     rnaCounts = "matrix",
     colAnnot = "data.frame",
     controls = "integerORNULL", #idx of negative controls
+    controls.forfit = "integerORNULL", #idx of negative controls used in fitting of full and red
 
     dnaDepth = "numeric",
     rnaDepth = "numeric",
@@ -104,20 +105,22 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
 #' @param full whether to extract from full model
 #' 
 #' @return DNA fits (numeric, enhancers x samples)
+#' 
+#' @export
 getDNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
     if(full == TRUE){
         fit <- obj@modelFits
     } else {
         fit <- obj@modelFits.red
     }
-    if(obj@model == "gamma.poisson") {
+    if(obj@model == "gamma.pois") {
         dfit <- do.call(rbind, lapply(enhancers, function(i) {
             fit[[i]]$d.par[1] + 
-                exp(sum(fit[[i]]$d.par[-1] * t(obj@designs$dna[i,]), na.rm = TRUE))
+                exp(sum(fit[[i]]$d.par[-1] * t(obj@designs@dna), na.rm = TRUE))
         }))
     } else if(obj@model == "ln.nb") {
         dfit <- do.call(rbind, lapply(enhancers, function(i) {
-            exp(sum(fit[[i]]$d.par[-1] * t(obj@designs$dna[i,]), na.rm = TRUE))
+            exp(sum(fit[[i]]$d.par[-1] * t(obj@designs@dna), na.rm = TRUE))
         }))
     }
     if(depth == TRUE){
@@ -134,23 +137,25 @@ getDNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
 #' @param full whether to extract from full model
 #' 
 #' @return RNA fits (numeric, enhancers x samples)
+#' 
+#' @export
 getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
     if(full == TRUE){
         fit <- obj@modelFits
-        rdesign <- obj@designs$rnaFull
+        rdesign <- obj@designs@rnaFull
     } else {
         fit <- obj@modelFits.red
-        rdesign <- obj@designs$rnaRed
+        rdesign <- obj@designs@rnaRed
     }
     dfit <- getDNAFits(obj=obj, enhancers=enhancers, 
                        depth=FALSE, full=full)
-    if(obj@model == "gamma.poisson") {
+    if(obj@model == "gamma.pois") {
         rfit <- dfit * do.call(rbind, lapply(enhancers, function(i) {
-                exp(sum(fit[[i]]$r.par * t(rdesign[i,]), na.rm = TRUE))
+                exp(sum(fit[[i]]$r.par * t(rdesign), na.rm = TRUE))
         }))
     } else if(obj@model == "ln.nb") {
         rfit <- dfit * do.call(rbind, lapply(enhancers, function(j) {
-            exp(sum(fit[[i]]$r.par[-1] * t(rdesign[i,]), na.rm = TRUE))
+            exp(sum(fit[[i]]$r.par[-1] * t(rdesign), na.rm = TRUE))
         }))
     }
     if(depth == TRUE){

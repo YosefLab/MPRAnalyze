@@ -97,7 +97,7 @@ ll.dna.ln.nb <- function(theta,
 #' log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth (gamma.pois)
 #' log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth (ln.nb)
 #' dimensions( (theta %*% t(rdesign.mat))[1,] )
-#' =((rna param) x (samples x rna param)^T)[1,]
+#' =((1 x rna param) x (samples x rna param)^T)[1,]
 #' =(1 x samples)[1,] = (samples)
 NULL
 
@@ -109,11 +109,17 @@ ll.rna.gamma.pois <- function(theta, theta.d,
     theta <- pmax(pmin(theta, 23), -23)
     
     log.d.est <- theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat)
-    log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth
+    #print(dim(rcounts))
+    #print(length(log.rdepth))
+    #print(dim(log.d.est))
+    #print(dim(theta %*% t(rdesign.mat)))
+    log.r.est <- log.d.est + 
+        matrix((theta %*% t(rdesign.mat))[1,] + log.rdepth,
+               nrow=NROW(rcounts), ncol=NCOL(rcounts), byrow=TRUE)
     
     ## compute likelihood
     ll <- sum(dnbinom(x = rcounts,
-                      size = exp(theta[1]),
+                      size = exp(theta.d[,1]),
                       mu = exp(log.r.est),
                       log = TRUE))
     
@@ -128,12 +134,13 @@ ll.rna.ln.nb <- function(theta, theta.d,
     theta <- pmax(pmin(theta, 23), -23)
     
     log.d.est <- theta.d[,-1] %*% t(ddesign.mat)
-    log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth
+    log.r.est <- log.d.est + (theta[-1] %*% t(rdesign.mat))[1,] + log.rdepth
     
     ## compute likelihood
     ll <- sum(dnbinom(x = rcounts,
                       size = exp(theta[1]),
-                      mu = exp(log.r.est),
+                      mu = matrix(exp(log.r.est) , nrow=NROW(rcounts), 
+                                  ncol=length(log.r.est), byrow=TRUE),
                       log = TRUE))
     
     return(-ll)

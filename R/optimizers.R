@@ -62,9 +62,9 @@ fit.dnarna.noctrlobs <- function(model,
     }
     
     ## filter invalid counts (NAs) from data and design
-    valid.c <- (dcounts > 0) & !is.na(dcounts) & !is.na(rcounts)
+    valid.c <- (dcounts > 0) & !is.na(dcounts) & !is.na(rcounts[1,])
     dcounts.valid <- dcounts[valid.c]
-    rcounts.valid <- rcounts[valid.c]
+    rcounts.valid <- rcounts[1,valid.c,drop=FALSE]
     log.ddepth.valid <- log(ddepth[valid.c])
     log.rdepth.valid <- log(rdepth[valid.c])
     
@@ -92,17 +92,6 @@ fit.dnarna.noctrlobs <- function(model,
     r.par <- fit$par[seq(1+NCOL(ddmat.valid)+1,
                          1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
     
-    #d.est <- rep(NA, length(dcounts))
-    #d.est[valid.c] <- exp(d.par[1] + (ddmat.valid %*% d.par[-1]))
-    
-    #d.fitval <- d.est * ddepth
-    
-    #r.est <- rep(NA, length(rcounts))
-    #r.est[valid.c] <- exp(rdmat.valid %*% r.par)
-    #r.est <- r.est * d.est
-    
-    #r.fitval <- r.est * rdepth
-    
     d.coef <- c(d.par[1], rep(NA, 1+NCOL(ddesign.mat)))
     d.coef[1 + which(valid.df)] <- d.par[-1]
     d.df <- length(d.par)
@@ -127,8 +116,6 @@ fit.dnarna.noctrlobs <- function(model,
     }
     
     return(list(
-        #d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = d.se,
-        #r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = r.se,
         d.coef = d.coef, d.se = d.se, d.df = d.df,
         r.coef = r.coef, r.se = r.se, r.df = r.df,
         r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = 0,
@@ -243,16 +230,6 @@ fit.dnarna.wctrlobs.iter <- function(model,
             converged <- FALSE
         }
     }
-    #d.est <- rep(NA, NCOL(dcounts))
-    #d.est[valid.c] <- exp(fit$par[1] + (ddmat.valid %*% d.par))
-    
-    #d.fitval <- d.est * ddepth
-    
-    #r.est <- rep(NA, length(rcounts))
-    #r.est[valid.c] <- exp(rdmat.valid %*% r.par)
-    #r.est <- r.est * d.est
-    
-    #r.fitval <- r.est * rdepth
     
     d.coef <- c(d.par[1], rep(NA, NCOL(ddesign.mat)))
     d.coef[1 + which(valid.df)] <- d.par[seq(2, length(d.par))]
@@ -298,8 +275,6 @@ fit.dnarna.wctrlobs.iter <- function(model,
     }
     
     return(list(
-        #d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = d.se,
-        #r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = r.se,
         d.coef = d.coef, d.se = d.se, d.df = d.df,
         r.coef = r.coef, r.se = r.se, r.df = r.df,
         r.ctrl.coef = r.ctrl.coef, r.ctrl.se = r.ctrl.se, r.ctrl.df = r.ctrl.df,
@@ -328,19 +303,12 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     ## filter invalid counts (NAs) from data and design
     valid.c.d <- (dcounts > 0) & !is.na(dcounts) & !is.na(rcounts) 
     valid.c.r <- apply((dcounts > 0) & !is.na(dcounts) & !is.na(rcounts), 2, any) 
-    #dcounts.valid <- dcounts[,valid.c]
-    #rcounts.valid <- rcounts[,valid.c]
-    #log.ddepth.valid <- log(ddepth[valid.c])
-    #log.rdepth.valid <- log(rdepth[valid.c])
     log.ddepth <- log(ddepth)
     log.rdepth <- log(rdepth)
     
     ## clean design matrix from unused factors: note that these should be
     valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2, 
                       function(x) !all(x==0))
-    
-    #ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
-    #rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
     
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation
@@ -413,16 +381,6 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             converged <- FALSE
         }
     }
-    #d.est <- matrix(NA, nrow = NROW(dcounts), ncol = NCOL(dcounts))
-    #d.est[valid.c] <- exp(fit$par[1] + (ddmat.valid %*% d.par))
-    
-    #d.fitval <- d.est * ddepth
-    
-    #r.est <- matrix(NA, nrow = NROW(rcounts), ncol = NCOL(rcounts))
-    #r.est[valid.c] <- exp(rdmat.valid %*% r.par)
-    #r.est <- r.est * d.est
-    
-    #r.fitval <- r.est * rdepth
     
     d.coef <- d.par
     d.df <- sapply(dfits, function(x) length(x$fit) )
@@ -433,8 +391,6 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     
     return(lapply(seq_len(NROW(d.coef)), function(i){
         list(
-            #d.fitval = d.fitval, d.est = d.est, d.coef = d.coef, d.se = NULL,
-            #r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = NULL,
             d.coef = d.coef[i,], d.se = NULL, d.df = d.df[i],
             r.coef = r.coef, r.se = NULL, r.df = r.df,
             r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = 0,

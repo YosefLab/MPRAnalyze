@@ -52,6 +52,6 @@ matrix multiplication: log.r.est
 log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth (gamma.pois)
 log.r.est <- log.d.est + (theta %*% t(rdesign.mat))[1,] + log.rdepth (ln.nb)
 dimensions( (theta %*% t(rdesign.mat))[1,] )
-=((rna param) x (samples x rna param)^T)[1,]
+=((1 x rna param) x (samples x rna param)^T)[1,]
 =(1 x samples)[1,] = (samples)
 }
