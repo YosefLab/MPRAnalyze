@@ -65,7 +65,7 @@ fit.dnarna.noctrlobs <- function(model,
     rcounts.valid <- rcounts[valid.c]
     log.ddepth.valid <- log(ddepth[valid.c])
     log.rdepth.valid <- log(rdepth[valid.c])
-
+    
     ## clean design matrix from unused factors: note that these should be
     valid.df <- apply(ddesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
     valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
@@ -200,12 +200,12 @@ fit.dnarna.wctrlobs.iter <- function(model,
     while(llnew > llold+llold*RELTOL & iter < MAXITER) {
         ## estimate dna model condition on rna model
         dfit <- optim(par = d.par, fn = cost.dna.wctrl,
-                     llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-                     theta.d.ctrl.prefit = theta.d.ctrl.prefit, theta.r = r.par,
-                     dcounts = dcounts.valid, rcounts = rcounts.valid,
-                     log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid,
-                     ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
-                     method = "BFGS", hessian = compute.hessian)
+                      llfnDNA = llfnDNA, llfnRNA = llfnRNA,
+                      theta.d.ctrl.prefit = theta.d.ctrl.prefit, theta.r = r.par,
+                      dcounts = dcounts.valid, rcounts = rcounts.valid,
+                      log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid,
+                      ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
+                      method = "BFGS", hessian = compute.hessian)
         
         d.par <- dfit$par[seq(1, length(d.par))]
         
@@ -219,10 +219,10 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       rdesign.ctrl.mat = rdmat.ctrl.valid,
                       method = "BFGS", hessian = compute.hessian)
         
-        r.par <- rfit$par[seq(1, 1+length(r.par))]
+        r.par <- rfit$par[seq(1, length(r.par))]
         if(!is.null(r.ctrl.par)) {
-            r.ctrl.par <- rfit$par[seq(1+length(r.par)+1, 
-                                       1+length(r.par)+length(r.ctrl.par))]
+            r.ctrl.par <- rfit$par[seq(length(r.par)+1, 
+                                       length(r.par)+length(r.ctrl.par))]
         }
         
         ## update iteration convergence reporters
@@ -240,7 +240,6 @@ fit.dnarna.wctrlobs.iter <- function(model,
             converged <- FALSE
         }
     }
-    
     #d.est <- rep(NA, NCOL(dcounts))
     #d.est[valid.c] <- exp(fit$par[1] + (ddmat.valid %*% d.par))
     
@@ -382,12 +381,12 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         
         ## estimate rna model conditioned on dna model
         rfit <- optim(par = r.par, fn = cost.rna, theta.d = d.par,
-                     llfnRNA = llfnRNA, 
-                     rcounts = rcounts[,valid.c.r,drop=FALSE], 
-                     log.rdepth = log.rdepth[valid.c.r],
-                     ddesign.mat = ddesign.mat[valid.rf,,drop=FALSE], 
-                     rdesign.mat = rdesign.mat[valid.rf,,drop=FALSE], 
-                     method = "BFGS", hessian = FALSE)
+                      llfnRNA = llfnRNA, 
+                      rcounts = rcounts[,valid.c.r,drop=FALSE], 
+                      log.rdepth = log.rdepth[valid.c.r],
+                      ddesign.mat = ddesign.mat[valid.rf,,drop=FALSE], 
+                      rdesign.mat = rdesign.mat[valid.rf,,drop=FALSE], 
+                      method = "BFGS", hessian = FALSE)
         
         r.par <- rfit$par
         names(r.par) <- NULL
@@ -410,7 +409,6 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             converged <- FALSE
         }
     }
-    
     #d.est <- matrix(NA, nrow = NROW(dcounts), ncol = NCOL(dcounts))
     #d.est[valid.c] <- exp(fit$par[1] + (ddmat.valid %*% d.par))
     
