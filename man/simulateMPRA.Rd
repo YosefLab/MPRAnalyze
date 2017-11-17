@@ -5,8 +5,8 @@
 \title{Simulate MPRA data}
 \usage{
 simulateMPRA(n.case = 100, n.ctrl = 20, n.cond = 2, n.bc = 25,
-  mu.dna = 100, sd.dna.cond = 2, sd.dna.bc = 0.1, mu.rna = 1,
-  sd.rna = 0.2, sd.rna.cond = 1)
+  n.reps = 2, mu.dna = 100, sd.dna.cond = 2, sd.dna.bc = 0.1,
+  mu.rna = 1, sd.rna = 0.2, sd.rna.cond = 1)
 }
 \arguments{
 \item{n.case}{number of case enhancers}

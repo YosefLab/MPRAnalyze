@@ -24,17 +24,18 @@
 #' 
 #' @export
 simulateMPRA <- function(n.case=100, n.ctrl=20,
-                          n.cond=2, n.bc=25,
+                          n.cond=2, n.bc=25, n.reps=2,
                           mu.dna=100, sd.dna.cond=2, sd.dna.bc=0.1,
                           mu.rna=1, sd.rna=0.2, sd.rna.cond=1) {
     
-    n.samples <- n.cond*n.bc
+    n.samples <- n.cond*n.bc*n.reps
     n.enhancers <- n.case+n.ctrl
     # sample allocation to condition
-    idx.cond <- sapply(seq(1, n.cond), function(x) rep(x, n.bc) )
+    idx.cond <- rep(sapply(seq(1, n.cond), function(x) rep(x, n.bc) ), n.reps)
+    idx.rep <- sapply(seq(1, n.reps), function(x) rep(x, n.bc*n.cond) )
     
     ## draw dna counts
-    fc.bc <- rep(rnorm(n = n.bc, mean = 1, sd = sd.dna.bc), n.cond)
+    fc.bc <- rep(rep(rnorm(n = n.bc, mean = 1, sd = sd.dna.bc), n.cond), n.reps)
     fc.bc[fc.bc] <- 0.2 # Threshold
     dcounts.case <- do.call(rbind, lapply(
         sample(x=mu.dna, size=n.case), 
@@ -73,7 +74,8 @@ simulateMPRA <- function(n.case=100, n.ctrl=20,
     colAnnot <- data.frame(
         sample=colnames(dcounts),
         cond=paste0("cond_", seq(1, n.cond))[idx.cond],
-        barcode=rep(paste0("BC", seq(1, n.bc)), n.cond),
+        rep=paste0("rep_", seq(1, n.reps))[idx.rep],
+        barcode=rep(paste0("BC", seq(1, n.bc)), n.cond*n.reps),
         stringsAsFactors = FALSE
     )
     colAnnot$experiment <- colAnnot$cond # for depth factors
