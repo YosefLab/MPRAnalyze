@@ -81,9 +81,13 @@ setClass("MpraObject", validity = validateMpraObject,
 #' @examples
 #' ##TODO
 MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_,
-                       BPPARAM=NULL) {
-    if(is.null(BPPARAM)) {
+                       BPPARAM=NULL, ncores=NULL) {
+    if(is.null(BPPARAM) & is.null(ncores)) {
         BPPARAM <- bpparam("SerialParam")
+    } else if(is.null(BPPARAM) & !is.null(ncores)) {
+        BPPARAM <- MulticoreParam(workers = ncores)
+    } else if(!is.null(BPPARAM) & !is.null(ncores)) {
+        stop("supply either BPPARAM or ncores but not both")
     }
 
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
