@@ -105,7 +105,7 @@ Enhancers can for example be ranked or compared to a reference (such as wild typ
 ```{r without_scrambles_without_conditions, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 10, n.ctrl = 5)
+sim <- simulateMPRA(n.case = 4, n.ctrl = 2)
 # Run MPRAnalyze
 ctrls <- which(sim$rowAnnot$type == "ctrl")
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, 
@@ -115,9 +115,7 @@ mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna))
 mpraobj <- analyse.condition.lrt(
     mpraobj, model="gamma.pois", mode="full",
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
-lsExprModels <- getExprModelFull(obj=objMPRA)
-print(data.frame(inferred=lsExprModels$baseline,
-                 simulated=vecExprRates))
+print(mpraobj@results)
 ```
 
 ## Test the effect of an condition
