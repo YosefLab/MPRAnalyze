@@ -28,7 +28,8 @@ test.lrt <- function(obj) {
                       row.names=rownames(obj@dnaCounts))
     
     res$lrt.statistic <- 2*(res$ll.full - res$ll.red)
-    res$pval <- pchisq(res$lrt.statistic, df = res$df.full-res$df.red)
+    res$pval <- pchisq(res$lrt.statistic, df = res$df.full-res$df.red, 
+                       lower.tail=FALSE)
     res$fdr.pval <- p.adjust(res$pval, 'BH')
     
     return(res)

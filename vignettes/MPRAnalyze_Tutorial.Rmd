@@ -105,7 +105,9 @@ Enhancers can for example be ranked or compared to a reference (such as wild typ
 ```{r without_scrambles_without_conditions, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 10, n.ctrl = 0)
+sim <- simulateMPRA(n.case = 10, n.ctrl = 0, n.reps = 3, 
+                    sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
+                    sd.rna = 2, sd.rna.cond = 2)
 # Run MPRAnalyze
 ctrls <- which(sim$rowAnnot$type == "ctrl")
 if(length(ctrls)  == 0) {
