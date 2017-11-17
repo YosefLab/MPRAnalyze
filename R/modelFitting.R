@@ -74,15 +74,20 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             rdesign.mat=obj@designs@rnaFull, 
             BPPARAM = obj@BPPARAM)
         if(obj@mode == "scaled") {
+            # H1: rna - prefit ~ 1 + condition + batch
+            # H0: rna - prefit ~ 1 + batch
             obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest)
-            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
-            obj@designs@rnaCtrlRed <- obj@designs@rnaFull
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull # used to correct prefit 
+            obj@designs@rnaCtrlRed <- obj@designs@rnaFull # used to correct prefit 
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
+            # cs: case-control identity of enhancer
+            # H1: rna ~ 1 + cs + condition + batch
+            # H0: rna ~ 1 + condition + batch
             obj@designs@rnaRed <- obj@designs@rnaFull
-            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
-            obj@designs@rnaCtrlRed <- getDesignMat(obj, rnaDesign, condition_totest)
+            obj@designs@rnaCtrlFull <- getDesignMat(obj, ~1)
+            obj@designs@rnaCtrlRed <- NULL
             obj@rnaCtrlScale <- NULL
             fitfun <- fit.dnarna.wctrlobs.iter
         }
@@ -163,10 +168,11 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
     obj@designs@rnaFull <- getDesignMat(obj, rnaDesign)
     if(is.null(obj@controls)) {
         obj@designs@rnaCtrlFull <- NULL
+        obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- NULL
         fitfun <- fit.dnarna.noctrlobs
     } else {
-        obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign, condition_totest) #?
+        obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
             model=model,
             dcounts = obj@dnaCounts[obj@controls,], 
@@ -177,9 +183,11 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
             rdesign.mat=obj@designs@rnaFull, 
             BPPARAM = obj@BPPARAM)
         if(obj@mode == "scaled") {
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
+            obj@designs@rnaCtrlFull <- getDesignMat(obj, ~1)
             obj@rnaCtrlScale <- NULL
             fitfun <- fit.dnarna.wctrlobs.iter
         }
@@ -262,9 +270,6 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
     if(is.null(obj@controls)) {
         stop("nothing to test against")
     } else {
-        obj@designs@rnaRed <- NULL
-        obj@designs@rnaCtrlFull <- obj@designs@rnaFull
-        obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
             model=model,
             dcounts = obj@dnaCounts[obj@controls,], 
@@ -275,9 +280,20 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
             rdesign.mat=obj@designs@rnaFull, 
             BPPARAM = obj@BPPARAM)
         if(obj@mode == "scaled") {
+            # H1: rna - prefit ~ 1 + batch
+            # H0: rna - prefit ~ 0
+            obj@designs@rnaRed <- NULL
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull # used to correct prefit 
+            obj@designs@rnaCtrlRed <- obj@designs@rnaFull # used to correct prefit 
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
+            # cs: case-control identity of enhancer
+            # H1: rna ~ 1 + cs + batch
+            # H0: rna ~ 1 + batch
+            obj@designs@rnaRed <- obj@designs@rnaFull
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
+            obj@designs@rnaCtrlRed <- NULL
             obj@rnaCtrlScale <- NULL
             fitfun <- fit.dnarna.wctrlobs.iter
         }
