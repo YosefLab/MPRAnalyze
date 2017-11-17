@@ -25,6 +25,8 @@
 #' (numeric, control enhancers x dna parameters)
 #' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
 #' coefficients to facilitate coefficient-based hypothesis testing
+#' @param BPPARAM BiocParallel parallelisation parameters. Only used in 
+#' fit.dnarna.onlyctrl.iter
 #'
 #' @return a list with components:
 #' \itemize{
@@ -46,7 +48,7 @@ fit.dnarna.noctrlobs <- function(model,
                                  ddepth, rdepth, rctrlscale,
                                  ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
                                  theta.d.ctrl.prefit,
-                                 compute.hessian) {
+                                 compute.hessian, BPPARAM=NULL) {
     
     ## set cost function
     if(model == "gamma.pois"){
@@ -140,7 +142,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
                                      ddepth, rdepth, rctrlscale=NULL,
                                      ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
                                      theta.d.ctrl.prefit,
-                                     compute.hessian) {
+                                     compute.hessian, BPPARAM=NULL) {
     ## set cost function
     if(model == "gamma.pois"){
         llfnDNA <- ll.dna.gamma.pois
@@ -308,7 +310,8 @@ fit.dnarna.wctrlobs.iter <- function(model,
 fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                                      ddepth, rdepth, rctrlscale=NULL,
                                      ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL,
-                                     theta.d.ctrl.prefit=NULL, compute.hessian=NULL) {
+                                     theta.d.ctrl.prefit=NULL, compute.hessian=NULL,
+                                     BPPARAM) {
     
     ## set cost function
     if(model == "gamma.pois"){
@@ -367,7 +370,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                          rdesign.mat = rdesign.mat[valid.c.d[i,],valid.rf,drop=FALSE], 
                          method = "BFGS", hessian = FALSE)
             return(fit)
-        }, BPPARAM = obj@BPPARAM)
+        }, BPPARAM = BPPARAM)
         
         d.par <- matrix(0, nrow=length(dfits),
                         ncol=NCOL(ddesign.mat)+1)

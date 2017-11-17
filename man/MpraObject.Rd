@@ -5,7 +5,7 @@
 \title{Initialize a MpraObject object}
 \usage{
 MpraObject(dnaCounts, rnaCounts, colAnnot = NULL, controls = NA_integer_,
-  BPPARAM = NULL)
+  BPPARAM = NULL, ncores = NULL)
 }
 \arguments{
 \item{dnaCounts}{the DNA counts matrix}

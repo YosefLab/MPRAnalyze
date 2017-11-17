@@ -71,7 +71,8 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             ddepth=obj@dnaDepth,
             rdepth=obj@rnaDepth,
             ddesign.mat=obj@designs@dna,
-            rdesign.mat=obj@designs@rnaFull)
+            rdesign.mat=obj@designs@rnaFull, 
+            BPPARAM = obj@BPPARAM)
         if(obj@mode == "scaled") {
             obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest)
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull
@@ -132,7 +133,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
 #' @rdname analyse.condition
 #' @export
 analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
-                                  dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL) {
+                                    dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL) {
     ## check depth is set
     if(length(obj@dnaDepth) == 0 | length(obj@rnaDepth) == 0) {
         stop("Library depth factors must be estimated or manually set")
@@ -173,7 +174,8 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
             ddepth=obj@dnaDepth,
             rdepth=obj@rnaDepth,
             ddesign.mat=obj@designs@dna,
-            rdesign.mat=obj@designs@rnaFull)
+            rdesign.mat=obj@designs@rnaFull, 
+            BPPARAM = obj@BPPARAM)
         if(obj@mode == "scaled") {
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
             fitfun <- fit.dnarna.noctrlobs
@@ -270,7 +272,8 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
             ddepth=obj@dnaDepth,
             rdepth=obj@rnaDepth,
             ddesign.mat=obj@designs@dna,
-            rdesign.mat=obj@designs@rnaFull)
+            rdesign.mat=obj@designs@rnaFull, 
+            BPPARAM = obj@BPPARAM)
         if(obj@mode == "scaled") {
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
             fitfun <- fit.dnarna.noctrlobs

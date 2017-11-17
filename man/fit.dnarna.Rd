@@ -12,15 +12,15 @@
 \usage{
 fit.dnarna.noctrlobs(model, dcounts, rcounts, ddepth, rdepth, rctrlscale,
   ddesign.mat, rdesign.mat, rdesign.ctrl.mat, theta.d.ctrl.prefit,
-  compute.hessian)
+  compute.hessian, BPPARAM = NULL)
 
 fit.dnarna.wctrlobs.iter(model, dcounts, rcounts, ddepth, rdepth,
   rctrlscale = NULL, ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
-  theta.d.ctrl.prefit, compute.hessian)
+  theta.d.ctrl.prefit, compute.hessian, BPPARAM = NULL)
 
 fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth,
   rctrlscale = NULL, ddesign.mat, rdesign.mat, rdesign.ctrl.mat = NULL,
-  theta.d.ctrl.prefit = NULL, compute.hessian = NULL)
+  theta.d.ctrl.prefit = NULL, compute.hessian = NULL, BPPARAM)
 }
 \arguments{
 \item{model}{noise model}
@@ -45,6 +45,9 @@ fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth,
 
 \item{compute.hessian}{if TRUE (default), compute the Hessian matrix of the
 coefficients to facilitate coefficient-based hypothesis testing}
+
+\item{BPPARAM}{BiocParallel parallelisation parameters. Only used in 
+fit.dnarna.onlyctrl.iter}
 }
 \value{
 a list with components:
