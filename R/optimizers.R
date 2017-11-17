@@ -88,7 +88,7 @@ fit.dnarna.noctrlobs <- function(model,
     ## split parameters to the two parts of the model
     d.par <- fit$par[seq(1, 1+NCOL(ddmat.valid))]
     r.par <- fit$par[seq(1+NCOL(ddmat.valid)+1,
-                         1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1)]
+                         1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
     
     #d.est <- rep(NA, length(dcounts))
     #d.est[valid.c] <- exp(d.par[1] + (ddmat.valid %*% d.par[-1]))
@@ -101,8 +101,8 @@ fit.dnarna.noctrlobs <- function(model,
     
     #r.fitval <- r.est * rdepth
     
-    d.coef <- c(fit$par[1], rep(NA, NCOL(ddesign.mat)))
-    d.coef[1 + which(valid.df)] <- d.par
+    d.coef <- c(d.par[1], rep(NA, 1+NCOL(ddesign.mat)))
+    d.coef[1 + which(valid.df)] <- d.par[-1]
     d.df <- length(d.par)
     
     r.coef <- rep(NA, NCOL(rdesign.mat))
@@ -129,7 +129,7 @@ fit.dnarna.noctrlobs <- function(model,
         #r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = r.se,
         d.coef = d.coef, d.se = d.se, d.df = d.df,
         r.coef = r.coef, r.se = r.se, r.df = r.df,
-        r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = NULL,
+        r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = 0,
         converged = fit$convergence,
         ll = -fit$value))
 }
@@ -433,7 +433,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             #r.fitval = r.fitval, r.est = r.est, r.coef = r.coef, r.se = NULL,
             d.coef = d.coef[i,], d.se = NULL, d.df = d.df[i],
             r.coef = r.coef, r.se = NULL, r.df = r.df,
-            r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = NULL,
+            r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = 0,
             converged = converged,
             ll = NA)
     }))

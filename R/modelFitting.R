@@ -64,9 +64,6 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
         fitfun <- fit.dnarna.noctrlobs
     } else {
         message("Fit control enhancer background models")
-        obj@designs@rnaRed <- obj@designs@rnaFull
-        obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign, condition_totest) #?
-        obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
             model=model,
             dcounts = obj@dnaCounts[obj@controls,], 
@@ -76,9 +73,15 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             ddesign.mat=obj@designs@dna,
             rdesign.mat=obj@designs@rnaFull)
         if(obj@mode == "scaled") {
-            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.par
+            obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest)
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
+            obj@designs@rnaCtrlRed <- obj@designs@rnaFull
+            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
+            obj@designs@rnaRed <- obj@designs@rnaFull
+            obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign, condition_totest)
+            obj@designs@rnaCtrlRed <- NULL
             obj@rnaCtrlScale <- NULL
             fitfun <- fit.dnarna.wctrlobs.iter
         }
@@ -172,7 +175,7 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
             ddesign.mat=obj@designs@dna,
             rdesign.mat=obj@designs@rnaFull)
         if(obj@mode == "scaled") {
-            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.par
+            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
             obj@rnaCtrlScale <- NULL
@@ -269,7 +272,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
             ddesign.mat=obj@designs@dna,
             rdesign.mat=obj@designs@rnaFull)
         if(obj@mode == "scaled") {
-            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.par
+            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
             obj@rnaCtrlScale <- NULL
