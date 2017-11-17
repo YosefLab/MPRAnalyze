@@ -167,19 +167,29 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       function(x) !all(x==0))
     valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, 
                       function(x) !all(x==0))
-    valid.rf.ctrl <- apply(rdesign.ctrl.mat[valid.c,,drop=FALSE], 2, 
-                           function(x) !all(x==0))
+    if(!is.null(rdesign.ctrl.mat)) {
+        valid.rf.ctrl <- apply(rdesign.ctrl.mat[valid.c,,drop=FALSE], 2, 
+                               function(x) !all(x==0))
+    }
     
     ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
     rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
-    rdmat.ctrl.valid <- rdesign.ctrl.mat[valid.c,valid.rf.ctrl,drop=FALSE]
+    if(!is.null(rdesign.ctrl.mat)) {
+        rdmat.ctrl.valid <- rdesign.ctrl.mat[valid.c,valid.rf.ctrl,drop=FALSE]
+    } else {
+        rdmat.ctrl.valid <- NULL
+    }
     
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation
     # Initialize DNA model parameter vector with a guess
     d.par <- matrix(0, nrow=1, ncol=1 + NCOL(ddmat.valid))
     r.par <- matrix(0, nrow=1, ncol=NCOL(rdmat.valid))
-    r.ctrl.par <- matrix(0, nrow=1, ncol=NCOL(rdmat.ctrl.valid))
+    if(!is.null(rdesign.ctrl.mat)) {
+        r.ctrl.par <- matrix(0, nrow=1, ncol=NCOL(rdmat.ctrl.valid))
+    } else {
+        r.ctrl.par <- NULL
+    }
     
     llold <- -Inf
     llnew <- 0
@@ -210,8 +220,10 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       method = "BFGS", hessian = compute.hessian)
         
         r.par <- rfit$par[seq(1, 1+length(r.par))]
-        r.ctrl.par <- rfit$par[seq(1+length(r.par)+1, 
-                                   1+length(r.par)+length(r.ctrl.par))]
+        if(!is.null(r.ctrl.par)) {
+            r.ctrl.par <- rfit$par[seq(1+length(r.par)+1, 
+                                       1+length(r.par)+length(r.ctrl.par))]
+        }
         
         ## update iteration convergence reporters
         llold <- llnew
@@ -248,9 +260,14 @@ fit.dnarna.wctrlobs.iter <- function(model,
     r.coef[which(valid.rf)] <- r.par
     r.df <- length(r.par)
     
-    r.ctrl.coef <- rep(NA, NCOL(rdesign.ctrl.mat))
-    r.ctrl.coef[which(valid.rf.ctrl)] <- r.ctrl.par
-    r.ctrl.df <- length(r.ctrl.par)
+    if(!is.null(rdesign.ctrl.mat)){
+        r.ctrl.coef <- rep(NA, NCOL(rdesign.ctrl.mat))
+        r.ctrl.coef[which(valid.rf.ctrl)] <- r.ctrl.par
+        r.ctrl.df <- length(r.ctrl.par)
+    } else {
+        r.ctrl.coef <- NULL
+        r.ctrl.df <- 0
+    }
     
     ## standard error of the estimates
     if (compute.hessian) {
@@ -264,10 +281,14 @@ fit.dnarna.wctrlobs.iter <- function(model,
             se[seq(1+NCOL(ddmat.valid)+1,
                    1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
         
-        r.ctrl.se <- rep(NA, NCOL(rdesign.ctrl.mat))
-        r.ctrl.se[which(valid.rf.ctrl)] <- 
-            se[seq(1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1,
-                   1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+NCOL(rdmat.ctrl.valid))]
+        if(!is.null(rdesign.ctrl.mat)){
+            r.ctrl.se <- rep(NA, NCOL(rdesign.ctrl.mat))
+            r.ctrl.se[which(valid.rf.ctrl)] <- 
+                se[seq(1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1,
+                       1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+NCOL(rdmat.ctrl.valid))]
+        } else {
+            r.ctrl.se <- NULL
+        }
     } else {
         d.se <- NULL
         r.se <- NULL

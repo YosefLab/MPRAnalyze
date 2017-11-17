@@ -156,9 +156,13 @@ cost.dnarna.wctrl <- function(theta, theta.d=NULL, theta.r=NULL, theta.d.ctrl.pr
     theta.r <- theta[
         seq(1+NCOL(ddesign.mat)+1, 
             1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
-    theta.r.ctrl <- theta[
-        seq(1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+1, 
-            1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1)]
+    if(!is.null(rdesign.ctrl.mat)) {
+        theta.r.ctrl <- theta[
+            seq(1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+1, 
+                1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1)]
+    } else {
+        theta.r.ctrl <- NULL
+    }
     
     ## compute likelihood
     # likelihood of case dna observations
@@ -217,9 +221,13 @@ cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
     
     ## extract parameter vectors by model part
     theta.r <- theta[seq(1, NCOL(rdesign.mat), by=1)]
-    theta.r.ctrl <- theta[seq(NCOL(rdesign.mat)+1, 
-                              NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1),
-                          drop=FALSE]
+    if(!is.null(rdesign.ctrl.mat)) {
+        theta.r.ctrl <- theta[seq(NCOL(rdesign.mat)+1, 
+                                  NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1),
+                              drop=FALSE]
+    } else {
+        theta.r.ctrl <- NULL
+    }
     
     ## compute liklihood
     # likelihood of case rna observations
