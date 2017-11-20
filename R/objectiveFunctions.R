@@ -62,8 +62,12 @@ cost.dnarna <- function(theta, theta.d=NULL, theta.r=NULL,
     theta <- pmax(pmin(theta, 23), -23)
     # first parameter of DNA model is the variance(-link) parameter
     theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
-    theta.r <- theta[seq(1+NCOL(ddesign.mat)+1, 
-                         1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
+    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
+        theta.r <- theta[seq(1+NCOL(ddesign.mat)+1, 
+                             1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
+    } else {
+        theta.r <- NULL
+    }
     
     ## compute likelihood
     # likelihood of case dna observations

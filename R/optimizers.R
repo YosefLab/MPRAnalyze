@@ -70,13 +70,21 @@ fit.dnarna.noctrlobs <- function(model,
     
     ## clean design matrix from unused factors: note that these should be
     valid.df <- apply(ddesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
-    valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
+    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
+        valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
+    }
     
     ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
-    rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
+    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
+        rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
+    }
     
     ## Initialize parameter vector with a guess
-    guess <- matrix(0, nrow=1, ncol=1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
+    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
+        guess <- matrix(0, nrow=1, ncol=1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
+    } else {
+        guess <- matrix(0, nrow=1, ncol=1 + NCOL(ddmat.valid))
+    }
     
     fit <- optim(par = guess,
                  fn = cost.dnarna, llfnDNA = llfnDNA, llfnRNA = llfnRNA,
@@ -90,16 +98,23 @@ fit.dnarna.noctrlobs <- function(model,
     ## split parameters to the two parts of the model
     fit$par <- pmax(pmin(fit$par, 23), -23)
     d.par <- fit$par[seq(1, 1+NCOL(ddmat.valid))]
-    r.par <- fit$par[seq(1+NCOL(ddmat.valid)+1,
-                         1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
+    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
+        r.par <- fit$par[seq(1+NCOL(ddmat.valid)+1,
+                             1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
+    }
     
     d.coef <- c(d.par[1], rep(NA, NCOL(ddesign.mat)))
     d.coef[1 + which(valid.df)] <- d.par[-1]
     d.df <- length(d.par)
     
-    r.coef <- rep(NA, NCOL(rdesign.mat))
-    r.coef[which(valid.rf)] <- r.par
-    r.df <- length(r.par)
+    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
+        r.coef <- rep(NA, NCOL(rdesign.mat))
+        r.coef[which(valid.rf)] <- r.par
+        r.df <- length(r.par)
+    } else {
+        r.coef <- NULL
+        r.df <- NULL
+    }
     
     ## standard error of the estimates
     if (compute.hessian) {
@@ -108,9 +123,13 @@ fit.dnarna.noctrlobs <- function(model,
         d.se <- rep(NA, 1 + NCOL(ddesign.mat))
         d.se[c(1, 1 + which(valid.df))] <- se[seq(1, 1+NCOL(ddmat.valid))]
         
-        r.se <- rep(NA, NCOL(rdesign.mat))
-        r.se[which(valid.rf)] <- se[seq(1+NCOL(ddmat.valid)+1,
-                                        1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1)]
+        if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
+            r.se <- rep(NA, NCOL(rdesign.mat))
+            r.se[which(valid.rf)] <- se[seq(1+NCOL(ddmat.valid)+1,
+                                            1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1)]
+        } else {
+            r.se <- NULL
+        }
     } else {
         d.se <- NULL
         r.se <- NULL

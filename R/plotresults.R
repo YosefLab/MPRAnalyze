@@ -57,7 +57,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
         ratio=log(rfit)-log(dfit),
         cond=obj@colAnnot[,condition],
         batch=obj@colAnnot[,batch],
-        enhancer="model_fit",
+        enhancer=id,
         stringsAsFactors=FALSE
     )
     if(!is.null(obj@controls)){
@@ -68,7 +68,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
                 ratio=log(rfit)-log(dfit),
                 cond=obj@colAnnot[,condition],
                 batch=obj@colAnnot[,batch],
-                enhancer="model_fit_ctrl",
+                enhancer="control",
                 stringsAsFactors=FALSE
             )
             return(gplot.data.fit.ctrl.i)
@@ -80,15 +80,27 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
     # colour-blind palette
     cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                     "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-    gplot.boxplot <- ggplot() + geom_boxplot(
-        data=gplot.data.boxplot, aes(x=cond, y=ratio, fill=enhancer, alpha=batch),
-        outlier.shape = "x" ) +
-        geom_point(data = gplot.data.fit, aes(x=cond, y=ratio, colour=enhancer, shape=batch)) +
-        labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
-                          round(log(obj@results[id,]$fdr.pval)/log(10),2)) )
+    if(!is.null(condition)) {
+        gplot.boxplot <- ggplot() + geom_boxplot(
+            data=gplot.data.boxplot, aes(x=cond, y=ratio, fill=enhancer, alpha=batch),
+            outlier.shape = "x" ) +
+            geom_point(data = gplot.data.fit, aes(
+                x=cond, y=ratio, shape=batch), size=3) +
+            scale_shape_discrete(solid = FALSE) +
+            labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
+                              round(log(obj@results[id,]$fdr.pval)/log(10),2)) )
+    } else {
+        gplot.boxplot <- ggplot() + geom_boxplot(
+            data=gplot.data.boxplot, aes(x=enhancer, y=ratio, fill=enhancer, alpha=batch),
+            outlier.shape = "x" ) +
+            geom_point(data = gplot.data.fit, aes(
+                x=enhancer, y=ratio, shape=batch), size=3) +
+            scale_shape_discrete(solid = FALSE) +
+            labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
+                              round(log(obj@results[id,]$fdr.pval)/log(10),2)) )
+    }
     if(length(unique(gplot.data.boxplot$batch <= length(cbbPalette)))) {
-        gplot.boxplot <- gplot.boxplot + scale_color_manual(values = cbbPalette) +
-            scale_fill_manual(values = cbbPalette)
+        gplot.boxplot <- gplot.boxplot + scale_fill_manual(values = cbbPalette)
     }
     
     return(gplot.boxplot)
