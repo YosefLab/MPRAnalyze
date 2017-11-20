@@ -31,7 +31,7 @@ ll.dna.gamma.pois <- function(theta,
                               dcounts, log.ddepth,
                               ddesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
-    theta <- pmax(pmin(theta, 23), -23)
+    #theta <- pmax(pmin(theta, 23), -23) # do this in objective functions
     
     d.est <- theta[1] + ddesign.mat %*% theta[-1] + log.ddepth
     
@@ -48,7 +48,7 @@ ll.dna.ln.nb <- function(theta,
                          dcounts, log.ddepth,
                          ddesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
-    theta <- pmax(pmin(theta, 23), -23)
+    # theta <- pmax(pmin(theta, 23), -23) # do this in objective functions
     
     d.est <- ddesign.mat %*% theta[-1] + log.ddepth
     
@@ -106,7 +106,7 @@ ll.rna.gamma.pois <- function(theta, theta.d,
                               rcounts, log.rdepth,
                               ddesign.mat, rdesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
-    theta <- pmax(pmin(theta, 23), -23)
+    # theta <- pmax(pmin(theta, 23), -23) # do this in objective functions
     
     log.d.est <- theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat)
     #print(dim(rcounts))
@@ -131,7 +131,7 @@ ll.rna.ln.nb <- function(theta, theta.d,
                          rcounts, log.rdepth,
                          ddesign.mat, rdesign.mat) {
     ## limit theta to avoid model shrinkage\explosion
-    theta <- pmax(pmin(theta, 23), -23)
+    # theta <- pmax(pmin(theta, 23), -23) # do this in objective functions
     
     log.d.est <- theta.d[,-1] %*% t(ddesign.mat)
     log.r.est <- log.d.est + (theta[-1] %*% t(rdesign.mat))[1,] + log.rdepth

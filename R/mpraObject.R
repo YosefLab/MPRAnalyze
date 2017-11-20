@@ -30,7 +30,7 @@ validateMpraObject <- function(object) {
         errors <- c(errors,
                     "RNA, DNA feature names either missing or don't match")
     }
-
+    
     if(length(errors) > 0) {
         return(errors)
     } else {
@@ -41,28 +41,28 @@ validateMpraObject <- function(object) {
 ##TODO: document this
 setClass("MpraObject", validity = validateMpraObject,
          slots = c(
-    ## provided by user
-    dnaCounts = "matrix",
-    rnaCounts = "matrix",
-    colAnnot = "data.frame",
-    controls = "integerORNULL", #idx of negative controls
-    controls.forfit = "integerORNULL", #idx of negative controls used in fitting of full and red
-
-    dnaDepth = "numeric",
-    rnaDepth = "numeric",
-    rnaCtrlScale = "numericORNULL",
-    
-    mode = "character",
-    model = "character",
-    designs = "Designs",
-    modelFits = "list",
-    modelFits.red = "list", ##only used for LRT diff mode
-    modelPreFits.dna.ctrl = "listORNULL", ##only used for LRT_iter diff mode 
-
-    results = "data.frame",
-
-    BPPARAM = "BiocParallelParam"
-))
+             ## provided by user
+             dnaCounts = "matrix",
+             rnaCounts = "matrix",
+             colAnnot = "data.frame",
+             controls = "integerORNULL", #idx of negative controls
+             controls.forfit = "integerORNULL", #idx of negative controls used in fitting of full and red
+             
+             dnaDepth = "numeric",
+             rnaDepth = "numeric",
+             rnaCtrlScale = "numericORNULL",
+             
+             mode = "character",
+             model = "character",
+             designs = "Designs",
+             modelFits = "list",
+             modelFits.red = "list", ##only used for LRT diff mode
+             modelPreFits.dna.ctrl = "listORNULL", ##only used for LRT_iter diff mode 
+             
+             results = "data.frame",
+             
+             BPPARAM = "BiocParallelParam"
+         ))
 
 
 #' Initialize a MpraObject object
@@ -90,7 +90,7 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
     } else if(!is.null(BPPARAM) & !is.null(ncores)) {
         stop("supply either BPPARAM or ncores but not both")
     }
-
+    
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
                colAnnot=colAnnot, controls=controls, BPPARAM=BPPARAM)
     return(obj)
@@ -115,12 +115,11 @@ getDNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
     }
     if(obj@model == "gamma.pois") {
         dfit <- do.call(rbind, lapply(enhancers, function(i) {
-            fit[[i]]$d.coef[1] + 
-                exp(sum(fit[[i]]$d.coef[-1] %*% t(obj@designs@dna), na.rm = TRUE))
+            exp(fit[[i]]$d.coef[1] + fit[[i]]$d.coef[-1] %*% t(obj@designs@dna))
         }))
     } else if(obj@model == "ln.nb") {
         dfit <- do.call(rbind, lapply(enhancers, function(i) {
-            exp(sum(fit[[i]]$d.coef[-1] * t(obj@designs@dna), na.rm = TRUE))
+            exp(fit[[i]]$d.coef[-1] * t(obj@designs@dna))
         }))
     }
     if(depth == TRUE){
@@ -151,11 +150,11 @@ getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
                        depth=FALSE, full=full)
     if(obj@model == "gamma.pois") {
         rfit <- dfit * do.call(rbind, lapply(enhancers, function(i) {
-                exp(sum(fit[[i]]$r.coef * t(rdesign), na.rm = TRUE))
+            exp(fit[[i]]$r.coef %*% t(rdesign))
         }))
     } else if(obj@model == "ln.nb") {
         rfit <- dfit * do.call(rbind, lapply(enhancers, function(j) {
-            exp(sum(fit[[i]]$r.coef[-1] * t(rdesign), na.rm = TRUE))
+            exp(fit[[i]]$r.coef[-1] %*% t(rdesign))
         }))
     }
     if(depth == TRUE){

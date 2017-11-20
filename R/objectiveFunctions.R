@@ -58,6 +58,8 @@ cost.dnarna <- function(theta, theta.d=NULL, theta.r=NULL,
                         ddesign.mat, rdesign.mat, rctrldesign.mat=NULL) {
     
     ## extract parameter vectors by model part
+    # limit theta to avoid model shrinkage\explosion
+    theta <- pmax(pmin(theta, 23), -23)
     # first parameter of DNA model is the variance(-link) parameter
     theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
     theta.r <- theta[seq(1+NCOL(ddesign.mat)+1, 
@@ -87,6 +89,9 @@ cost.dna <- function(theta, theta.d=NULL, theta.r,
                      log.ddepth, log.rdepth, rctrlscale=NULL,
                      ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
     
+    ## limit theta to avoid model shrinkage\explosion
+    theta <- pmax(pmin(theta, 23), -23)
+    
     ## compute likelihood
     d.ll <- llfnDNA(theta = theta,
                     dcounts = dcounts,
@@ -108,6 +113,9 @@ cost.rna <- function(theta, theta.d, theta.r=NULL,
                      dcounts, rcounts,
                      log.ddepth=NULL, log.rdepth, rctrlscale=NULL,
                      ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
+    
+    ## limit theta to avoid model shrinkage\explosion
+    theta <- pmax(pmin(theta, 23), -23)
     
     ## compute likelihood
     r.ll <- llfnRNA(theta = c(theta, rctrlscale),
@@ -150,6 +158,8 @@ cost.dnarna.wctrl <- function(theta, theta.d=NULL, theta.r=NULL, theta.d.ctrl.pr
                               ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
     
     ## extract parameter vectors by model part
+    # limit theta to avoid model shrinkage\explosion
+    theta <- pmax(pmin(theta, 23), -23)
     # first parameter of DNA model is the variance(-link) parameter
     theta.d <- theta[
         seq(1, 1+NCOL(ddesign.mat), by=1)]
@@ -196,6 +206,8 @@ cost.dna.wctrl <- function(theta, theta.d=NULL, theta.r,  theta.d.ctrl.prefit=NU
                            ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
     
     ## compute likelihood
+    # limit theta to avoid model shrinkage\explosion
+    theta <- pmax(pmin(theta, 23), -23)
     # likelihood of case dna observations
     d.ll <- llfnDNA(theta = theta,
                     dcounts = dcounts,
@@ -220,6 +232,8 @@ cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
                            ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
     
     ## extract parameter vectors by model part
+    # limit theta to avoid model shrinkage\explosion
+    theta <- pmax(pmin(theta, 23), -23)
     theta.r <- theta[seq(1, NCOL(rdesign.mat), by=1)]
     if(!is.null(rdesign.ctrl.mat)) {
         theta.r.ctrl <- theta[seq(NCOL(rdesign.mat)+1, 
