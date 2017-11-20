@@ -88,7 +88,7 @@ fit.dnarna.noctrlobs <- function(model,
                  method = "BFGS", hessian = compute.hessian)
     
     ## split parameters to the two parts of the model
-    fit$par <- pmax(pmin(fit$par, 23), -23) # do this in objective functions
+    fit$par <- pmax(pmin(fit$par, 23), -23)
     d.par <- fit$par[seq(1, 1+NCOL(ddmat.valid))]
     r.par <- fit$par[seq(1+NCOL(ddmat.valid)+1,
                          1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
@@ -185,7 +185,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
     llnew <- 0
     iter <- 1
     converged <- TRUE
-    RELTOL <- 10^(-4) # -6 or -8?
+    RELTOL <- 10^(-6) # -6 or -8?
     MAXITER <- 1000
     while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
         #print(paste0(iter, ": ", llnew, " ", llold))
@@ -198,9 +198,14 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
                       method = "BFGS", hessian = compute.hessian)
         
+        dfit$par <- pmax(pmin(dfit$par, 23), -23)
         d.par <- dfit$par[seq(1, length(d.par))]
         
         ## estimate rna model conditioned on dna model
+        print("rna")
+        print(d.par)
+        print(r.par)
+        print(r.ctrl.par)
         rfit <- optim(par = c(r.par, r.ctrl.par), 
                       fn = cost.rna.wctrl, llfnRNA = llfnRNA,
                       theta.d = d.par, theta.d.ctrl.prefit = theta.d.ctrl.prefit,
@@ -210,6 +215,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       rdesign.ctrl.mat = rdmat.ctrl.valid,
                       method = "BFGS", hessian = compute.hessian)
         
+        rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par[seq_len(length(r.par))]
         if(!is.null(r.ctrl.par)) {
             r.ctrl.par <- rfit$par[seq(length(r.par)+1, 
@@ -321,7 +327,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     llnew <- 0
     iter <- 1
     converged <- TRUE
-    RELTOL <- 10^(-4) # down to -6 or -8?
+    RELTOL <- 10^(-6) # down to -6 or -8?
     MAXITER <- 1000
     while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
         #print(paste0(iter, ": ", llnew, " ", llold))
@@ -339,6 +345,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                          ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
                          rdesign.mat = rdesign.mat[valid.c.d[i,],valid.rf,drop=FALSE], 
                          method = "BFGS", hessian = FALSE)
+            fit$par <- pmax(pmin(fit$par, 23), -23)
             return(fit)
         }, BPPARAM = BPPARAM)
         
@@ -360,6 +367,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                       rdesign.mat = rdesign.mat[valid.rf,,drop=FALSE], 
                       method = "BFGS", hessian = FALSE)
         
+        rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par
         names(r.par) <- NULL
         
