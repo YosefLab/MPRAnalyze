@@ -88,7 +88,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             # H1: rna ~ 1 + cs + condition + batch
             # H0: rna ~ 1 + condition + batch
             obj@designs@rnaRed <- obj@designs@rnaFull
-            obj@designs@rnaCtrlFull <- getDesignMat(obj, ~1)
+            obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign)
             obj@designs@rnaCtrlRed <- NULL
             obj@rnaCtrlScale <- NULL
             obj@controls.forfit <- obj@controls

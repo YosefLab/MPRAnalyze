@@ -218,7 +218,7 @@ plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), fu
 ```{r with_scrambles_with_conditions_full, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 2, n.ctrl = 2, n.reps = 2, 
+sim <- simulateMPRA(n.case = 2, n.ctrl = 5, n.reps = 2, 
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -237,6 +237,11 @@ print(mpraobj@results)
 plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
 ```
 
+```{r }
+plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
+plot(mpraobj@dnaCounts["case_1",], getDNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
+plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
+```
 
 # Plotting
 MPRAnalyze compores distribution with each other and the results can be visualised using boxplots.
