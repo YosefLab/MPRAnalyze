@@ -231,7 +231,7 @@ plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
 ```{r with_scrambles_with_conditions_full, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 4, n.ctrl = 2, n.reps = 2, 
+sim <- simulateMPRA(n.case = 10, n.ctrl = 10, n.reps = 2, 
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -239,7 +239,7 @@ ctrls <- which(sim$rowAnnot$type == "ctrl")
 if(length(ctrls)  == 0) {
     ctrls <- NULL
 }
-mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
+mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 2,
                       colAnnot=sim$colAnnot, controls=ctrls)
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
@@ -261,11 +261,7 @@ plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
 
 # Plotting
 MPRAnalyze compores distribution with each other and the results can be visualised using boxplots.
-```{r boxplots, results='markdown'}
-id <- rownames(objMPRA$dfMPRAnalyzeResults)[order(objMPRA$dfMPRAnalyzeResults$padj)[1]]
-gplotBoxplots <- plot.boxplots(objMPRA,id)
-print(gplotBoxplots)
-```
+
 A useful reference for the overall results is also a histogram of the log10 FDR-corrected p-values:
 ```{r q-value histogram, results='markdown'}
 hist(log(objMPRA$dfMPRAnalyzeResults$padj)/log(10))

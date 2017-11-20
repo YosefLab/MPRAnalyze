@@ -27,7 +27,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
     
     ## extract observations and format into data-frame of rna:dna ratios
     # case enhancer observations
-    gplot.data.obs <- data.frame(
+    gplot.data.boxplot <- data.frame(
         ratio=(log(obj@rnaCounts[id,])-log(obj@rnaDepth))-
             (log(obj@dnaCounts[id,])-log(obj@dnaDepth)),
         cond=obj@colAnnot[,condition],
@@ -47,7 +47,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
                 stringsAsFactors=FALSE
             )
         }))
-        gplot.data.obs <- rbind(gplot.data.obs, gplot.data.obs.ctrl)
+        gplot.data.boxplot <- rbind(gplot.data.boxplot, gplot.data.obs.ctrl)
     }
     
     ## extract model fits
@@ -60,20 +60,35 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
         enhancer="model_fit",
         stringsAsFactors=FALSE
     )
+    if(!is.null(obj@controls)){
+        gplot.data.fit.ctrl <- do.call(rbind, lapply(obj@controls, function(i) {
+            dfit <- as.vector(getDNAFits(obj, enhancers=i, depth=FALSE, full=full))
+            rfit <- as.vector(getRNAFits(obj, enhancers=i, depth=FALSE, full=full))
+            gplot.data.fit.ctrl.i <- data.frame(
+                ratio=log(rfit)-log(dfit),
+                cond=obj@colAnnot[,condition],
+                batch=obj@colAnnot[,batch],
+                enhancer="model_fit_ctrl",
+                stringsAsFactors=FALSE
+            )
+            return(gplot.data.fit.ctrl.i)
+        }))
+        gplot.data.fit <- rbind(gplot.data.fit, gplot.data.fit.ctrl)
+    }
     
     ## create ggplot
     # colour-blind palette
     cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                     "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-    gplot.data <- rbind(gplot.data.obs, gplot.data.fit)
     gplot.boxplot <- ggplot() + geom_boxplot(
-        data=gplot.data.obs, aes(x=cond, y=ratio, fill=enhancer, alpha=batch),
+        data=gplot.data.boxplot, aes(x=cond, y=ratio, fill=enhancer, alpha=batch),
         outlier.shape = "x" ) +
-        geom_point(data = gplot.data.fit, aes(x=cond, y=ratio, shape=batch)) +
+        geom_point(data = gplot.data.fit, aes(x=cond, y=ratio, colour=enhancer, shape=batch)) +
         labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
                           round(log(obj@results[id,]$fdr.pval)/log(10),2)) )
-    if(length(unique(gplot.data.obs$batch <= length(cbbPalette)))) {
-        gplot.boxplot <- gplot.boxplot + scale_fill_manual(values = cbbPalette)
+    if(length(unique(gplot.data.boxplot$batch <= length(cbbPalette)))) {
+        gplot.boxplot <- gplot.boxplot + scale_color_manual(values = cbbPalette) +
+            scale_fill_manual(values = cbbPalette)
     }
     
     return(gplot.boxplot)
@@ -109,6 +124,6 @@ plotVolcano <- function(obj){
     gplot.volcano <- ggplot() + geom_boxplot(
         data=gplot.data, aes(x=lfc, y=padj) ) +
         labs(title="volcano plot" )
-
+    
     return(gplot.volcano)
 }
