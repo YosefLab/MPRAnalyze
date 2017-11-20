@@ -37,14 +37,16 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
     )
     # control enhancer observations
     if(!is.null(obj@controls)){
-        gplot.data.obs.ctrl <- data.frame(
-            ratio=(log(obj@rnaCounts[obj@controls,])-log(obj@rnaDepth))-
-                (log(obj@dnaCounts[obj@controls,])-log(obj@dnaDepth)),
-            cond=obj@colAnnot[,condition],
-            batch=obj@colAnnot[,batch],
-            enhancer="control",
-            stringsAsFactors=FALSE
-        )
+        gplot.data.obs.ctrl <- do.call(rbind, lapply(obj@controls, function(i) {
+            data.frame(
+                ratio=(log(obj@rnaCounts[i,])-log(obj@rnaDepth))-
+                    (log(obj@dnaCounts[i,])-log(obj@dnaDepth)),
+                cond=obj@colAnnot[,condition],
+                batch=obj@colAnnot[,batch],
+                enhancer="control",
+                stringsAsFactors=FALSE
+            )
+        }))
         gplot.data.obs <- rbind(gplot.data.obs, gplot.data.obs.ctrl)
     }
     
@@ -65,7 +67,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
                     "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
     gplot.data <- rbind(gplot.data.obs, gplot.data.fit)
     gplot.boxplot <- ggplot() + geom_boxplot(
-        data=gplot.data.obs, aes(x=cond, y=ratio, fill=batch, alpha=batch),
+        data=gplot.data.obs, aes(x=cond, y=ratio, fill=enhancer, alpha=batch),
         outlier.shape = "x" ) +
         geom_point(data = gplot.data.fit, aes(x=cond, y=ratio, shape=batch)) +
         labs(title=paste0(id, " log10 fdr-corrected p-value: ", 

@@ -198,7 +198,7 @@ taking account for baseline variation captured be the control sequences.
 ```{r with_scrambles_with_conditions_scaled, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 20, n.ctrl = 20, n.reps = 2, 
+sim <- simulateMPRA(n.case = 20, n.ctrl = 5, n.reps = 2, n.bc = 5,
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -214,13 +214,16 @@ mpraobj <- analyse.condition.lrt(
     mpraobj, model="gamma.pois", mode="scaled",
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
 print(mpraobj@results)
-plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
 ```
 
 ```{r }
 plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
 plot(mpraobj@dnaCounts["case_1",], getDNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
+abline(a = 0, b = 1, col="red")
 plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
+abline(a = 0, b = 1, col="red")
+plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
+plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
 ```
 
 ### Full
@@ -251,6 +254,7 @@ plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
 plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
 plot(mpraobj@dnaCounts["case_1",], getDNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
 plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
+plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
 ```
 
 # Plotting
