@@ -52,7 +52,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
     dfit <- as.vector(getDNAFits(obj, enhancers=id, depth=FALSE, full=full))
     rfit <- as.vector(getRNAFits(obj, enhancers=id, depth=FALSE, full=full))
     gplot.data.fit <- data.frame(
-        ratio=dfit/rfit,
+        ratio=log(rfit)-log(dfit),
         cond=obj@colAnnot[,condition],
         batch=obj@colAnnot[,batch],
         enhancer="model_fit",

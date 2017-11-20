@@ -158,6 +158,7 @@ abline(a = 0, b = 1, col="red")
 plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
 abline(a = 0, b = 1, col="red")
 plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
+plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
 ```
 
 # With scrambled/control enhancers
