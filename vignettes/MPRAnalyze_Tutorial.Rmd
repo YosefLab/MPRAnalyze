@@ -118,11 +118,8 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
                       colAnnot=sim$colAnnot, controls=ctrls)
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
-mpraobj <- analyse.condition.lrt(
-    mpraobj, model="gamma.pois", mode="full", 
-    dnaDesign=~barcode, rnaDesign=~1)
-print(mpraobj@results)
-plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
+#TODO
+#print(mpraobj@results)
 ```
 
 ## Test the effect of an condition
@@ -272,7 +269,7 @@ MPRAnalyze compores distribution with each other and the results can be visualis
 
 A useful reference for the overall results is also a histogram of the log10 FDR-corrected p-values:
 ```{r q-value histogram, results='markdown'}
-hist(log(objMPRA$dfMPRAnalyzeResults$padj)/log(10))
+hist(log(mpraobj@results$fdr.pval)/log(10))
 ```
 
 # Session information
