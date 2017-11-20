@@ -202,10 +202,6 @@ fit.dnarna.wctrlobs.iter <- function(model,
         d.par <- dfit$par[seq(1, length(d.par))]
         
         ## estimate rna model conditioned on dna model
-        print("rna")
-        print(d.par)
-        print(r.par)
-        print(r.ctrl.par)
         rfit <- optim(par = c(r.par, r.ctrl.par), 
                       fn = cost.rna.wctrl, llfnRNA = llfnRNA,
                       theta.d = d.par, theta.d.ctrl.prefit = theta.d.ctrl.prefit,
