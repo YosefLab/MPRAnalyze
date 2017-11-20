@@ -133,7 +133,7 @@ Such a base line variation could be overall transcriptional activity.
 ```{r without_scrambles_with_conditions, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 10, n.ctrl = 0, n.reps = 2, 
+sim <- simulateMPRA(n.case = 30, n.ctrl = 0, n.reps = 3,  
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -148,8 +148,19 @@ mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna))
 mpraobj <- analyse.condition.lrt(
     mpraobj, model="gamma.pois", mode="full", 
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
+```
+
+```{r }
 print(mpraobj@results)
 plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
+plot(mpraobj@dnaCounts["case_1",], getDNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
+abline(a = 0, b = 1, col="red")
+plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
+abline(a = 0, b = 1, col="red")
+plot(mpraobj@rnaCounts["case_1",]/mpraobj@dnaCounts["case_1",], 
+     getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE) /
+         getDNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
+abline(a = 0, b = 1, col="red")
 ```
 
 # With scrambled/control enhancers
@@ -189,7 +200,7 @@ taking account for baseline variation captured be the control sequences.
 ```{r with_scrambles_with_conditions_scaled, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 4, n.ctrl = 2, n.reps = 2, 
+sim <- simulateMPRA(n.case = 20, n.ctrl = 20, n.reps = 2, 
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -205,6 +216,7 @@ mpraobj <- analyse.condition.lrt(
     mpraobj, model="gamma.pois", mode="scaled",
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
 print(mpraobj@results)
+plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
 ```
 
 ```{r }

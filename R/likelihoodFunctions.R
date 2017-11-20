@@ -33,11 +33,17 @@ ll.dna.gamma.pois <- function(theta,
     ## limit theta to avoid model shrinkage\explosion
     #theta <- pmax(pmin(theta, 23), -23) # do this in objective functions
     
-    d.est <- theta[1] + ddesign.mat %*% theta[-1] + log.ddepth
+    #log.rate.est <- theta[1] + ddesign.mat %*% theta[-1] + log.ddepth
+    log.rate.est <- - ddesign.mat %*% theta[-1] - log.ddepth
     
+    ## compute likelihood
+    # mu_gamma = alpha / beta 
+    #          = alpha * model_dna
+    # shape_gamma = alpha
+    # rate_gamma = beta = 1/model_dna
     ll <- sum(dgamma(x = dcounts,
                      shape = exp(theta[1]), # alpha
-                     rate = exp(d.est),
+                     rate = exp(log.rate.est),
                      log = TRUE))
     
     return(-ll)
@@ -50,11 +56,11 @@ ll.dna.ln.nb <- function(theta,
     ## limit theta to avoid model shrinkage\explosion
     # theta <- pmax(pmin(theta, 23), -23) # do this in objective functions
     
-    d.est <- ddesign.mat %*% theta[-1] + log.ddepth
+    log.d.est <- ddesign.mat %*% theta[-1] + log.ddepth
     
-    # the sum of log-likelihoods
+    ## compute likelihood
     ll <- sum(dlnorm(x = dcounts,
-                     meanlog = exp(d.est),
+                     meanlog = exp(log.d.est),
                      sdlog = exp(theta[1]),
                      log = TRUE))
     
@@ -118,6 +124,9 @@ ll.rna.gamma.pois <- function(theta, theta.d,
                nrow=NROW(rcounts), ncol=NCOL(rcounts), byrow=TRUE)
     
     ## compute likelihood
+    # mu_NB = alpha / beta * rna_model
+    #       = alpha * dna_model * rna_model
+    # size_alpha = alpha
     ll <- sum(dnbinom(x = rcounts,
                       size = exp(theta.d[,1]),
                       mu = exp(log.r.est),

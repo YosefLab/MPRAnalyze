@@ -88,6 +88,7 @@ fit.dnarna.noctrlobs <- function(model,
                  method = "BFGS", hessian = compute.hessian)
     
     ## split parameters to the two parts of the model
+    fit$par <- pmax(pmin(fit$par, 23), -23) # do this in objective functions
     d.par <- fit$par[seq(1, 1+NCOL(ddmat.valid))]
     r.par <- fit$par[seq(1+NCOL(ddmat.valid)+1,
                          1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
@@ -209,7 +210,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       rdesign.ctrl.mat = rdmat.ctrl.valid,
                       method = "BFGS", hessian = compute.hessian)
         
-        r.par <- rfit$par[seq(1, length(r.par))]
+        r.par <- rfit$par[seq_len(length(r.par))]
         if(!is.null(r.ctrl.par)) {
             r.ctrl.par <- rfit$par[seq(length(r.par)+1, 
                                        length(r.par)+length(r.ctrl.par))]
@@ -325,7 +326,6 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
         #print(paste0(iter, ": ", llnew, " ", llold))
         ## estimate dna model for each control enhancer
-        # TODO: parallelize
         dfits <- bplapply(seq_len(NROW(dcounts)), function(i) {
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
                               function(x) !all(x==0))
@@ -342,7 +342,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             return(fit)
         }, BPPARAM = BPPARAM)
         
-        d.par <- matrix(0, nrow=length(dfits),
+        d.par <- matrix(0, nrow=NROW(dcounts),
                         ncol=NCOL(ddesign.mat)+1)
         d.par[,1] <- sapply(dfits, function(x) x$par[1] )
         for(i in seq_len(NROW(dcounts))){

@@ -114,6 +114,10 @@ getDNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
         fit <- obj@modelFits.red
     }
     if(obj@model == "gamma.pois") {
+        # mu_gamma = alpha / beta 
+        #          = alpha * model_dna
+        # shape_gamma = alpha
+        # rate_gamma = beta = 1/model_dna
         dfit <- do.call(rbind, lapply(enhancers, function(i) {
             exp(fit[[i]]$d.coef[1] + fit[[i]]$d.coef[-1] %*% t(obj@designs@dna))
         }))
@@ -149,6 +153,10 @@ getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
     dfit <- getDNAFits(obj=obj, enhancers=enhancers, 
                        depth=FALSE, full=full)
     if(obj@model == "gamma.pois") {
+        # mu_NB = alpha / beta * rna_model
+        #       = alpha * dna_model * rna_model
+        #       = mu_rna * rna_model
+        # size_alpha = alpha
         rfit <- dfit * do.call(rbind, lapply(enhancers, function(i) {
             exp(fit[[i]]$r.coef %*% t(rdesign))
         }))
