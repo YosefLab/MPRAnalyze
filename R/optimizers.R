@@ -324,9 +324,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     RELTOL <- 10^(-4) # down to -6 or -8?
     MAXITER <- 1000
     while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
-        print(paste0(iter, ": ", llnew, " ", llold))
+        #print(paste0(iter, ": ", llnew, " ", llold))
         ## estimate dna model for each control enhancer
-        print("dna")
         dfits <- bplapply(seq_len(NROW(dcounts)), function(i) {
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
                               function(x) !all(x==0))
@@ -353,8 +352,6 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         }
         
         ## estimate rna model conditioned on dna model
-        print("rna")
-        print(d.par)
         rfit <- optim(par = r.par, fn = cost.rna, theta.d = d.par,
                       llfnRNA = llfnRNA, 
                       rcounts = rcounts[,valid.c.r,drop=FALSE], 
