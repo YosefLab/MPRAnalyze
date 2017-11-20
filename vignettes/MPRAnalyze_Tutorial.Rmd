@@ -157,10 +157,7 @@ plot(mpraobj@dnaCounts["case_1",], getDNAFits(mpraobj, enhancers=c("case_1"), fu
 abline(a = 0, b = 1, col="red")
 plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
 abline(a = 0, b = 1, col="red")
-plot(mpraobj@rnaCounts["case_1",]/mpraobj@dnaCounts["case_1",], 
-     getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE) /
-         getDNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
-abline(a = 0, b = 1, col="red")
+plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
 ```
 
 # With scrambled/control enhancers

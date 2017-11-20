@@ -23,7 +23,7 @@
 #' @import ggplot2
 #' 
 #' @export
-plot.boxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
+plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
     
     ## extract observations and format into data-frame of rna:dna ratios
     # case enhancer observations
@@ -36,7 +36,7 @@ plot.boxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
         stringsAsFactors=FALSE
     )
     # control enhancer observations
-    if(!is.null(obj@vecCtrlIDs)){
+    if(!is.null(obj@controls)){
         gplot.data.obs.ctrl <- data.frame(
             ratio=(log(obj@rnaCounts[obj@controls,])-log(obj@rnaDepth))-
                 (log(obj@dnaCounts[obj@controls,])-log(obj@dnaDepth)),
@@ -49,8 +49,8 @@ plot.boxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
     }
     
     ## extract model fits
-    dfit <- getDNAFits(obj, enhancers=id, depth=FALSE, full=full)
-    rfit <- getRNAFits(obj, enhancers=id, depth=FALSE, full=full)
+    dfit <- as.vector(getDNAFits(obj, enhancers=id, depth=FALSE, full=full))
+    rfit <- as.vector(getRNAFits(obj, enhancers=id, depth=FALSE, full=full))
     gplot.data.fit <- data.frame(
         ratio=log(dfit)-log(rfit),
         cond=obj@colAnnot[,condition],
@@ -65,9 +65,11 @@ plot.boxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
                     "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
     gplot.data <- rbind(gplot.data.obs, gplot.data.fit)
     gplot.boxplot <- ggplot() + geom_boxplot(
-        data=gplot.data, aes(x=cond, y=ratio, fill=enhancer, alpha=batch) ) +
-        labs(title=paste0(id, " log10 q-value: ", 
-                          round(log(obj$results[id,]$padj)/log(10),2)) )
+        data=gplot.data.obs, aes(x=cond, y=ratio, fill=batch, alpha=batch),
+        outlier.shape = "x" ) +
+        geom_point(data = gplot.data.fit, aes(x=cond, y=ratio, shape=batch)) +
+        labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
+                          round(log(obj@results[id,]$fdr.pval)/log(10),2)) )
     if(length(unique(gplot.data.obs$batch <= length(cbbPalette)))) {
         gplot.boxplot <- gplot.boxplot + scale_fill_manual(values = cbbPalette)
     }
@@ -86,7 +88,7 @@ plot.boxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
 #' @import ggplot2
 #' 
 #' @export
-plot.volcano <- function(obj){
+plotVolcano <- function(obj){
     
     ## extract model fits
     #TODO only extract coeffient
