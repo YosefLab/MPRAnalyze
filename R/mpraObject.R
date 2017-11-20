@@ -158,11 +158,11 @@ getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
         #       = mu_rna * rna_model
         # size_alpha = alpha
         rfit <- dfit * do.call(rbind, lapply(enhancers, function(i) {
-            exp(fit[[i]]$r.coef %*% t(rdesign))
+            exp(fit[[i]]$r.coef %*% t(rdesign) + obj@rnaCtrlScale %*% t(rdesign))
         }))
     } else if(obj@model == "ln.nb") {
         rfit <- dfit * do.call(rbind, lapply(enhancers, function(j) {
-            exp(fit[[i]]$r.coef[-1] %*% t(rdesign))
+            exp(fit[[i]]$r.coef[-1] %*% t(rdesign) + obj@rnaCtrlScale %*% t(rdesign))
         }))
     }
     if(depth == TRUE){
