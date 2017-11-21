@@ -118,14 +118,14 @@ Firstly, as without control sequences, enhancers can be compared by their induce
 Secondly, one can test whether the expression rates of the "case enhancers" differ significantly from the rates of the control enhancers.
 
 ```{r with_scrambles_without_conditions, results='markdown'}
-# gamma.pois - full: works
-# gamma.pois - scaled: no
-# ln.nb - full: no
-# ln.nb - scaled: no
+# gamma.pois - full: yes
+# gamma.pois - scaled: sometimes but plotting doesnt work?
+# ln.nb - full: yes? worse than gamma.pois - full?
+# ln.nb - scaled: yes but plotting doesnt work?
 library(MPRAnalyze)
 # 1 condition supported by simulation?
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 10, n.ctrl = 5, n.reps = 3, n.cond = 1,
+sim <- simulateMPRA(n.case = 10, n.ctrl = 10, n.reps = 3, n.cond = 1,
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -138,7 +138,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.casectrl.lrt(
-    mpraobj, model="ln.nb", mode="full", 
+    mpraobj, model="ln.nb", mode="scaled", 
     dnaDesign=~barcode)
 print(mpraobj@results)
 ```
@@ -158,6 +158,8 @@ taking account for baseline variation captured be the control sequences.
 
 ### Scaled
 ```{r with_scrambles_with_conditions_scaled, results='markdown'}
+# ln.nb: yes but plotting does not work?
+# gamma.pois: yes 
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
 sim <- simulateMPRA(n.case = 10, n.ctrl = 5, n.reps = 3, 
@@ -173,7 +175,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.condition.lrt(
-    mpraobj, model="ln.nb", mode="scaled",
+    mpraobj, model="gamma.pois", mode="scaled",
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
 print(mpraobj@results)
 ```
@@ -191,9 +193,11 @@ plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
 ### Full
 
 ```{r with_scrambles_with_conditions_full, results='markdown'}
+# ln.nb:
+# gamma.pois: yes
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 10, n.ctrl = 3, n.reps = 3, 
+sim <- simulateMPRA(n.case = 5, n.ctrl = 2, n.reps = 3, 
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -201,7 +205,7 @@ ctrls <- which(sim$rowAnnot$type == "ctrl")
 if(length(ctrls)  == 0) {
     ctrls <- NULL
 }
-mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
+mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 3,
                       colAnnot=sim$colAnnot, controls=ctrls)
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))

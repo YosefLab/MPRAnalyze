@@ -311,7 +311,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
             fitfun <- fit.dnarna.noctrlobs
         } else if(obj@mode == "full") {
             # cs: case-control identity of enhancer
-            # H1: rna ~ 1 + cs + batch
+            # H1: rna ~ 1 + cs + batch + cs:batch
             # H0: rna ~ 1 + batch
             obj@designs@rnaRed <- obj@designs@rnaFull
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull

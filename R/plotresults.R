@@ -43,7 +43,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
                     (log(obj@dnaCounts[i,])-log(obj@dnaDepth)),
                 cond=obj@colAnnot[,condition],
                 batch=obj@colAnnot[,batch],
-                enhancer="control",
+                enhancer="controls",
                 stringsAsFactors=FALSE
             )
         }))
@@ -62,6 +62,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
         enhancer=id,
         stringsAsFactors=FALSE
     )
+    gplot.data.fit <- gplot.data.fit[!duplicated(gplot.data.fit),]
     if(!is.null(obj@controls)){
         gplot.data.fit.ctrl <- do.call(rbind, lapply(obj@controls, function(i) {
             dfit <- as.vector(getDNAFits(obj, enhancers=i, 
@@ -72,11 +73,12 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
                 ratio=log(rfit)-log(dfit),
                 cond=obj@colAnnot[,condition],
                 batch=obj@colAnnot[,batch],
-                enhancer="control",
+                enhancer="controls",
                 stringsAsFactors=FALSE
             )
             return(gplot.data.fit.ctrl.i)
         }))
+        gplot.data.fit.ctrl <- gplot.data.fit.ctrl[!duplicated(gplot.data.fit.ctrl),]
         gplot.data.fit <- rbind(gplot.data.fit, gplot.data.fit.ctrl)
     }
     

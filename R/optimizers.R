@@ -12,6 +12,27 @@
 #' fit.dnarna.wctrlobs.iter
 #' fit.dnarna.onlyctrl.iter
 #' 
+#' @details dna model
+#' The dna model is encoded as a vector where the first parameter
+#' is the variance-link (ln: stdv, nb: dispersion) and the remaining parameters
+#' are the coefficient of the linear model that consitutes the mean parameter,
+#' as encoded in the model matrix.
+#' 
+#' @details rna model
+#' The case rna model and the control rna interaction terms are encoded as seperate
+#' linear models so that they can be added up by design matrix concatenation (cbind)
+#' if a control enhancer is considered. Note that the first parameter
+#' may be a variance link parameter (ln.nb: nb: dispersion) which does not contribute
+#' to the linear model that constitutes the mean parameter. As all parameters only act
+#' on the mean parameter in the case of gamma.pois, the rna model matrix is 
+#' augmented by a first column containing only padding 0s if such a variance parameter
+#' exists, so that the mean parameter can be computed via the same matrix multiplication
+#' irrespective of whether the rna model contains such parameter that does not contribute
+#' to the mean model. The code that throws away non-used coefficients before fitting
+#' is blocked for this parameter. Note that the ctrl rna model is not allowed to have
+#' and additional variance coefficient so that the testing is only on the first moment.
+#' This is guaranteed by the default that this non-use cofficient is discarded. 
+#' 
 #' @param model noise model
 #' @param dcounts the DNA counts
 #' @param rcounts the RNA counts
@@ -202,7 +223,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation
     # Initialize DNA model parameter vector with a guess
-    d.par <- matrix(0, nrow=1, ncol=1 + NCOL(ddmat.valid))
+    d.par <- matrix(0, nrow=1, ncol=1+NCOL(ddmat.valid))
     r.par <- matrix(0, nrow=1, ncol=NCOL(rdmat.valid))
     if(!is.null(rdesign.ctrl.mat)) {
         r.ctrl.par <- matrix(0, nrow=1, ncol=NCOL(rdmat.ctrl.valid))
@@ -253,10 +274,10 @@ fit.dnarna.wctrlobs.iter <- function(model,
             theta = c(d.par, r.par, r.ctrl.par),
             theta.d.ctrl.prefit = theta.d.ctrl.prefit,
             llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-            dcounts = dcounts, rcounts = rcounts,
-            log.ddepth = log.ddepth, log.rdepth = log.rdepth, 
-            ddesign.mat = ddesign.mat, rdesign.mat = rdesign.mat, 
-            rdesign.ctrl.mat = rdesign.ctrl.mat)
+            dcounts = dcounts.valid, rcounts = rcounts.valid,
+            log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid, 
+            ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid, 
+            rdesign.ctrl.mat = rdmat.ctrl.valid)
         iter <- iter + 1
         if(iter == MAXITER & llnew > llold-llold*RELTOL) {
             converged <- FALSE
