@@ -88,7 +88,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             # H1: rna ~ 1 + cs + condition + batch
             # H0: rna ~ 1 + condition + batch
             obj@designs@rnaRed <- obj@designs@rnaFull
-            obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign, rna=TRUE)
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@designs@rnaCtrlRed <- NULL
             obj@rnaCtrlScale <- NULL
             obj@controls.forfit <- obj@controls
@@ -286,7 +286,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
     
     ## get design matrices
     obj@designs@dna <- getDesignMat(obj, dnaDesign)
-    obj@designs@rnaFull <- getDesignMat(obj, rnaDesign)
+    obj@designs@rnaFull <- getDesignMat(obj, rnaDesign, rna=TRUE)
     if(is.null(obj@controls)) {
         stop("no control enhancers supplied")
     } else {
@@ -314,7 +314,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
             # H1: rna ~ 1 + cs + batch
             # H0: rna ~ 1 + batch
             obj@designs@rnaRed <- obj@designs@rnaFull
-            obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign)
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@designs@rnaCtrlRed <- NULL
             obj@rnaCtrlScale <- NULL
             obj@controls.forfit <- obj@controls

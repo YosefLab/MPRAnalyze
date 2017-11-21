@@ -118,6 +118,10 @@ Firstly, as without control sequences, enhancers can be compared by their induce
 Secondly, one can test whether the expression rates of the "case enhancers" differ significantly from the rates of the control enhancers.
 
 ```{r with_scrambles_without_conditions, results='markdown'}
+# gamma.pois - full: works
+# gamma.pois - scaled: no
+# ln.nb - full: no
+# ln.nb - scaled: no
 library(MPRAnalyze)
 # 1 condition supported by simulation?
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
@@ -134,7 +138,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.casectrl.lrt(
-    mpraobj, model="ln.nb", mode="scaled", 
+    mpraobj, model="ln.nb", mode="full", 
     dnaDesign=~barcode)
 print(mpraobj@results)
 ```
