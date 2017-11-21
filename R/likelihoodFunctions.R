@@ -60,7 +60,7 @@ ll.dna.ln.nb <- function(theta,
     
     ## compute likelihood
     ll <- sum(dlnorm(x = dcounts,
-                     meanlog = exp(log.d.est),
+                     meanlog = log.d.est,
                      sdlog = exp(theta[1]),
                      log = TRUE))
     

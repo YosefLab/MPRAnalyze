@@ -48,54 +48,6 @@ These barcodes are additional to the UMI barcodes.
 Such plasmid barcoding may increase the reliability of the data and the added information can be used with MPRAnalyze.
 We suggest to NOT MERGE the plasmid counts by barcode but to treat them as separate samples and to add the barcode identity into the DNA model as done below.
 
-# Input
-
-Please be aware that the model input interface via vectors of model elements may not be very straight forward for the user right now, I am working on that.
-Please consult me to discuss these after looking at the examples below and thinking about which scenario might be applicable to your case.
-
-MPRAnalyze requires a matrix of transcript/RNA counts
-and a matrix of plasmid/DNA counts.
-Both matrices must contain integers or NA only and have the same shape and dimension names.
-Secondly, sample metadata and an estimation scheme ID must be provided.
-The user should consider the minimal parameter set for the wrapper function runMPRAnalyze:
-
-* matRNACounts Count matrix RNA (enhancers x samples). No normalisation or transformations, the entries must be integers!
-* matDNACounts Count matrix DNA (enhancers x samples). No normalisation or transformations, the entries must be integers!
-* dfAnnotation Data frame with sample meta data
-* strModel Model name. {"lnDNAnbRNA", "gammaDNApoisRNA", "gammaDNApoisRNA_coordascent"} and
-boolPreFitCtrlDNA.
-Model and estimation scheme to be used. Currently, we suggest the use of 
-strModel=lnDNAnbRNA,boolPreFitCtrlDNA=FALSE for DNA point estimator-based models, 
-strModel=gammaDNApoisRNA,boolPreFitCtrlDNA=FALSE for marginalisation-based models with few or no control enhancers (<10) and
-strModel=gammaDNApoisRNA,boolPreFitCtrlDNA=TRUE for marginalisation-based models with many control enhancers.
-strModel=gammaDNApoisRNA_coordascent,boolPreFitCtrlDNA=FALSE is an alternative if many control enhancers are used.
-lnDNAnbRNA: DNA point estimators are pre-estimated based on a lognormal model.
-The expression model is then fit based on a negative binomial likelihood of the RNA counts.
-gammaDNApoisRNA: DNA and expression model are co-estimated, exloiting a closed
-form marginalisation. The DNA counts are modeled with a beta distribution
-and the RNA counts with a poisson distribution. If boolPreFitCtrlDNA==TRUE,
-the estimation is conditioned on a pre-fit model
-gammaDNApoisRNA_coordascent: As gammaDNApoisRNA but can be used to estimate
-models with many control enhancers. The problem is broken up into iterative
-DNA and expression model estimation until it converges to a local optimum of
-the likelihood function.
-
-Additionally, one can provide:
-
-* vecCtrlIDs Vector of strings: Rownames of sequences which are scrambled/control enhancers in count matrices.
-* strModelFull Currently not applicable.
-* strModelRed Currently not applicable.
-* vecModelFacRNAFull (vector of strings lenght number of factors in FULL expression model) [Default NULL] The model factors (columns in dfAnnotation) which are to be used in the FULL expression model. The expression model will have batch adjustment for these factors.
-* vecModelFacRNAFullCtrl (vector of strings lenght number of additional factors in FULL expression model for control enhancers) [Default NULL] The model factors (columns in dfAnnotation) which are to be used in the FULL control expression model. The expression model will have batch adjustment for these factors.
-* vecModelFacRNARed (vector of strings lenght number of factors in REDUCED expression model) [Default NULL] The model factors (columns in dfAnnotation) which are to be used in the REDUCED expression model. The expression model will have batch adjustment for these factors.
-* vecModelFacRNARedCtrl (vector of strings lenght number of additional factors in REDUCED expression model for control enhancers) [Default NULL] The model factors (columns in dfAnnotation) which are to be used in the REDUCED control expression model. The expression model will have batch adjustment for these factors.
-* vecModelFacDNA (vector of strings lenght number of factors in DNA model) [Default NULL] The model factors (columns in dfAnnotation) which are to be used  in the DNA model. The DNA model will have batch adjustment for these factors.
-* scaNProc Number of processes to use during parallelisation.
-* vecDispersionsExternal Currently not applicable.
-* vecRNADepthExternal Externally supplied RNA sample sequencing depth factors.
-* vecDNADepthExternal Externally supplied DNA sample sequencing depth factors.
-* boolVerbose Control output of package.
-
 # Without scrambled sequences
 ## Compare the strength of enhancers
 Enhancers can be compared without a reference set based on their induced expression rates.
@@ -169,7 +121,7 @@ Secondly, one can test whether the expression rates of the "case enhancers" diff
 library(MPRAnalyze)
 # 1 condition supported by simulation?
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 10, n.ctrl = 5, n.reps = 2, n.cond = 1,
+sim <- simulateMPRA(n.case = 10, n.ctrl = 5, n.reps = 3, n.cond = 1,
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -182,7 +134,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.casectrl.lrt(
-    mpraobj, model="ln.nb", mode="full", 
+    mpraobj, model="ln.nb", mode="scaled", 
     dnaDesign=~barcode)
 print(mpraobj@results)
 ```
@@ -194,6 +146,7 @@ plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), fu
 abline(a = 0, b = 1, col="red")
 plotBoxplots(mpraobj, "case_1", batch = "rep")
 plotBoxplots(mpraobj, "case_2", batch = "rep")
+plotBoxplots(mpraobj, "ctrl_1", batch = "rep")
 ```
 ## Test the effect of an condition
 A hypothesis test is conducted to test whether expression varies significantly (= is non-constant) as a function of the given conditions(s)
@@ -203,7 +156,7 @@ taking account for baseline variation captured be the control sequences.
 ```{r with_scrambles_with_conditions_scaled, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 20, n.ctrl = 5, n.reps = 2, n.bc = 5,
+sim <- simulateMPRA(n.case = 10, n.ctrl = 5, n.reps = 3, 
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -236,7 +189,7 @@ plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
 ```{r with_scrambles_with_conditions_full, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 10, n.ctrl = 10, n.reps = 2, 
+sim <- simulateMPRA(n.case = 10, n.ctrl = 3, n.reps = 3, 
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -244,12 +197,12 @@ ctrls <- which(sim$rowAnnot$type == "ctrl")
 if(length(ctrls)  == 0) {
     ctrls <- NULL
 }
-mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 2,
+mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
                       colAnnot=sim$colAnnot, controls=ctrls)
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.condition.lrt(
-    mpraobj, model="gamma.pois", mode="full", 
+    mpraobj, model="ln.nb", mode="full", 
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
 print(mpraobj@results)
 ```

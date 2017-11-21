@@ -81,6 +81,8 @@ fit.dnarna.noctrlobs <- function(model,
     ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
     if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
         rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
+    } else {
+        rdmat.valid <- NULL
     }
     
     ## Initialize parameter vector with a guess
@@ -117,7 +119,7 @@ fit.dnarna.noctrlobs <- function(model,
         r.df <- length(r.par)
     } else {
         r.coef <- NULL
-        r.df <- NULL
+        r.df <- 0
     }
     
     ## standard error of the estimates

@@ -51,8 +51,10 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
     }
     
     ## extract model fits
-    dfit <- as.vector(getDNAFits(obj, enhancers=id, depth=FALSE, full=full))
-    rfit <- as.vector(getRNAFits(obj, enhancers=id, depth=FALSE, full=full))
+    dfit <- as.vector(getDNAFits(obj, enhancers=id, 
+                                 depth=FALSE, full=full))
+    rfit <- as.vector(getRNAFits(obj, enhancers=id, 
+                                 depth=FALSE, full=full, rnascale=TRUE))
     gplot.data.fit <- data.frame(
         ratio=log(rfit)-log(dfit),
         cond=obj@colAnnot[,condition],
@@ -62,8 +64,10 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
     )
     if(!is.null(obj@controls)){
         gplot.data.fit.ctrl <- do.call(rbind, lapply(obj@controls, function(i) {
-            dfit <- as.vector(getDNAFits(obj, enhancers=i, depth=FALSE, full=full))
-            rfit <- as.vector(getRNAFits(obj, enhancers=i, depth=FALSE, full=full))
+            dfit <- as.vector(getDNAFits(obj, enhancers=i, 
+                                         depth=FALSE, full=full))
+            rfit <- as.vector(getRNAFits(obj, enhancers=i, 
+                                         depth=FALSE, full=full, rnascale=TRUE))
             gplot.data.fit.ctrl.i <- data.frame(
                 ratio=log(rfit)-log(dfit),
                 cond=obj@colAnnot[,condition],
@@ -82,25 +86,28 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
                     "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
     if(!is.null(condition)) {
         gplot.boxplot <- ggplot() + geom_boxplot(
-            data=gplot.data.boxplot, aes(x=cond, y=ratio, fill=enhancer, alpha=batch),
+            data=gplot.data.boxplot, aes(
+                x=cond, y=ratio, fill=enhancer, alpha=batch),
             outlier.shape = "x" ) +
             geom_point(data = gplot.data.fit, aes(
-                x=cond, y=ratio, shape=batch), size=3) +
+                x=cond, y=ratio, color = enhancer, shape=batch), size=3) +
             scale_shape_discrete(solid = FALSE) +
             labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
                               round(log(obj@results[id,]$fdr.pval)/log(10),2)) )
     } else {
         gplot.boxplot <- ggplot() + geom_boxplot(
-            data=gplot.data.boxplot, aes(x=enhancer, y=ratio, fill=enhancer, alpha=batch),
+            data=gplot.data.boxplot, aes(
+                x=enhancer, y=ratio, fill=enhancer, alpha=batch),
             outlier.shape = "x" ) +
             geom_point(data = gplot.data.fit, aes(
-                x=enhancer, y=ratio, shape=batch), size=3) +
+                x=enhancer, y=ratio, color = enhancer, shape=batch), size=3) +
             scale_shape_discrete(solid = FALSE) +
             labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
                               round(log(obj@results[id,]$fdr.pval)/log(10),2)) )
     }
     if(length(unique(gplot.data.boxplot$batch <= length(cbbPalette)))) {
-        gplot.boxplot <- gplot.boxplot + scale_fill_manual(values = cbbPalette)
+        gplot.boxplot <- gplot.boxplot + scale_fill_manual(values = cbbPalette) + 
+            scale_colour_manual(values = cbbPalette)
     }
     
     return(gplot.boxplot)

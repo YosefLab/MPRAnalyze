@@ -138,11 +138,12 @@ getDNAFits <- function(obj, enhancers, depth=FALSE, full=TRUE){
 #' @param enhancers enhancer to extract 
 #' @param depth include depth correction
 #' @param full whether to extract from full model
+#' @param rnascale whether to use prefit rna model factors
 #' 
 #' @return RNA fits (numeric, enhancers x samples)
 #' 
 #' @export
-getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
+getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE, rnascale=TRUE){
     if(full == TRUE){
         fit <- obj@modelFits
         rdesign <- obj@designs@rnaFull
@@ -152,6 +153,12 @@ getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
         rdesign <- obj@designs@rnaRed
         rctrldesign <- obj@designs@rnaCtrlRed
     }
+    if(!is.null(obj@rnaCtrlScale) & rnascale) {
+        rctrlscale <- obj@rnaCtrlScale
+    } else {
+        rctrldesign <- NULL # overwrite initialisation
+        rctrlscale <- NULL
+    }
     dfit <- getDNAFits(obj=obj, enhancers=enhancers, 
                        depth=FALSE, full=full)
     if(obj@model == "gamma.pois") {
@@ -160,14 +167,14 @@ getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
         #       = mu_rna * rna_model
         # size_alpha = alpha
         rfit <- do.call(rbind, lapply(enhancers, function(i) {
-            dfit*exp( c(fit[[i]]$r.coef, obj@rnaCtrlScale) %*% t(cbind(rdesign, rctrldesign)) )
+            dfit*exp( c(fit[[i]]$r.coef, rctrlscale) %*% t(cbind(rdesign, rctrldesign)) )
         }))
     } else if(obj@model == "ln.nb") {
         # mu_NB = rna_model
         # Note that the first parameter in r.coef is the variance parameter and that
         # the design matrix is padded with 0s at this position.
         rfit <- do.call(rbind, lapply(enhancers, function(i) {
-            dfit*exp( c(fit[[i]]$r.coef, obj@rnaCtrlScale) %*% t(cbind(rdesign, rctrldesign)) )
+            dfit*exp( c(fit[[i]]$r.coef, rctrlscale) %*% t(cbind(rdesign, rctrldesign)) )
         }))
     }
     if(depth == TRUE){
