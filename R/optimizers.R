@@ -72,6 +72,10 @@ fit.dnarna.noctrlobs <- function(model,
     valid.df <- apply(ddesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
     if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
         valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
+        # catch exception of variance padding: this is an unused factor
+        if(model %in% c("ln.nb")) {
+            valid.rf[1] <- TRUE
+        }
     }
     
     ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
@@ -176,6 +180,10 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       function(x) !all(x==0))
     valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, 
                       function(x) !all(x==0))
+    # catch exception of variance padding: this is an unused factor
+    if(model %in% c("ln.nb")) {
+        valid.rf[1] <- TRUE
+    }
     if(!is.null(rdesign.ctrl.mat)) {
         valid.rf.ctrl <- apply(rdesign.ctrl.mat[valid.c,,drop=FALSE], 2, 
                                function(x) !all(x==0))
@@ -331,6 +339,10 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     ## clean design matrix from unused factors: note that these should be
     valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2, 
                       function(x) !all(x==0))
+    # catch exception of variance padding: this is an unused factor
+    if(model %in% c("ln.nb")) {
+        valid.rf[1] <- TRUE
+    }
     
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation

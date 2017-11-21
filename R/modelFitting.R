@@ -55,9 +55,9 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
     
     ## get design matrices
     obj@designs@dna <- getDesignMat(obj, dnaDesign)
-    obj@designs@rnaFull <- getDesignMat(obj, rnaDesign)
+    obj@designs@rnaFull <- getDesignMat(obj, rnaDesign, rna=TRUE)
     if(is.null(obj@controls)) {
-        obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest)
+        obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest, rna=TRUE)
         obj@designs@rnaCtrlFull <- NULL
         obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- NULL
@@ -77,7 +77,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
         if(obj@mode == "scaled") {
             # H1: rna - prefit ~ 1 + condition + batch
             # H0: rna - prefit ~ 1 + batch
-            obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest)
+            obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest, rna=TRUE)
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull # used to correct prefit 
             obj@designs@rnaCtrlRed <- obj@designs@rnaFull # used to correct prefit 
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
@@ -88,7 +88,7 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             # H1: rna ~ 1 + cs + condition + batch
             # H0: rna ~ 1 + condition + batch
             obj@designs@rnaRed <- obj@designs@rnaFull
-            obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign)
+            obj@designs@rnaCtrlFull <- getDesignMat(obj, rnaDesign, rna=TRUE)
             obj@designs@rnaCtrlRed <- NULL
             obj@rnaCtrlScale <- NULL
             obj@controls.forfit <- obj@controls
@@ -284,7 +284,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
     obj@mode <- mode
     obj@model <- model
     
-        ## get design matrices
+    ## get design matrices
     obj@designs@dna <- getDesignMat(obj, dnaDesign)
     obj@designs@rnaFull <- getDesignMat(obj, rnaDesign)
     if(is.null(obj@controls)) {
@@ -362,7 +362,7 @@ analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL,
     
     ## run lrt
     obj@results <- test.lrt(obj)
-
+    
     # TODO rank based on strength of effect
     return(obj)
 }
@@ -408,20 +408,29 @@ analyse.quant <- function(obj, mode="quant", model=NULL, dnaDesign=NULL, rnaDesi
 }
 
 #' get a design matrix from the input design
+#' 
+#' adds an extra first column if this is the rna design matrix and
+#' the rna noise model requires a separate variance parameter which is not
+#' used for the mean model, ie. if the first parameter to estimate is not 
+#' part of the GLM that defines the mean parameter.
 #'
 #' @param obj the MpraObject
 #' @param design the input design. A matrix is returned as is, a formula is
 #' expanded to a model matrix using the object colAnnot. If design is NULL, an
 #' intercept-only design matrix is created and returned
-#' @param testcondition condition to substract from formulae
+#' @param testcondition condition to substract from formula
+#' @param rna whether this is a rna model. Together with the noise model set
+#' in obj@model, this defines whether an extra column for the variance link
+#' parameter is allowed in the design matrix.
 #'
 #' @return a design matrix
-getDesignMat <- function(obj, design, testcondition=NULL) {
+getDesignMat <- function(obj, design, testcondition=NULL, rna=FALSE) {
+    # depreceate matrix entry?
     if (is.matrix(design)) {
-        return(design)
+        dmat <- design
     } else if (is.null(design)) {
-        return(matrix(rep(1,NCOL(obj@dnaCounts)), ncol = 1,
-                      dimnames = list(colnames(obj@dnaCounts), "(intercept)")))
+        dmat <- matrix(rep(1,NCOL(obj@dnaCounts)), ncol = 1,
+                       dimnames = list(colnames(obj@dnaCounts), "(intercept)"))
     } else if (is(design, "formula")) {
         if(!is.null(testcondition)){
             # substract this condition from formula
@@ -433,8 +442,17 @@ getDesignMat <- function(obj, design, testcondition=NULL) {
                 design <- ~1
             }
         }
-        return(model.matrix(design, obj@colAnnot))
+        dmat <- model.matrix(design, obj@colAnnot)
     } else {
         stop("invalid design")
     }
+    if(obj@model %in% c("ln.nb") & rna==TRUE) {
+        # the first column with only zero entries allows
+        # treating the parameter vector in the GLM desing matrix
+        # matrix multiplication vector even though the first parameter
+        # just defines the variance:
+        # ln.nb: the first parameter is the dispersion parameter
+        dmat <- as.matrix(cbind(variance_padding=0, dmat))
+    }
+    return(dmat)
 }

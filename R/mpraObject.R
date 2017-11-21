@@ -107,7 +107,7 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
 #' @return DNA fits (numeric, enhancers x samples)
 #' 
 #' @export
-getDNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
+getDNAFits <- function(obj, enhancers, depth=FALSE, full=TRUE){
     if(full == TRUE){
         fit <- obj@modelFits
     } else {
@@ -123,7 +123,7 @@ getDNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
         }))
     } else if(obj@model == "ln.nb") {
         dfit <- do.call(rbind, lapply(enhancers, function(i) {
-            exp(fit[[i]]$d.coef[-1] * t(obj@designs@dna))
+            exp(fit[[i]]$d.coef[-1] %*% t(obj@designs@dna))
         }))
     }
     if(depth == TRUE){
@@ -146,9 +146,11 @@ getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
     if(full == TRUE){
         fit <- obj@modelFits
         rdesign <- obj@designs@rnaFull
+        rctrldesign <- obj@designs@rnaCtrlFull
     } else {
         fit <- obj@modelFits.red
         rdesign <- obj@designs@rnaRed
+        rctrldesign <- obj@designs@rnaCtrlRed
     }
     dfit <- getDNAFits(obj=obj, enhancers=enhancers, 
                        depth=FALSE, full=full)
@@ -157,16 +159,20 @@ getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE){
         #       = alpha * dna_model * rna_model
         #       = mu_rna * rna_model
         # size_alpha = alpha
-        rfit <- dfit * do.call(rbind, lapply(enhancers, function(i) {
-            exp(fit[[i]]$r.coef %*% t(rdesign) + obj@rnaCtrlScale %*% t(rdesign))
+        rfit <- do.call(rbind, lapply(enhancers, function(i) {
+            dfit*exp( c(fit[[i]]$r.coef, obj@rnaCtrlScale) %*% t(cbind(rdesign, rctrldesign)) )
         }))
     } else if(obj@model == "ln.nb") {
-        rfit <- dfit * do.call(rbind, lapply(enhancers, function(j) {
-            exp(fit[[i]]$r.coef[-1] %*% t(rdesign) + obj@rnaCtrlScale %*% t(rdesign))
+        # mu_NB = rna_model
+        # Note that the first parameter in r.coef is the variance parameter and that
+        # the design matrix is padded with 0s at this position.
+        rfit <- do.call(rbind, lapply(enhancers, function(i) {
+            dfit*exp( c(fit[[i]]$r.coef, obj@rnaCtrlScale) %*% t(cbind(rdesign, rctrldesign)) )
         }))
     }
     if(depth == TRUE){
-        rfit <- rfit * obj@rnaDepth
+        rfit <- rfit * matrix(obj@rnaDepth, nrow = NROW(rfit), 
+                              ncol = NCOL(rfit), byrow = TRUE)
     }
     return(rfit)
 }

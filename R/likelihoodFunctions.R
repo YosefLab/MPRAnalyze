@@ -115,10 +115,6 @@ ll.rna.gamma.pois <- function(theta, theta.d,
     # theta <- pmax(pmin(theta, 23), -23) # do this in objective functions
     
     log.d.est <- theta.d[,1] + theta.d[,-1] %*% t(ddesign.mat)
-    #print(dim(rcounts))
-    #print(length(log.rdepth))
-    #print(dim(log.d.est))
-    #print(dim(theta %*% t(rdesign.mat)))
     log.r.est <- log.d.est + 
         matrix((theta %*% t(rdesign.mat))[1,] + log.rdepth,
                nrow=NROW(rcounts), ncol=NCOL(rcounts), byrow=TRUE)
@@ -143,13 +139,14 @@ ll.rna.ln.nb <- function(theta, theta.d,
     # theta <- pmax(pmin(theta, 23), -23) # do this in objective functions
     
     log.d.est <- theta.d[,-1] %*% t(ddesign.mat)
-    log.r.est <- log.d.est + (theta[-1] %*% t(rdesign.mat))[1,] + log.rdepth
+    log.r.est <- log.d.est + 
+        matrix((theta %*% t(rdesign.mat))[1,] + log.rdepth,
+               nrow=NROW(rcounts), ncol=NCOL(rcounts), byrow=TRUE)
     
     ## compute likelihood
     ll <- sum(dnbinom(x = rcounts,
                       size = exp(theta[1]),
-                      mu = matrix(exp(log.r.est) , nrow=NROW(rcounts), 
-                                  ncol=length(log.r.est), byrow=TRUE),
+                      mu = exp(log.r.est),
                       log = TRUE))
     
     return(-ll)

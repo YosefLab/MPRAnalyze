@@ -130,7 +130,7 @@ Such a base line variation could be overall transcriptional activity.
 ```{r without_scrambles_with_conditions, results='markdown'}
 library(MPRAnalyze)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 30, n.ctrl = 0, n.reps = 3,  
+sim <- simulateMPRA(n.case = 10, n.ctrl = 0, n.reps = 3,  
                     sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
                     sd.rna = 1, sd.rna.cond = 0.5)
 # Run MPRAnalyze
@@ -143,7 +143,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.condition.lrt(
-    mpraobj, model="gamma.pois", mode="full", 
+    mpraobj, model="ln.nb", mode="full", 
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
 ```
 
@@ -182,7 +182,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.casectrl.lrt(
-    mpraobj, model="gamma.pois", mode="full", 
+    mpraobj, model="ln.nb", mode="full", 
     dnaDesign=~barcode)
 print(mpraobj@results)
 ```
@@ -216,7 +216,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- analyse.condition.lrt(
-    mpraobj, model="gamma.pois", mode="scaled",
+    mpraobj, model="ln.nb", mode="scaled",
     dnaDesign=~barcode+cond, rnaDesign=~cond, condition_totest="cond")
 print(mpraobj@results)
 ```
