@@ -4,13 +4,9 @@
 \alias{analyse.casectrl}
 \alias{analyse.casectrl.lrt}
 \alias{analyse.quant}
-\alias{analyse.casectrl.lrt}
 \alias{analyse.quant}
 \title{quantitative/case-control analysis}
 \usage{
-analyse.casectrl.lrt(obj, mode = "scaled", model = NULL, dnaDesign = NULL,
-  rnaDesign = ~1)
-
 analyse.quant(obj, mode = "quant", model = NULL, dnaDesign = NULL,
   rnaDesign = ~1)
 }

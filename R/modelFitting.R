@@ -6,7 +6,7 @@
 #' @rdname analyse.condition
 #' 
 #' @aliases 
-#' analyse.condition.lrt
+#' analyse.lrt
 #' analyse.condition.ttest
 #'
 #' @param obj the MpraObject
@@ -27,7 +27,7 @@ NULL
 
 #' @rdname analyse.condition
 #' @export
-analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
+analyse.lrt <- function(obj, model="gamma.pois", mode=NULL,
                                   dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL) {
     ## check depth is set
     if(length(obj@dnaDepth) == 0 | length(obj@rnaDepth) == 0) {
@@ -56,13 +56,15 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
     ## get design matrices
     obj@designs@dna <- getDesignMat(obj, dnaDesign)
     obj@designs@rnaFull <- getDesignMat(obj, rnaDesign, rna=TRUE)
-    if(is.null(obj@controls)) {
+    if(is.null(obj@controls) & !is.null(condition_totest)) {
         obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest, rna=TRUE)
         obj@designs@rnaCtrlFull <- NULL
         obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- NULL
         obj@controls.forfit <- NULL
         fitfun <- fit.dnarna.noctrlobs
+    } else if(is.null(obj@controls) & is.null(condition_totest)) {
+        stop("no control enhancers supplied and no condition to test")
     } else {
         message("Fit control enhancer background models")
         obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
@@ -74,10 +76,18 @@ analyse.condition.lrt <- function(obj, model="gamma.pois", mode=NULL,
             ddesign.mat=obj@designs@dna,
             rdesign.mat=obj@designs@rnaFull, 
             BPPARAM = obj@BPPARAM)
-        if(obj@mode == "scaled") {
-            # H1: rna - prefit ~ 1 + condition + batch
-            # H0: rna - prefit ~ 1 + batch
+        # could merge the two first cases of this switch
+        # if getDesignMat is coded accordingly that the intercept
+        # is taken out of rnaRed if no condition_totest is supplied
+        if(obj@mode == "scaled" & !is.null(condition_totest)) {
             obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest, rna=TRUE)
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull # used to correct prefit 
+            obj@designs@rnaCtrlRed <- obj@designs@rnaFull # used to correct prefit 
+            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
+            obj@controls.forfit <- NULL
+            fitfun <- fit.dnarna.noctrlobs
+        } else if(obj@mode == "scaled" & is.null(condition_totest)) {
+            obj@designs@rnaRed <- NULL
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull # used to correct prefit 
             obj@designs@rnaCtrlRed <- obj@designs@rnaFull # used to correct prefit 
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
@@ -255,117 +265,6 @@ analyse.condition.ttest <- function(obj, model="gamma.pois", mode="ttest",
 #' 
 #' @return the MpraObject with fitted models and condition test
 NULL
-
-#' @rdname analyse.casectrl
-#' @export
-analyse.casectrl.lrt <- function(obj, mode="scaled", model=NULL, dnaDesign=NULL, rnaDesign=~1) {
-    
-    ## check depth is set
-    if(length(obj@dnaDepth) == 0 | length(obj@rnaDepth) == 0) {
-        stop("Library depth factors must be estimated or manually set")
-    }
-    ## check mode
-    if(!is.null(obj@controls)) {
-        # set default
-        if(is.null(mode)) {
-            mode <- "scaled"
-        } else if(!mode %in% c("scaled", "full") ) {
-            stop("Only mode 'scaled' and 'full' are supported if control enhancers are supplied")
-        }
-    } else {
-        # set default
-        if(is.null(mode)) {
-            mode <- "quant"
-        }
-        else if(!mode %in% c("quant") ) {
-            stop("Only mode 'quant' is sensible if no control enhancers are supplied")
-        }
-    }
-    obj@mode <- mode
-    obj@model <- model
-    
-    ## get design matrices
-    obj@designs@dna <- getDesignMat(obj, dnaDesign)
-    obj@designs@rnaFull <- getDesignMat(obj, rnaDesign, rna=TRUE)
-    if(is.null(obj@controls)) {
-        stop("no control enhancers supplied")
-    } else {
-        message("Fit control enhancer background models")
-        obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
-            model=model,
-            dcounts = obj@dnaCounts[obj@controls,], 
-            rcounts = obj@rnaCounts[obj@controls,],
-            ddepth=obj@dnaDepth,
-            rdepth=obj@rnaDepth,
-            ddesign.mat=obj@designs@dna,
-            rdesign.mat=obj@designs@rnaFull, 
-            BPPARAM = obj@BPPARAM)
-        if(obj@mode == "scaled") {
-            # H1: rna - prefit ~ 1 + batch
-            # H0: rna - prefit ~ 0
-            obj@designs@rnaRed <- NULL
-            obj@designs@rnaCtrlFull <- obj@designs@rnaFull # used to correct prefit 
-            obj@designs@rnaCtrlRed <- obj@designs@rnaFull # used to correct prefit 
-            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
-            obj@controls.forfit <- NULL
-            fitfun <- fit.dnarna.noctrlobs
-        } else if(obj@mode == "full") {
-            # cs: case-control identity of enhancer
-            # H1: rna ~ 1 + cs + batch + cs:batch
-            # H0: rna ~ 1 + batch
-            obj@designs@rnaRed <- obj@designs@rnaFull
-            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
-            obj@designs@rnaCtrlRed <- NULL
-            obj@rnaCtrlScale <- NULL
-            obj@controls.forfit <- obj@controls
-            fitfun <- fit.dnarna.wctrlobs.iter
-        }
-    }
-    
-    ## fit full models
-    message("Fit full models")
-    obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
-        return(fitfun(model=model,
-                      dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=rbind(obj@rnaCounts[rn,], obj@rnaCounts[obj@controls.forfit,]),
-                      ddepth=obj@dnaDepth,
-                      rdepth=obj@rnaDepth,
-                      rctrlscale=obj@rnaCtrlScale,
-                      ddesign.mat=obj@designs@dna,
-                      rdesign.mat=obj@designs@rnaFull,
-                      rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
-                      theta.d.ctrl.prefit=
-                          do.call(rbind, lapply(obj@modelPreFits.dna.ctrl,
-                                                function(x) x$d.coef)),
-                      compute.hessian=FALSE))
-    }, BPPARAM = obj@BPPARAM)
-    names(obj@modelFits) <- rownames(obj@dnaCounts)
-    
-    ## fit reduced models
-    message("Fit reduced models")
-    obj@modelFits.red <- bplapply(rownames(obj@dnaCounts), function(rn) {
-        return(fitfun(model=model,
-                      dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=rbind(obj@rnaCounts[rn,], obj@rnaCounts[obj@controls.forfit,]),
-                      ddepth=obj@dnaDepth,
-                      rdepth=obj@rnaDepth,
-                      rctrlscale=obj@rnaCtrlScale,
-                      ddesign.mat=obj@designs@dna,
-                      rdesign.mat=obj@designs@rnaRed,
-                      rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
-                      theta.d.ctrl.prefit=
-                          do.call(rbind, lapply(obj@modelPreFits.dna.ctrl,
-                                                function(x) x$d.coef)),
-                      compute.hessian=FALSE))
-    }, BPPARAM = obj@BPPARAM)
-    names(obj@modelFits.red) <- rownames(obj@dnaCounts)
-    
-    ## run lrt
-    obj@results <- test.lrt(obj)
-    
-    # TODO rank based on strength of effect
-    return(obj)
-}
 
 #' @rdname analyse.casectrl
 #' @export

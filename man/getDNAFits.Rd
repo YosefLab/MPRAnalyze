@@ -4,7 +4,7 @@
 \alias{getDNAFits}
 \title{Get DNA model fits from an MpraObject}
 \usage{
-getDNAFits(obj, enhancers, depth = TRUE, full = TRUE)
+getDNAFits(obj, enhancers, depth = FALSE, full = TRUE)
 }
 \arguments{
 \item{obj}{MpraObject to extract from}

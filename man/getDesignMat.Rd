@@ -4,7 +4,7 @@
 \alias{getDesignMat}
 \title{get a design matrix from the input design}
 \usage{
-getDesignMat(obj, design, testcondition = NULL)
+getDesignMat(obj, design, testcondition = NULL, rna = FALSE)
 }
 \arguments{
 \item{obj}{the MpraObject}
@@ -13,11 +13,18 @@ getDesignMat(obj, design, testcondition = NULL)
 expanded to a model matrix using the object colAnnot. If design is NULL, an
 intercept-only design matrix is created and returned}
 
-\item{testcondition}{condition to substract from formulae}
+\item{testcondition}{condition to substract from formula}
+
+\item{rna}{whether this is a rna model. Together with the noise model set
+in obj@model, this defines whether an extra column for the variance link
+parameter is allowed in the design matrix.}
 }
 \value{
 a design matrix
 }
 \description{
-get a design matrix from the input design
+adds an extra first column if this is the rna design matrix and
+the rna noise model requires a separate variance parameter which is not
+used for the mean model, ie. if the first parameter to estimate is not 
+part of the GLM that defines the mean parameter.
 }

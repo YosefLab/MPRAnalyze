@@ -4,7 +4,7 @@
 \alias{getRNAFits}
 \title{Get RNA full model fits from an MpraObject}
 \usage{
-getRNAFits(obj, enhancers, depth = TRUE, full = TRUE)
+getRNAFits(obj, enhancers, depth = TRUE, full = TRUE, rnascale = TRUE)
 }
 \arguments{
 \item{obj}{MpraObject to extract from}
@@ -14,6 +14,8 @@ getRNAFits(obj, enhancers, depth = TRUE, full = TRUE)
 \item{depth}{include depth correction}
 
 \item{full}{whether to extract from full model}
+
+\item{rnascale}{whether to use prefit rna model factors}
 }
 \value{
 RNA fits (numeric, enhancers x samples)

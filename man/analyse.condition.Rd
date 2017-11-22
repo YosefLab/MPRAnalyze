@@ -2,14 +2,14 @@
 % Please edit documentation in R/modelFitting.R
 \name{analyse.condition}
 \alias{analyse.condition}
-\alias{analyse.condition.lrt}
+\alias{analyse.lrt}
 \alias{analyse.condition.ttest}
-\alias{analyse.condition.lrt}
+\alias{analyse.lrt}
 \alias{analyse.condition.ttest}
 \title{differential activity analysis by condition}
 \usage{
-analyse.condition.lrt(obj, model = "gamma.pois", mode = NULL,
-  dnaDesign = NULL, rnaDesign = NULL, condition_totest = NULL)
+analyse.lrt(obj, model = "gamma.pois", mode = NULL, dnaDesign = NULL,
+  rnaDesign = NULL, condition_totest = NULL)
 
 analyse.condition.ttest(obj, model = "gamma.pois", mode = "ttest",
   dnaDesign = NULL, rnaDesign = NULL, condition_totest = NULL)
