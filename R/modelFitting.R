@@ -28,7 +28,7 @@ NULL
 #' @rdname analyse.condition
 #' @export
 analyse.lrt <- function(obj, model="gamma.pois", mode=NULL,
-                                  dnaDesign=NULL, rnaDesign=NULL, condition_totest=NULL) {
+                        dnaDesign=NULL, rnaDesign=~1, condition_totest=NULL) {
     ## check depth is set
     if(length(obj@dnaDepth) == 0 | length(obj@rnaDepth) == 0) {
         stop("Library depth factors must be estimated or manually set")

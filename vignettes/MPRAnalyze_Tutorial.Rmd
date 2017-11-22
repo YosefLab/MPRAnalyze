@@ -137,9 +137,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
                       colAnnot=sim$colAnnot, controls=ctrls)
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
-mpraobj <- analyse.lrt(
-    mpraobj, model="ln.nb", mode="scaled", 
-    dnaDesign=~barcode)
+mpraobj <- analyse.lrt(mpraobj, model="ln.nb", mode="scaled", dnaDesign=~barcode)
 print(mpraobj@results)
 ```
 
