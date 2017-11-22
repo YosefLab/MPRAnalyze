@@ -79,24 +79,18 @@ analyse.lrt <- function(obj, model="gamma.pois", mode=NULL,
         # could merge the two first cases of this switch
         # if getDesignMat is coded accordingly that the intercept
         # is taken out of rnaRed if no condition_totest is supplied
-        if(obj@mode == "scaled" & !is.null(condition_totest)) {
-            obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest, rna=TRUE)
+        if(obj@mode == "scaled") {
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull # used to correct prefit 
             obj@designs@rnaCtrlRed <- obj@designs@rnaFull # used to correct prefit 
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
             obj@controls.forfit <- NULL
             fitfun <- fit.dnarna.noctrlobs
-        } else if(obj@mode == "scaled" & is.null(condition_totest)) {
-            obj@designs@rnaRed <- NULL
-            obj@designs@rnaCtrlFull <- obj@designs@rnaFull # used to correct prefit 
-            obj@designs@rnaCtrlRed <- obj@designs@rnaFull # used to correct prefit 
-            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
-            obj@controls.forfit <- NULL
-            fitfun <- fit.dnarna.noctrlobs
+            if(!is.null(condition_totest)) {
+                obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition_totest, rna=TRUE)
+            } else if(obj@mode == "scaled" & is.null(condition_totest)) {
+                obj@designs@rnaRed <- NULL
+            }
         } else if(obj@mode == "full") {
-            # cs: case-control identity of enhancer
-            # H1: rna ~ 1 + cs + condition + batch
-            # H0: rna ~ 1 + condition + batch
             obj@designs@rnaRed <- obj@designs@rnaFull
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@designs@rnaCtrlRed <- NULL

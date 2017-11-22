@@ -9,7 +9,7 @@
 \title{differential activity analysis by condition}
 \usage{
 analyse.lrt(obj, model = "gamma.pois", mode = NULL, dnaDesign = NULL,
-  rnaDesign = NULL, condition_totest = NULL)
+  rnaDesign = ~1, condition_totest = NULL)
 
 analyse.condition.ttest(obj, model = "gamma.pois", mode = "ttest",
   dnaDesign = NULL, rnaDesign = NULL, condition_totest = NULL)

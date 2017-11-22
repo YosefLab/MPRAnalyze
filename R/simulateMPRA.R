@@ -24,9 +24,9 @@
 #' 
 #' @export
 simulateMPRA <- function(n.case=100, n.ctrl=20,
-                          n.cond=2, n.bc=25, n.reps=2,
-                          mu.dna=100, sd.dna.cond=2, sd.dna.bc=0.1,
-                          mu.rna=1, sd.rna=0.2, sd.rna.cond=1) {
+                         n.cond=2, n.bc=25, n.reps=2,
+                         mu.dna=100, log.sd.dna=0.2, sd.dna.cond=2, sd.dna.bc=0.1,
+                         mu.rna=1, sd.rna=0.2, sd.rna.cond=1) {
     
     n.samples <- n.cond*n.bc*n.reps
     n.enhancers <- n.case+n.ctrl
@@ -38,7 +38,7 @@ simulateMPRA <- function(n.case=100, n.ctrl=20,
     fc.bc <- rep(rep(rnorm(n = n.bc, mean = 1, sd = sd.dna.bc), n.cond), n.reps)
     fc.bc[fc.bc] <- 0.2 # Threshold
     dcounts.case <- do.call(rbind, lapply(
-        sample(x=mu.dna, size=n.case), 
+        rlnorm(n=n.case, meanlog=log(mu.dna), sdlog=log.sd.dna), 
         function(mu) {
             round(rlnorm(n=n.samples, meanlog = log(mu), sdlog = sd.dna.cond)*fc.bc)
         }))
@@ -72,7 +72,7 @@ simulateMPRA <- function(n.case=100, n.ctrl=20,
         fc.rna.ctrl[fc.rna.ctrl < 0.1] <- 0.1 # Threshold
         rcounts.ctrl <- do.call(rbind, lapply(n.case+seq_len(n.ctrl), function(i) {
             sapply(dcounts[i,]*fc.rna.ctrl, function(x) 
-                round(rpois(n=1, lambda=x )) )
+                round(rnbinom(n=1, mu=x, size=2 )) )
         }))
         rcounts <- rbind(rcounts, rcounts.ctrl)
     }
