@@ -13,16 +13,16 @@
 #' 
 #' @return results data frame
 test.lrt <- function(obj) {
-    
+    ##TODO: format these as a data.frame to begin with?
     ll.full <- sapply(obj@modelFits, function(x) x$ll)
     ll.red <- sapply(obj@modelFits.red, function(x) x$ll)
-    df.dna <- sapply(obj@modelFits, function(x) x$d.df )
-    df.full.rna <- sapply(obj@modelFits, function(x) x$r.df )
+    df.dna <- sapply(obj@modelFits, function(x) x$d.df)
+    df.full.rna <- sapply(obj@modelFits, function(x) x$r.df)
     df.red.rna <- sapply(obj@modelFits.red, function(x) x$r.df)
-    df.full.rna.ctrl <- sapply(obj@modelFits, function(x) x$r.ctrl.df )
-    df.red.rna.ctrl <- sapply(obj@modelFits.red, function(x) x$r.ctrl.df )
-    df.full <- sapply(obj@modelFits, function(x) x$d.df + x$r.df + x$r.ctrl.df )
-    df.red <- sapply(obj@modelFits.red, function(x) x$d.df + x$r.df + x$r.ctrl.df )
+    df.full.rna.ctrl <- sapply(obj@modelFits, function(x) x$r.ctrl.df)
+    df.red.rna.ctrl <- sapply(obj@modelFits.red, function(x) x$r.ctrl.df)
+    df.full <- sapply(obj@modelFits, function(x) x$d.df + x$r.df + x$r.ctrl.df)
+    df.red <- sapply(obj@modelFits.red, function(x) x$d.df + x$r.df + x$r.ctrl.df)
     #df.full <- NCOL(obj@designs@dnaFull) + NCOL(obj@designs@rnaFull)
     #df.red <- NCOL(obj@designs@dnaRed) + NCOL(obj@designs@rnaRed)
     res <- data.frame(enhancer=rownames(obj@dnaCounts),

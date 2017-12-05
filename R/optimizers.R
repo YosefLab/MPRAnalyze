@@ -64,23 +64,13 @@
 NULL
 
 #' @rdname fit.dnarna
-fit.dnarna.noctrlobs <- function(model,
-                                 dcounts, rcounts,
+fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
                                  ddepth, rdepth, rctrlscale,
                                  ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
                                  theta.d.ctrl.prefit,
                                  compute.hessian, BPPARAM=NULL) {
-    
-    ## set cost function
-    if(model == "gamma.pois"){
-        llfnDNA <- ll.dna.gamma.pois
-        llfnRNA <- ll.rna.gamma.pois
-    } else if(model == "ln.nb"){
-        llfnDNA <- ll.dna.ln.nb
-        llfnRNA <- ll.rna.ln.nb
-    } else {
-        stop("model ", model, " not available in fit.dnarna.wctrl.iter()")
-    }
+    ## get likelihood function
+    ll.funs <- get.ll.functions(model)
     
     ## filter invalid counts (NAs) from data and design
     valid.c <- (dcounts > 0) & !is.na(dcounts) & !is.na(rcounts[1,])
@@ -89,59 +79,45 @@ fit.dnarna.noctrlobs <- function(model,
     log.ddepth.valid <- log(ddepth[valid.c])
     log.rdepth.valid <- log(rdepth[valid.c])
     
-    ## clean design matrix from unused factors: note that these should be
+    ## clean design matrix from unused factors
     valid.df <- apply(ddesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
-    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
-        valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
-        # catch exception of variance padding: this is an unused factor
-        if(model %in% c("ln.nb")) {
-            valid.rf[1] <- TRUE
-        }
-    }
+    valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, function(x) !all(x==0))
     
     ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
-    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
-        rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
-    } else {
-        rdmat.valid <- NULL
-    }
+    rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
     
     ## Initialize parameter vector with a guess
-    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
-        guess <- matrix(0, nrow=1, ncol=1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
-    } else {
-        guess <- matrix(0, nrow=1, ncol=1 + NCOL(ddmat.valid))
-    }
+    guess <- rep(0, 1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
     
+    ## optimize
     fit <- optim(par = guess,
-                 fn = cost.dnarna, llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-                 dcounts = dcounts.valid, rcounts = rcounts.valid,
-                 log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid,
+                 fn = cost.dnarna, 
+                 llfnDNA = ll.funs$dna, 
+                 llfnRNA = ll.funs$rna,
+                 dcounts = dcounts.valid, 
+                 rcounts = rcounts.valid,
+                 log.ddepth = log.ddepth.valid, 
+                 log.rdepth = log.rdepth.valid,
                  rctrlscale = rctrlscale,
-                 ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
+                 ddesign.mat = ddmat.valid, 
+                 rdesign.mat = rdmat.valid,
                  rctrldesign.mat = rdesign.ctrl.mat,
-                 method = "BFGS", hessian = compute.hessian)
+                 method = "BFGS", 
+                 hessian = compute.hessian)
     
     ## split parameters to the two parts of the model
     fit$par <- pmax(pmin(fit$par, 23), -23)
     d.par <- fit$par[seq(1, 1+NCOL(ddmat.valid))]
-    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
-        r.par <- fit$par[seq(1+NCOL(ddmat.valid)+1,
-                             1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
-    }
+    r.par <- fit$par[c(1, seq(1+NCOL(ddmat.valid)+1,
+                         1+NCOL(ddmat.valid)+NCOL(rdmat.valid)))]
     
     d.coef <- c(d.par[1], rep(NA, NCOL(ddesign.mat)))
     d.coef[1 + which(valid.df)] <- d.par[-1]
     d.df <- length(d.par)
     
-    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
-        r.coef <- rep(NA, NCOL(rdesign.mat))
-        r.coef[which(valid.rf)] <- r.par
-        r.df <- length(r.par)
-    } else {
-        r.coef <- NULL
-        r.df <- 0
-    }
+    r.coef <- c(r.par[1], rep(NA, NCOL(rdesign.mat)))
+    r.coef[1 + which(valid.rf)] <- r.par[-1]
+    r.df <- length(r.par) - 1
     
     ## standard error of the estimates
     if (compute.hessian) {
@@ -150,13 +126,9 @@ fit.dnarna.noctrlobs <- function(model,
         d.se <- rep(NA, 1 + NCOL(ddesign.mat))
         d.se[c(1, 1 + which(valid.df))] <- se[seq(1, 1+NCOL(ddmat.valid))]
         
-        if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
-            r.se <- rep(NA, NCOL(rdesign.mat))
-            r.se[which(valid.rf)] <- se[seq(1+NCOL(ddmat.valid)+1,
-                                            1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1)]
-        } else {
-            r.se <- NULL
-        }
+        r.se <- rep(NA, 1 + NCOL(rdesign.mat))
+        r.se[c(1, 1 + which(valid.rf))] <- se[c(1, seq(1+NCOL(ddmat.valid)+1,
+                                        1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1))]
     } else {
         d.se <- NULL
         r.se <- NULL
@@ -178,16 +150,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
                                      theta.d.ctrl.prefit,
                                      compute.hessian, BPPARAM=NULL) {
     ## set cost function
-    if(model == "gamma.pois"){
-        llfnDNA <- ll.dna.gamma.pois
-        llfnRNA <- ll.rna.gamma.pois
-    } else if(model == "ln.nb"){
-        llfnDNA <- ll.dna.ln.nb
-        llfnRNA <- ll.rna.ln.nb
-    } else {
-        stop("model ", model, " not available in fit.dnarna.wctrl.iter()")
-    }
-    
+    ll.funs <- get.ll.functions(model)
     ## filter invalid counts (NAs) from data and design
     # this operation is performed on the case enhancer, the first row
     valid.c <- (dcounts[1,] > 0) & !is.na(dcounts[1,]) & !is.na(rcounts[1,])
@@ -203,10 +166,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       function(x) !all(x==0))
     valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, 
                       function(x) !all(x==0))
-    # catch exception of variance padding: this is an unused factor
-    if(model %in% c("ln.nb")) {
-        valid.rf[1] <- TRUE
-    }
+
     if(!is.null(rdesign.ctrl.mat)) {
         valid.rf.ctrl <- apply(rdesign.ctrl.mat[valid.c,,drop=FALSE], 2, 
                                function(x) !all(x==0))
@@ -223,10 +183,10 @@ fit.dnarna.wctrlobs.iter <- function(model,
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation
     # Initialize DNA model parameter vector with a guess
-    d.par <- matrix(0, nrow=1, ncol=1+NCOL(ddmat.valid))
-    r.par <- matrix(0, nrow=1, ncol=NCOL(rdmat.valid))
+    d.par <- rep(0, 1+NCOL(ddmat.valid))
+    r.par <- rep(0, 1+NCOL(rdmat.valid))
     if(!is.null(rdesign.ctrl.mat)) {
-        r.ctrl.par <- matrix(0, nrow=1, ncol=NCOL(rdmat.ctrl.valid))
+        r.ctrl.par <- rep(0, NCOL(rdmat.ctrl.valid))
     } else {
         r.ctrl.par <- NULL
     }
@@ -240,12 +200,17 @@ fit.dnarna.wctrlobs.iter <- function(model,
     while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
         #print(paste0(iter, ": ", llnew, " ", llold))
         ## estimate dna model condition on rna model
-        dfit <- optim(par = d.par, fn = cost.dna.wctrl,
-                      llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-                      theta.d.ctrl.prefit = theta.d.ctrl.prefit, theta.r = r.par,
-                      dcounts = dcounts.valid, rcounts = rcounts.valid,
-                      log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid,
-                      ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
+        dfit <- optim(par = d.par, 
+                      fn = cost.dna.wctrl,
+                      llfnDNA = ll.funs$dna, 
+                      llfnRNA = ll.funs$rna,
+                      theta.r = r.par,
+                      dcounts = dcounts.valid, 
+                      rcounts = rcounts.valid,
+                      log.ddepth = log.ddepth.valid, 
+                      log.rdepth = log.rdepth.valid,
+                      ddesign.mat = ddmat.valid, 
+                      rdesign.mat = rdmat.valid,
                       method = "BFGS", hessian = compute.hessian)
         
         dfit$par <- pmax(pmin(dfit$par, 23), -23)
@@ -253,14 +218,16 @@ fit.dnarna.wctrlobs.iter <- function(model,
         
         ## estimate rna model conditioned on dna model
         rfit <- optim(par = c(r.par, r.ctrl.par), 
-                      fn = cost.rna.wctrl, llfnRNA = llfnRNA,
-                      theta.d = d.par, theta.d.ctrl.prefit = theta.d.ctrl.prefit,
+                      fn = cost.rna.wctrl, 
+                      llfnRNA = ll.funs$rna,
+                      theta.d = d.par, 
+                      theta.d.ctrl.prefit = theta.d.ctrl.prefit,
                       rcounts = rcounts.valid,
                       log.rdepth = log.rdepth.valid, 
-                      ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid,
+                      ddesign.mat = ddmat.valid, 
+                      rdesign.mat = rdmat.valid,
                       rdesign.ctrl.mat = rdmat.ctrl.valid,
                       method = "BFGS", hessian = compute.hessian)
-        
         rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par[seq_len(length(r.par))]
         if(!is.null(r.ctrl.par)) {
@@ -270,14 +237,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
         
         ## update iteration convergence reporters
         llold <- llnew
-        llnew <- -cost.dnarna.wctrl(
-            theta = c(d.par, r.par, r.ctrl.par),
-            theta.d.ctrl.prefit = theta.d.ctrl.prefit,
-            llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-            dcounts = dcounts.valid, rcounts = rcounts.valid,
-            log.ddepth = log.ddepth.valid, log.rdepth = log.rdepth.valid, 
-            ddesign.mat = ddmat.valid, rdesign.mat = rdmat.valid, 
-            rdesign.ctrl.mat = rdmat.ctrl.valid)
+        llnew <- -(rfit$value + dfit$value)
         iter <- iter + 1
         if(iter == MAXITER & llnew > llold-llold*RELTOL) {
             converged <- FALSE
@@ -285,11 +245,11 @@ fit.dnarna.wctrlobs.iter <- function(model,
     }
     
     d.coef <- c(d.par[1], rep(NA, NCOL(ddesign.mat)))
-    d.coef[1 + which(valid.df)] <- d.par[seq(2, length(d.par))]
+    d.coef[1 + which(valid.df)] <- d.par[-1]
     d.df <- length(d.par)
     
-    r.coef <- rep(NA, NCOL(rdesign.mat))
-    r.coef[which(valid.rf)] <- r.par
+    r.coef <- c(r.par[1], rep(NA, NCOL(rdesign.mat)))
+    r.coef[1 + which(valid.rf)] <- r.par[-1]
     r.df <- length(r.par)
     
     if(!is.null(rdesign.ctrl.mat)){
@@ -300,7 +260,6 @@ fit.dnarna.wctrlobs.iter <- function(model,
         r.ctrl.coef <- NULL
         r.ctrl.df <- 0
     }
-    
     ## standard error of the estimates
     if (compute.hessian) {
         se <- sqrt(diag(solve(fit$hessian)))
@@ -308,16 +267,16 @@ fit.dnarna.wctrlobs.iter <- function(model,
         d.se <- rep(NA, 1 + NCOL(ddesign.mat))
         d.se[c(1, 1 + which(valid.df))] <- se[seq(1, 1+NCOL(ddmat.valid))]
         
-        r.se <- rep(NA, NCOL(rdesign.mat))
+        r.se <- rep(NA, 1 + NCOL(rdesign.mat))
         r.se[which(valid.rf)] <- 
             se[seq(1+NCOL(ddmat.valid)+1,
-                   1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
+                   1+NCOL(ddmat.valid)+1+NCOL(rdmat.valid))]
         
         if(!is.null(rdesign.ctrl.mat)){
             r.ctrl.se <- rep(NA, NCOL(rdesign.ctrl.mat))
             r.ctrl.se[which(valid.rf.ctrl)] <- 
-                se[seq(1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1,
-                       1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+NCOL(rdmat.ctrl.valid))]
+                se[seq(1+NCOL(ddmat.valid)+1+NCOL(rdmat.valid)+1,
+                       1+NCOL(ddmat.valid)+1+NCOL(rdmat.valid)+NCOL(rdmat.ctrl.valid))]
         } else {
             r.ctrl.se <- NULL
         }
@@ -342,16 +301,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                                      theta.d.ctrl.prefit=NULL, compute.hessian=NULL,
                                      BPPARAM) {
     
-    ## set cost function
-    if(model == "gamma.pois"){
-        llfnDNA <- ll.dna.gamma.pois
-        llfnRNA <- ll.rna.gamma.pois
-    } else if(model == "ln.nb"){
-        llfnDNA <- ll.dna.ln.nb
-        llfnRNA <- ll.rna.ln.nb
-    } else {
-        stop("model ", model, " not available in fit.dnarna.wctrl.iter()")
-    }
+    ## get cost function
+    ll.funs <- get.ll.functions(model)
     
     ## filter invalid counts (NAs) from data and design
     valid.c.d <- (dcounts > 0) & !is.na(dcounts) & !is.na(rcounts) 
@@ -362,16 +313,12 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     ## clean design matrix from unused factors: note that these should be
     valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2, 
                       function(x) !all(x==0))
-    # catch exception of variance padding: this is an unused factor
-    if(model %in% c("ln.nb")) {
-        valid.rf[1] <- TRUE
-    }
     
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation
     # Initialize DNA model parameter vector with a guess
     d.par <- matrix(0, nrow=NROW(dcounts), ncol=1+NCOL(ddesign.mat))
-    r.par <- rep(0, NCOL(rdesign.mat))
+    r.par <- rep(0, 1+NCOL(rdesign.mat))
     
     llold <- 0
     llnew <- 0
@@ -380,16 +327,17 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     RELTOL <- 10^(-6) # down to -6 or -8?
     MAXITER <- 1000
     while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
-        #print(paste0(iter, ": ", llnew, " ", llold))
         ## estimate dna model for each control enhancer
         dfits <- bplapply(seq_len(NROW(dcounts)), function(i) {
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
                               function(x) !all(x==0))
             fit <- optim(par = d.par[i,], 
-                         fn = cost.dna, theta.r = r.par,
-                         llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-                         dcounts = dcounts[i,valid.c.d[i,],drop=FALSE], 
-                         rcounts = rcounts[i,valid.c.d[i,],drop=FALSE], 
+                         fn = cost.dna, 
+                         theta.r = r.par,
+                         llfnDNA = ll.funs$dna, 
+                         llfnRNA = ll.funs$rna,
+                         dcounts = t(dcounts[i,valid.c.d[i,],drop=FALSE]),
+                         rcounts = t(rcounts[i,valid.c.d[i,],drop=FALSE]),
                          log.ddepth = log.ddepth[valid.c.d[i,]], 
                          log.rdepth = log.rdepth[valid.c.d[i,]],
                          ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
@@ -398,10 +346,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             fit$par <- pmax(pmin(fit$par, 23), -23)
             return(fit)
         }, BPPARAM = BPPARAM)
-        
-        d.par <- matrix(0, nrow=NROW(dcounts),
-                        ncol=NCOL(ddesign.mat)+1)
-        d.par[,1] <- sapply(dfits, function(x) x$par[1] )
+        d.par <- matrix(0, nrow=NROW(dcounts), ncol=NCOL(ddesign.mat)+1)
+        d.par[,1] <- sapply(dfits, function(x) x$par[1])
         for(i in seq_len(NROW(dcounts))){
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
                               function(x) !all(x==0))
@@ -409,31 +355,22 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         }
         
         ## estimate rna model conditioned on dna model
-        rfit <- optim(par = r.par, fn = cost.rna, theta.d = d.par,
-                      llfnRNA = llfnRNA, 
-                      rcounts = rcounts[,valid.c.r,drop=FALSE], 
+        rfit <- optim(par = r.par, 
+                      fn = cost.rna, 
+                      theta.d = t(d.par),
+                      llfnRNA = ll.funs$rna, 
+                      rcounts = t(rcounts[,valid.c.r,drop=FALSE]),
                       log.rdepth = log.rdepth[valid.c.r],
                       ddesign.mat = ddesign.mat[valid.rf,,drop=FALSE], 
                       rdesign.mat = rdesign.mat[valid.rf,,drop=FALSE], 
                       method = "BFGS", hessian = FALSE)
-        
         rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par
         names(r.par) <- NULL
         
         ## update iteration convergence reporters
         llold <- llnew
-        llnew <- -sum(sapply(seq_len(NROW(dcounts)), function(i) {
-            cost.dnarna(
-                theta = c(d.par[i,], r.par),
-                llfnDNA = llfnDNA, llfnRNA = llfnRNA,
-                dcounts = dcounts[i,,drop=FALSE], 
-                rcounts = rcounts[i,,drop=FALSE], 
-                log.ddepth = log.ddepth, log.rdepth = log.rdepth, 
-                rctrlscale = NULL,
-                ddesign.mat = ddesign.mat, rdesign.mat = rdesign.mat,
-                rctrldesign.mat = NULL)
-        }))
+        llnew <- -sum(rfit$value + vapply(dfits, function(x) x$value, 0.0))
         iter <- iter + 1
         if(iter == MAXITER & llnew > llold-llold*RELTOL) {
             converged <- FALSE
@@ -441,17 +378,16 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     }
     
     d.coef <- d.par
-    d.df <- sapply(dfits, function(x) length(x$fit) )
+    d.df <- sapply(dfits, function(x) length(x$fit))
     
     r.coef <- rep(NA, NCOL(rdesign.mat))
-    r.coef[which(valid.rf)] <- r.par
-    r.df <- length(r.par)
-    
+    r.coef[valid.rf] <- r.par[-1]
+    r.df <- length(r.par) - 1
     return(lapply(seq_len(NROW(d.coef)), function(i){
         list(
-            d.coef = d.coef[i,], d.se = NULL, d.df = d.df[i],
-            r.coef = r.coef, r.se = NULL, r.df = r.df,
-            r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = 0,
+            d.coef = d.coef[i,], d.se = NULL,      d.df = d.df[i],
+            r.coef = r.coef,     r.se = NULL,      r.df = r.df,
+            r.ctrl.coef = NULL,  r.ctrl.se = NULL, r.ctrl.df = 0,
             converged = converged,
             ll = NA)
     }))

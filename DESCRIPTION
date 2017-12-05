@@ -14,21 +14,12 @@ Description: MPRAnalyze is an analysis framework for MPRA data that aims at tran
 License: GPL-3
 Encoding: UTF-8
 Imports:
+    BiocParallel,
+    ggplot2,
     methods,
     S4Vectors,
     stats,
     utils
-Collate: 
-    'mpraObject.R'
-    'hypothesisTesting.R'
-    'libraryDepth.R'
-    'likelihoodFunctions.R'
-    'modelFitting.R'
-    'modelSelection.R'
-    'objectiveFunctions.R'
-    'optimizers.R'
-    'plotresults.R'
-    'simulateMPRA.R'
 biocViews: Software,
     StatisticalMethod,
     Sequencing,

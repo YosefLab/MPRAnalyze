@@ -51,23 +51,17 @@ NULL
 NULL
 
 #' @rdname cost.model.noctrl
-cost.dnarna <- function(theta, theta.d=NULL, theta.r=NULL,
-                        dcounts, rcounts,
+cost.dnarna <- function(theta, dcounts, rcounts,
                         llfnDNA, llfnRNA,
                         log.ddepth, log.rdepth, rctrlscale=NULL,
                         ddesign.mat, rdesign.mat, rctrldesign.mat=NULL) {
-    
-    ## extract parameter vectors by model part
     # limit theta to avoid model shrinkage\explosion
     theta <- pmax(pmin(theta, 23), -23)
+    ## extract parameter vectors by model part
     # first parameter of DNA model is the variance(-link) parameter
     theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
-    if(!is.null(rdesign.mat)) { # casectrl one condition null model, this is null
-        theta.r <- theta[seq(1+NCOL(ddesign.mat)+1, 
-                             1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
-    } else {
-        theta.r <- NULL
-    }
+    theta.r <- theta[c(1, seq(1+NCOL(ddesign.mat)+1, 
+                            1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1))]
     
     ## compute likelihood
     # likelihood of case dna observations
@@ -77,17 +71,17 @@ cost.dnarna <- function(theta, theta.d=NULL, theta.r=NULL,
                     ddesign.mat = ddesign.mat)
     # likelihood of case rna observations
     r.ll <- llfnRNA(theta = c(theta.r, rctrlscale),
-                    theta.d = t(matrix(theta.d)),
+                    theta.d = matrix(theta.d),
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
-                    rdesign.mat = cbind(rdesign.mat, rctrldesign.mat) )
+                    rdesign.mat = cbind(rdesign.mat, rctrldesign.mat)) 
     
     return(d.ll + r.ll)
 }
 
 #' @rdname cost.model.noctrl
-cost.dna <- function(theta, theta.d=NULL, theta.r,
+cost.dna <- function(theta, theta.r,
                      llfnDNA, llfnRNA,
                      dcounts, rcounts,
                      log.ddepth, log.rdepth, rctrlscale=NULL,
@@ -101,21 +95,19 @@ cost.dna <- function(theta, theta.d=NULL, theta.r,
                     dcounts = dcounts,
                     log.ddepth = log.ddepth,
                     ddesign.mat = ddesign.mat)
+    
     r.ll <- llfnRNA(theta = c(theta.r, rctrlscale),
-                    theta.d = t(matrix(theta)),
+                    theta.d = matrix(theta),
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
                     rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
-    
     return(d.ll + r.ll)
 }
 
 #' @rdname cost.model.noctrl
-cost.rna <- function(theta, theta.d, theta.r=NULL, 
-                     llfnDNA=NULL, llfnRNA,
-                     dcounts, rcounts,
-                     log.ddepth=NULL, log.rdepth, rctrlscale=NULL,
+cost.rna <- function(theta, theta.d, llfnRNA, rcounts,
+                     log.rdepth, rctrlscale=NULL,
                      ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
     
     ## limit theta to avoid model shrinkage\explosion
@@ -127,8 +119,7 @@ cost.rna <- function(theta, theta.d, theta.r=NULL,
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
-                    rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
-    
+                    rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat))
     return(r.ll)
 }
 
@@ -155,21 +146,19 @@ cost.rna <- function(theta, theta.d, theta.r=NULL,
 NULL
 
 #' @rdname cost.model.wctrl
-cost.dnarna.wctrl <- function(theta, theta.d=NULL, theta.r=NULL, theta.d.ctrl.prefit,
+cost.dnarna.wctrl <- function(theta, theta.d.ctrl.prefit,
                               llfnDNA, llfnRNA,
                               dcounts, rcounts,
                               log.ddepth, log.rdepth, 
                               ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
-    
+    print("HERE.DR")
     ## extract parameter vectors by model part
     # limit theta to avoid model shrinkage\explosion
     theta <- pmax(pmin(theta, 23), -23)
     # first parameter of DNA model is the variance(-link) parameter
-    theta.d <- theta[
-        seq(1, 1+NCOL(ddesign.mat), by=1)]
-    theta.r <- theta[
-        seq(1+NCOL(ddesign.mat)+1, 
-            1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
+    theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
+    theta.r <- theta[seq(1+NCOL(ddesign.mat)+1, 
+                         1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
     if(!is.null(rdesign.ctrl.mat)) {
         theta.r.ctrl <- theta[
             seq(1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+1, 
@@ -203,23 +192,22 @@ cost.dnarna.wctrl <- function(theta, theta.d=NULL, theta.r=NULL, theta.d.ctrl.pr
 }
 
 #' @rdname cost.model.wctrl
-cost.dna.wctrl <- function(theta, theta.d=NULL, theta.r,  theta.d.ctrl.prefit=NULL,
-                           llfnDNA, llfnRNA,
-                           dcounts, rcounts,
-                           log.ddepth, log.rdepth,
-                           ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
+cost.dna.wctrl <- function(theta, theta.r, llfnDNA, llfnRNA,
+                           dcounts, rcounts, log.ddepth, log.rdepth,
+                           ddesign.mat, rdesign.mat) {
     
-    ## compute likelihood
-    # limit theta to avoid model shrinkage\explosion
+    ## limit theta to avoid model shrinkage\explosion
     theta <- pmax(pmin(theta, 23), -23)
-    # likelihood of case dna observations
+    
+    ## likelihood of case dna observations
     d.ll <- llfnDNA(theta = theta,
                     dcounts = dcounts,
                     log.ddepth = log.ddepth, 
                     ddesign.mat = ddesign.mat)
-    # likelihood of case rna observations
+    
+    ## likelihood of case rna observations
     r.ll <- llfnRNA(theta = theta.r,
-                    theta.d = t(matrix(theta)),
+                    theta.d = matrix(theta),
                     rcounts = rcounts[1,,drop=FALSE],
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
@@ -229,19 +217,18 @@ cost.dna.wctrl <- function(theta, theta.d=NULL, theta.r,  theta.d.ctrl.prefit=NU
 }
 
 #' @rdname cost.model.wctrl
-cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
-                           llfnDNA=NULL, llfnRNA,
-                           dcounts=NULL, rcounts,
+cost.rna.wctrl <- function(theta, theta.d, theta.d.ctrl.prefit,
+                           llfnRNA, 
+                           rcounts,
                            log.ddepth, log.rdepth, 
                            ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
-    
     ## extract parameter vectors by model part
     # limit theta to avoid model shrinkage\explosion
     theta <- pmax(pmin(theta, 23), -23)
-    theta.r <- theta[seq(1, NCOL(rdesign.mat), by=1)]
+    theta.r <- theta[seq(1, 1+NCOL(rdesign.mat), by=1)]
     if(!is.null(rdesign.ctrl.mat)) {
-        theta.r.ctrl <- theta[seq(NCOL(rdesign.mat)+1, 
-                                  NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1),
+        theta.r.ctrl <- theta[seq(1+NCOL(rdesign.mat)+1, 
+                                  1+NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1),
                               drop=FALSE]
     } else {
         theta.r.ctrl <- NULL
@@ -251,11 +238,12 @@ cost.rna.wctrl <- function(theta, theta.d, theta.r=NULL, theta.d.ctrl.prefit,
     # likelihood of case rna observations
     r.ll.case <- llfnRNA(
         theta = theta.r,
-        theta.d = t(as.matrix(theta.d)),
+        theta.d = matrix(theta.d),
         rcounts = rcounts[1,,drop=FALSE],
         log.rdepth = log.rdepth,
         ddesign.mat = ddesign.mat,
-        rdesign.mat = rdesign.mat )
+        rdesign.mat = rdesign.mat)
+    
     # likelihood of control rna observations
     r.ll.ctrl <- llfnRNA(
         theta = c(theta.r, theta.r.ctrl),

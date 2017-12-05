@@ -11,27 +11,18 @@
 \title{likelihood wrapper to compute terms of likelihood with non-zero derivative
 with respect to case dna model and rna model with control enhancer observations}
 \usage{
-cost.dnarna.wctrl(theta, theta.d = NULL, theta.r = NULL,
-  theta.d.ctrl.prefit, llfnDNA, llfnRNA, dcounts, rcounts, log.ddepth,
-  log.rdepth, ddesign.mat, rdesign.mat, rdesign.ctrl.mat)
+cost.dnarna.wctrl(theta, theta.d.ctrl.prefit, llfnDNA, llfnRNA, dcounts,
+  rcounts, log.ddepth, log.rdepth, ddesign.mat, rdesign.mat, rdesign.ctrl.mat)
 
-cost.dna.wctrl(theta, theta.d = NULL, theta.r, theta.d.ctrl.prefit = NULL,
-  llfnDNA, llfnRNA, dcounts, rcounts, log.ddepth, log.rdepth, ddesign.mat,
-  rdesign.mat, rdesign.ctrl.mat = NULL)
+cost.dna.wctrl(theta, theta.r, llfnDNA, llfnRNA, dcounts, rcounts, log.ddepth,
+  log.rdepth, ddesign.mat, rdesign.mat)
 
-cost.rna.wctrl(theta, theta.d, theta.r = NULL, theta.d.ctrl.prefit,
-  llfnDNA = NULL, llfnRNA, dcounts = NULL, rcounts, log.ddepth, log.rdepth,
-  ddesign.mat, rdesign.mat, rdesign.ctrl.mat)
+cost.rna.wctrl(theta, theta.d, theta.d.ctrl.prefit, llfnRNA, rcounts,
+  log.ddepth, log.rdepth, ddesign.mat, rdesign.mat, rdesign.ctrl.mat)
 }
 \arguments{
 \item{theta}{vector of model parameters to evaluate likelihood for
 (numeric, parameters)}
-
-\item{theta.d}{vector of dna model parameters to condition likelihood on
-(numeric, dna parameters)}
-
-\item{theta.r}{vector of rna model parameters to condition likelihood on
-(numeric, rna parameters)}
 
 \item{theta.d.ctrl.prefit}{prefit control DNA model parameters
 (numeric, control enhancers x dna model parameters)}
@@ -54,6 +45,12 @@ cost.rna.wctrl(theta, theta.d, theta.r = NULL, theta.d.ctrl.prefit,
 
 \item{rdesign.ctrl.mat}{the control rna model design matrix 
 (logical, samples x rna parameters)}
+
+\item{theta.r}{vector of rna model parameters to condition likelihood on
+(numeric, rna parameters)}
+
+\item{theta.d}{vector of dna model parameters to condition likelihood on
+(numeric, dna parameters)}
 }
 \value{
 negative sum of log likelihood terms with non-zero derivative

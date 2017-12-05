@@ -19,9 +19,22 @@ plotModelPerformance <- function(obj) {
     ##TODO
 }
 
+#' Set the distributional model used
+#' @param obj the MPRAnalyze object
+#' @param model the charater identifier of the model to be used. Currently 
+#' supported models: "ln.nb", "gamma.pois".
+#' @return the MPRAnalyze with the model set for the given value
+setModel <- function(obj, model) {
+    if(model %in% c("ln.nb", "gamma.pois")) {
+        obj@model <- model
+    } else {
+        stop("model", model, "not supported.")
+    }
+    return(obj)
+}
 
 autoChooseModel <- function(obj) {
-    return("gammaPoisson")
+    return("gamma.pois")
     ##modelDiag <- evalModels()
     ##TODO: select the best model somehow
 }

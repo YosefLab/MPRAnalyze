@@ -8,6 +8,7 @@ setClass("Designs", slots = c(
     
     rnaFull = "Design",
     rnaCtrlFull = "Design",
+    
     ## only used in differential LRT mode
     rnaRed = "Design",
     rnaCtrlRed = "Design"
@@ -48,6 +49,7 @@ setClass("MpraObject", validity = validateMpraObject,
              controls = "integerORNULL", #idx of negative controls
              controls.forfit = "integerORNULL", #idx of negative controls used in fitting of full and red
              
+             lib.factor = "factor",
              dnaDepth = "numeric",
              rnaDepth = "numeric",
              rnaCtrlScale = "numericORNULL",
@@ -107,7 +109,10 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
 #' @return DNA fits (numeric, enhancers x samples)
 #' 
 #' @export
-getDNAFits <- function(obj, enhancers, depth=FALSE, full=TRUE){
+getDNAFits <- function(obj, enhancers=NULL, depth=FALSE, full=TRUE){
+    if(is.null(enhancers)) {
+        enhancers <- names(obj@modelFits)
+    }
     if(full == TRUE){
         fit <- obj@modelFits
     } else {
@@ -118,18 +123,23 @@ getDNAFits <- function(obj, enhancers, depth=FALSE, full=TRUE){
         #          = alpha * model_dna
         # shape_gamma = alpha
         # rate_gamma = beta = 1/model_dna
-        dfit <- do.call(rbind, lapply(enhancers, function(i) {
-            exp(fit[[i]]$d.coef[1] + fit[[i]]$d.coef[-1] %*% t(obj@designs@dna))
+        dfit <- do.call(cbind, lapply(enhancers, function(i) {
+            exp(fit[[i]]$d.coef[1] + obj@designs@dna %*% fit[[i]]$d.coef[-1])
         }))
     } else if(obj@model == "ln.nb") {
-        dfit <- do.call(rbind, lapply(enhancers, function(i) {
-            exp(fit[[i]]$d.coef[-1] %*% t(obj@designs@dna))
+        dfit <- do.call(cbind, lapply(enhancers, function(i) {
+            exp(obj@designs@dna %*% fit[[i]]$d.coef[-1])
         }))
     }
+    
     if(depth == TRUE){
-        dfit <- dfit * obj@dnaDepth
+        dfit <- dfit * matrix(obj@dnaDepth, 
+                              nrow=NROW(dfit), ncol=NCOL(dfit), byrow=TRUE)
     }
-    return(dfit)
+    
+    colnames(dfit) <- enhancers
+    rownames(dfit) <- rownames(obj@colAnnot)
+    return(t(dfit))
 }
 
 #' Get RNA full model fits from an MpraObject
@@ -143,7 +153,10 @@ getDNAFits <- function(obj, enhancers, depth=FALSE, full=TRUE){
 #' @return RNA fits (numeric, enhancers x samples)
 #' 
 #' @export
-getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE, rnascale=TRUE){
+getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE){
+    if(is.null(enhancers)) {
+        enhancers <- names(obj@modelFits)
+    }
     if(full == TRUE){
         fit <- obj@modelFits
         rdesign <- obj@designs@rnaFull
@@ -161,25 +174,20 @@ getRNAFits <- function(obj, enhancers, depth=TRUE, full=TRUE, rnascale=TRUE){
     }
     dfit <- getDNAFits(obj=obj, enhancers=enhancers, 
                        depth=FALSE, full=full)
-    if(obj@model == "gamma.pois") {
-        # mu_NB = alpha / beta * rna_model
-        #       = alpha * dna_model * rna_model
-        #       = mu_rna * rna_model
-        # size_alpha = alpha
-        rfit <- do.call(rbind, lapply(enhancers, function(i) {
-            dfit*exp( c(fit[[i]]$r.coef, rctrlscale) %*% t(cbind(rdesign, rctrldesign)) )
-        }))
-    } else if(obj@model == "ln.nb") {
-        # mu_NB = rna_model
-        # Note that the first parameter in r.coef is the variance parameter and that
-        # the design matrix is padded with 0s at this position.
-        rfit <- do.call(rbind, lapply(enhancers, function(i) {
-            dfit*exp( c(fit[[i]]$r.coef, rctrlscale) %*% t(cbind(rdesign, rctrldesign)) )
-        }))
-    }
+    
+    joint.des.mat <- cbind(rdesign, rctrldesign)
+    rfit <- do.call(cbind, lapply(enhancers, function(i) {
+        exp(joint.des.mat %*% c(fit[[i]]$r.coef[-1], rctrlscale))
+    }))
+        
     if(depth == TRUE){
         rfit <- rfit * matrix(obj@rnaDepth, nrow = NROW(rfit), 
                               ncol = NCOL(rfit), byrow = TRUE)
     }
+    
+    rfit <- t(rfit) * dfit
+    
+    rownames(rfit) <- enhancers
+    colnames(rfit) <- rownames(obj@colAnnot)
     return(rfit)
 }

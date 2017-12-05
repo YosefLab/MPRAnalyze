@@ -8,7 +8,9 @@
 #'
 #' @param obj the MpraObject
 #' @param lib.factor the factor associating each sample to a library. Can be a
-#' factor or the name of a column in the object's colAnnot.
+#' factor or the name of a column in the object's colAnnot. If not provided, the
+#' data is assumed to have been generated from a single library, and constant
+#' library depth is set.
 #' @param depthEstimator a character indicating which depth estimation to use.
 #' Currently supported values are "uq" for upper quantile (default) and "rle"
 #' for RLE (uses geometric mean, and is therefore not recommended if libraries
@@ -24,8 +26,14 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, depthEstimator='uq') {
     }
 
     if(is.null(lib.factor)) {
-        ##TODO: lib.factor not provided, now what?
-    } else if(is.character(lib.factor)){
+        ##library factor not provided, assume single library (=neutral depth)
+        obj@lib.factor <- as.factor(rep(1, NCOL(obj@dnaCounts)))
+        obj@dnaDepth <- rep(1, NCOL(obj@dnaCounts))
+        obj@rnaDepth <- rep(1, NCOL(obj@rnaCounts))
+        return(obj)
+    }
+    
+    if(is.character(lib.factor)){
         if(!(lib.factor %in% colnames(obj@colAnnot))) {
             stop("character input for lib.factor must be name of a column in object's colAnnot")
         }
@@ -34,9 +42,10 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, depthEstimator='uq') {
 
     est <- DEPTH_EST_FUNCTIONS[[depthEstimator]]
     if(is.null(est)) {
-        stop(paste0(est, " depth estimation is not supported"))
-        }
-
+        stop(depthEstimator, " depth estimation is not supported")
+    }
+    
+    obj@lib.factor <- lib.factor
     obj@dnaDepth <- compute.depth(data=obj@dnaCounts,
                                   lib.factor=lib.factor,
                                   func=est)
@@ -83,7 +92,10 @@ DEPTH_EST_FUNCTIONS = list(
 #' 
 #' @export
 setDepthFactors <- function(obj, dnaDepth, rnaDepth) {
-    ##TODO: validate lengths, etc
+    if(length(dnaDepth) != NCOL(obj@dnaCounts) 
+       | length(rnaDepth) != NCOL(obj@rnaCounts)) {
+        stop("invalid length of depth factors")
+    }
     obj@dnaDepth <- dnaDepth
     obj@rnaDepth <- rnaDepth
 

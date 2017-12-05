@@ -10,7 +10,9 @@ estimateDepthFactors(obj, lib.factor = NULL, depthEstimator = "uq")
 \item{obj}{the MpraObject}
 
 \item{lib.factor}{the factor associating each sample to a library. Can be a
-factor or the name of a column in the object's colAnnot.}
+factor or the name of a column in the object's colAnnot. If not provided, the
+data is assumed to have been generated from a single library, and constant
+library depth is set.}
 
 \item{depthEstimator}{a character indicating which depth estimation to use.
 Currently supported values are "uq" for upper quantile (default) and "rle"
