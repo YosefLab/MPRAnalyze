@@ -135,9 +135,10 @@ if(length(ctrls)  == 0) {
 }
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
                       colAnnot=sim$colAnnot, controls=ctrls)
-mpraobj <- estimateDepthFactors(mpraobj)
-mpraobj <- analyze.quantitative.lrt(mpraobj, dnaDesign=~barcode)
-mpraobj <- analyse.lrt(mpraobj, model="gamma.pois", mode="scaled", dnaDesign=~barcode)
+mpraobj <- estimateDepthFactors(mpraobj, "rep")
+mpraobj <- setModel(mpraobj, "gamma.pois")
+mpraobj <- analyze.quantitative(obj=mpraobj, 
+                                dnaDesign=~barcode, rnaDesign=~1, mode="empirical")
 print(mpraobj@results)
 ```
 
@@ -171,7 +172,7 @@ if(length(ctrls)  == 0) {
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 1,
                       colAnnot=sim$colAnnot, controls=ctrls)
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
-mpraobj <- estimateDepthFactors(mpraobj)
+mpraobj <- estimateDepthFactors(mpraobj, "rep")
 # mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
 mpraobj <- setModel(mpraobj, "ln.nb")
 mpraobj <- analyze.comparative.lrt(mpraobj, mode="scaled",
@@ -207,7 +208,7 @@ if(length(ctrls)  == 0) {
 }
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, ncores = 3,
                       colAnnot=sim$colAnnot, controls=ctrls)
-mpraobj <- estimateDepthFactors(mpraobj)
+mpraobj <- estimateDepthFactors(mpraobj, "rep")
 mpraobj <- setModel(mpraobj, "ln.nb")
 mpraobj <- analyze.comparative.lrt(obj = mpraobj, condition = "cond", 
                                    mode = "full", dnaDesign = ~barcode+cond, 

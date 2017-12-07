@@ -45,7 +45,7 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, depthEstimator='uq') {
         stop(depthEstimator, " depth estimation is not supported")
     }
     
-    obj@lib.factor <- lib.factor
+    obj@lib.factor <- as.factor(lib.factor)
     obj@dnaDepth <- compute.depth(data=obj@dnaCounts,
                                   lib.factor=lib.factor,
                                   func=est)
