@@ -36,6 +36,9 @@ analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL,
     if(length(obj@dnaDepth) == 0){
         stop("library depth factors must be estimated or provided before analysis")
     }
+    if(length(obj@model) == 0) {
+        obj <- autoChooseModel(obj)
+    }
     
     ## get LRT mode
     if(is.null(mode)) {
@@ -64,6 +67,9 @@ analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL,
 #' 
 #' @export
 analyze.comparative.ttest <- function(obj, dnaDesign, rnaDesign, condition){
+    if(length(obj@model) == 0) {
+        obj <- autoChooseModel(obj)
+    }
     ## check if there is an intercept or not
     ## make sure condition is first term in formula
     ## mode: comparative.ttest.1ref (has intercept, coeff = offset)
@@ -109,11 +115,13 @@ analyze.comparative.ttest <- function(obj, dnaDesign, rnaDesign, condition){
 #' @return the MpraObject, with populated models and results
 #' 
 #' @export
-analyze.quantitative <- function(obj, mode, dnaDesign=~1, rnaDesign=~1){
-    if(obj@dnaDepth == 0){
+analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
+    if(length(obj@dnaDepth) == 0){
         stop("library depth factors must be estimated or provided before analysis")
     }
-    
+    if(length(obj@model) == 0) {
+        obj <- autoChooseModel(obj)
+    }
     if(is.null(mode)) {
         if(is.null(obj@controls)) {
             if(length(levels(obj@lib.factor)) > 1) {
@@ -124,11 +132,14 @@ analyze.quantitative <- function(obj, mode, dnaDesign=~1, rnaDesign=~1){
         } else {
             mode <- "empirical"
         }
-    } else if (!(mode %in% c("IDR", "LRT", "globalScale", "empirical"))) {
+    } else if (!(mode %in% c("IDR", "lrt", "globalScale", "empirical"))) {
         stop("mode ", mode, " is not supported")
     }
     
     obj@mode <- paste0("quantitative.", mode)
+    
+    obj@designs@dna <- getDesignMat(obj=obj, design=dnaDesign)
+    obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
     
     return(QUANT_ANALYSIS[[obj@mode]](obj, dnaDesign, rnaDesign))
 }
@@ -144,14 +155,13 @@ analyze.quantitative.emppval <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fit.dnarna.noctrlobs(model=obj@model,
                       dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=rbind(obj@rnaCounts[rn,], 
-                                    obj@rnaCounts[obj@controls.forfit,]),
+                      rcounts=obj@rnaCounts[rn,,drop=FALSE],
                       ddepth=obj@dnaDepth,
                       rdepth=obj@rnaDepth,
-                      rctrlscale=obj@rnaCtrlScale,
+                      rctrlscale=NULL,
                       ddesign.mat=obj@designs@dna,
                       rdesign.mat=obj@designs@rnaFull,
-                      rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
+                      rdesign.ctrl.mat=NULL,
                       theta.d.ctrl.prefit=NULL,
                       compute.hessian=FALSE))
     }, BPPARAM = obj@BPPARAM)
@@ -161,12 +171,16 @@ analyze.quantitative.emppval <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
     slopes <- vapply(obj@modelFits, function(x) x$r.coef[2], 0.0)
     names(slopes) <- names(obj@modelFits)
     
+    ## create ecdf and compute epvalues
     ctrls <- slopes[obj@controls]
     ctrl.cdf <- ecdf(ctrls)
+    epval <- 1 - ctrl.cdf(slopes)
+    obj@results <- data.frame(row.names=names(slopes),
+                              coef=slopes,
+                              pval=epval,
+                              fdr=p.adjust(epval, 'BH'))
     
-    
-    
-    ## create ecdf and compute epvalues
+    return(obj)
 }
 
 analyze.quantitative.globalscale <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
@@ -194,9 +208,6 @@ analyze.quantitative.idr <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
 analyze.lrt <- function(obj, condition=NULL, 
                         dnaDesign=NULL, rnaDesign= ~condition) {
     ##TODO: verify mode quantitative.lrt!!! works
-    
-    obj@designs@dna <- getDesignMat(obj=obj, design=dnaDesign)
-    obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
     
     ## get distributional model
     if(is.null(obj@model)) {
@@ -279,48 +290,6 @@ analyze.lrt <- function(obj, condition=NULL,
     obj@results <- test.lrt(obj)
     
     return(obj)
-}
-
-#' get a design matrix from the input design
-#' 
-#' adds an extra first column if this is the rna design matrix and
-#' the rna noise model requires a separate variance parameter which is not
-#' used for the mean model, ie. if the first parameter to estimate is not 
-#' part of the GLM that defines the mean parameter.
-#'
-#' @param obj the MpraObject
-#' @param design the input design. A matrix is returned as is, a formula is
-#' expanded to a model matrix using the object colAnnot. If design is NULL, an
-#' intercept-only design matrix is created and returned
-#' @param testcondition condition to substract from formula
-#' @param rna whether this is a rna model. Together with the noise model set
-#' in obj@model, this defines whether an extra column for the variance link
-#' parameter is allowed in the design matrix.
-#'
-#' @return a design matrix
-getDesignMat <- function(obj, design, testcondition=NULL) {
-    # deprecate matrix entry?
-    if (is.matrix(design)) {
-        dmat <- design
-    } else if (is.null(design)) {
-        dmat <- matrix(rep(1,NCOL(obj@dnaCounts)), ncol = 1,
-                       dimnames = list(colnames(obj@dnaCounts), "(intercept)"))
-    } else if (is(design, "formula")) {
-        if(!is.null(testcondition)){
-            ## substract this condition from formula
-            terms <- attr(terms.formula(design), "term.labels")
-            termsnew <- terms[terms != testcondition]
-            if(length(termsnew) >= 1) {
-                design <- as.formula(paste0("~", paste(termsnew, collapse="+")))
-            } else {
-                design <- ~1
-            }
-        }
-        dmat <- model.matrix(design, obj@colAnnot)
-    } else {
-        stop("invalid design")
-    }
-    return(dmat)
 }
 
 QUANT_ANALYSIS <- list(quantitative.IDR = analyze.quantitative.idr,
