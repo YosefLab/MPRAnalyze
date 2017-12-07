@@ -23,24 +23,10 @@ test.lrt <- function(obj) {
     df.red.rna.ctrl <- sapply(obj@modelFits.red, function(x) x$r.ctrl.df)
     df.full <- sapply(obj@modelFits, function(x) x$d.df + x$r.df + x$r.ctrl.df)
     df.red <- sapply(obj@modelFits.red, function(x) x$d.df + x$r.df + x$r.ctrl.df)
-    #df.full <- NCOL(obj@designs@dnaFull) + NCOL(obj@designs@rnaFull)
-    #df.red <- NCOL(obj@designs@dnaRed) + NCOL(obj@designs@rnaRed)
-    res <- data.frame(enhancer=rownames(obj@dnaCounts),
-                      ll.full=ll.full,
-                      ll.red=ll.red,
-                      df.full=df.full,
-                      df.red=df.red,
-                      df.dna=df.dna,
-                      df.full.rna=df.full.rna,
-                      df.red.rna=df.red.rna,
-                      df.full.rna.ctrl=df.full.rna.ctrl,
-                      df.red.rna.ctrl=df.red.rna.ctrl,
-                      row.names=rownames(obj@dnaCounts))
     
-    res$lrt.statistic <- 2*(res$ll.full - res$ll.red)
-    res$pval <- pchisq(res$lrt.statistic, df = res$df.full-res$df.red, 
-                       lower.tail=FALSE)
-    res$fdr.pval <- p.adjust(res$pval, 'BH')
+    lrt <- 2*(ll.full - ll.red)
+    pval <- pchisq(lrt, df = df.full-df.red, lower.tail=FALSE)
+    fdr <- p.adjust(pval, 'BH')
     
-    return(res)
+    return(data.frame(statistic=lrt, pval=pval, fdr=fdr))
 }

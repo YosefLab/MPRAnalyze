@@ -34,7 +34,8 @@ setModel <- function(obj, model) {
 }
 
 autoChooseModel <- function(obj) {
-    return("gamma.pois")
+    obj@model <- "gamma.pois"
     ##modelDiag <- evalModels()
     ##TODO: select the best model somehow
+    return(obj)
 }
