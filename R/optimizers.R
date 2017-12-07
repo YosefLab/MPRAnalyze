@@ -90,6 +90,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     guess <- rep(0, 1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
     
     ## optimize
+    suppressWarnings(
     fit <- optim(par = guess,
                  fn = cost.dnarna, 
                  llfnDNA = ll.funs$dna, 
@@ -103,7 +104,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
                  rdesign.mat = rdmat.valid,
                  rctrldesign.mat = rdesign.ctrl.mat,
                  method = "BFGS", 
-                 hessian = compute.hessian)
+                 hessian = compute.hessian))
     
     ## split parameters to the two parts of the model
     fit$par <- pmax(pmin(fit$par, 23), -23)
@@ -200,6 +201,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
     while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
         #print(paste0(iter, ": ", llnew, " ", llold))
         ## estimate dna model condition on rna model
+        suppressWarnings(
         dfit <- optim(par = d.par, 
                       fn = cost.dna.wctrl,
                       llfnDNA = ll.funs$dna, 
@@ -211,12 +213,13 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       log.rdepth = log.rdepth.valid,
                       ddesign.mat = ddmat.valid, 
                       rdesign.mat = rdmat.valid,
-                      method = "BFGS", hessian = compute.hessian)
+                      method = "BFGS", hessian = compute.hessian))
         
         dfit$par <- pmax(pmin(dfit$par, 23), -23)
         d.par <- dfit$par[seq(1, length(d.par))]
         
         ## estimate rna model conditioned on dna model
+        suppressWarnings(
         rfit <- optim(par = c(r.par, r.ctrl.par), 
                       fn = cost.rna.wctrl, 
                       llfnRNA = ll.funs$rna,
@@ -227,7 +230,8 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       ddesign.mat = ddmat.valid, 
                       rdesign.mat = rdmat.valid,
                       rdesign.ctrl.mat = rdmat.ctrl.valid,
-                      method = "BFGS", hessian = compute.hessian)
+                      method = "BFGS", hessian = compute.hessian))
+        
         rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par[seq_len(length(r.par))]
         if(!is.null(r.ctrl.par)) {
@@ -331,6 +335,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         dfits <- bplapply(seq_len(NROW(dcounts)), function(i) {
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
                               function(x) !all(x==0))
+            suppressWarnings(
             fit <- optim(par = d.par[i,], 
                          fn = cost.dna, 
                          theta.r = r.par,
@@ -342,7 +347,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                          log.rdepth = log.rdepth[valid.c.d[i,]],
                          ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
                          rdesign.mat = rdesign.mat[valid.c.d[i,],valid.rf,drop=FALSE], 
-                         method = "BFGS", hessian = FALSE)
+                         method = "BFGS", hessian = FALSE))
             fit$par <- pmax(pmin(fit$par, 23), -23)
             return(fit)
         }, BPPARAM = BPPARAM)
@@ -355,6 +360,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         }
         
         ## estimate rna model conditioned on dna model
+        suppressWarnings(
         rfit <- optim(par = r.par, 
                       fn = cost.rna, 
                       theta.d = t(d.par),
@@ -363,7 +369,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                       log.rdepth = log.rdepth[valid.c.r],
                       ddesign.mat = ddesign.mat[valid.rf,,drop=FALSE], 
                       rdesign.mat = rdesign.mat[valid.rf,,drop=FALSE], 
-                      method = "BFGS", hessian = FALSE)
+                      method = "BFGS", hessian = FALSE))
         rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par
         names(r.par) <- NULL
