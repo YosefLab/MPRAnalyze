@@ -29,7 +29,7 @@ effect of the given condition.
 }
 \details{
 comparative LRT-based analysis can be run in three possible modes.
-\itemize {
+\itemize{
   \item "nocontrol": this is the default mode for scenarios where control 
   sequences (scrambles) are not available. In this mode, The full model folows
   the given design, and the reduced model is similar but with the condition

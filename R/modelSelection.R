@@ -24,6 +24,7 @@ plotModelPerformance <- function(obj) {
 #' @param model the charater identifier of the model to be used. Currently 
 #' supported models: "ln.nb", "gamma.pois".
 #' @return the MPRAnalyze with the model set for the given value
+#' @export
 setModel <- function(obj, model) {
     if(model %in% c("ln.nb", "gamma.pois")) {
         obj@model <- model

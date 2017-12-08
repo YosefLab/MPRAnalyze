@@ -1,3 +1,4 @@
+
 setClassUnion('listORNULL', members=c('list', 'NULL'))
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
 setClassUnion('integerORNULL', members=c('integer', 'NULL'))
@@ -85,12 +86,16 @@ setClass("MpraObject", validity = validateMpraObject,
 #' ##TODO
 MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_,
                        BPPARAM=NULL, ncores=NULL) {
-    if(is.null(BPPARAM) & is.null(ncores) | ncores == 1) {
-        BPPARAM <- bpparam("SerialParam")
+    if(is.null(BPPARAM) & is.null(ncores)) {
+        BPPARAM <- SerialParam()
     } else if(is.null(BPPARAM) & !is.null(ncores)) {
         BPPARAM <- MulticoreParam(workers = ncores)
     } else if(!is.null(BPPARAM) & !is.null(ncores)) {
         stop("supply either BPPARAM or ncores but not both")
+    }
+    
+    if(is.logical(controls)) {
+        controls <- which(controls)
     }
     
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,

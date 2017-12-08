@@ -85,6 +85,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     
     ddmat.valid <- ddesign.mat[valid.c,valid.df,drop=FALSE]
     rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
+    rdmat.ctrl.valid <- rdesign.ctrl.mat[valid.c,,drop=FALSE]
     
     ## Initialize parameter vector with a guess
     guess <- rep(0, 1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
@@ -102,7 +103,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
                  rctrlscale = rctrlscale,
                  ddesign.mat = ddmat.valid, 
                  rdesign.mat = rdmat.valid,
-                 rctrldesign.mat = rdesign.ctrl.mat,
+                 rctrldesign.mat = rdmat.ctrl.valid,
                  method = "BFGS", 
                  hessian = compute.hessian))
     
@@ -335,8 +336,9 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         dfits <- bplapply(seq_len(NROW(dcounts)), function(i) {
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
                               function(x) !all(x==0))
+            d.par <- rep(0, sum(valid.df) + 1)
             suppressWarnings(
-            fit <- optim(par = d.par[i,], 
+            fit <- optim(par = d.par, 
                          fn = cost.dna, 
                          theta.r = r.par,
                          llfnDNA = ll.funs$dna, 
@@ -351,6 +353,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             fit$par <- pmax(pmin(fit$par, 23), -23)
             return(fit)
         }, BPPARAM = BPPARAM)
+        
         d.par <- matrix(0, nrow=NROW(dcounts), ncol=NCOL(ddesign.mat)+1)
         d.par[,1] <- sapply(dfits, function(x) x$par[1])
         for(i in seq_len(NROW(dcounts))){

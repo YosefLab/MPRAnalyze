@@ -5,7 +5,7 @@
 \title{Perform quantitative analysis on the MPRA data. This analysis aims to determine
 which sequences have a regulatory function, when no condition is being tested.}
 \usage{
-analyze.quantitative(obj, mode, dnaDesign = ~1, rnaDesign = ~1)
+analyze.quantitative(obj, mode = NULL, dnaDesign = ~1, rnaDesign = ~1)
 }
 \arguments{
 \item{obj}{the MpraObject}
@@ -26,7 +26,7 @@ which sequences have a regulatory function, when no condition is being tested.
 \details{
 quantitative analysis can be performed in several ways, depending on
 the experimental design and user preference:
-\itemize {
+\itemize{
   \item empirical: default mode if negative controls are provided. After the
   fit, the 'slope' factor is extracted from the model (this is the factor 
   that captures transcriptional rate). An empricial pvalue is computed for 

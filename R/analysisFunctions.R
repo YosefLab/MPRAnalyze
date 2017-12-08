@@ -4,7 +4,7 @@
 #' @export
 #' 
 #' @details comparative LRT-based analysis can be run in three possible modes.
-#' \itemize {
+#' \itemize{
 #'   \item "nocontrol": this is the default mode for scenarios where control 
 #'   sequences (scrambles) are not available. In this mode, The full model folows
 #'   the given design, and the reduced model is similar but with the condition
@@ -87,7 +87,7 @@ analyze.comparative.ttest <- function(obj, dnaDesign, rnaDesign, condition){
 #' 
 #' @details quantitative analysis can be performed in several ways, depending on
 #' the experimental design and user preference:
-#' \itemize {
+#' \itemize{
 #'   \item empirical: default mode if negative controls are provided. After the
 #'   fit, the 'slope' factor is extracted from the model (this is the factor 
 #'   that captures transcriptional rate). An empricial pvalue is computed for 
