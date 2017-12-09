@@ -34,10 +34,14 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, depthEstimator='uq') {
     }
     
     if(is.character(lib.factor)){
-        if(!(lib.factor %in% colnames(obj@colAnnot))) {
-            stop("character input for lib.factor must be name of a column in object's colAnnot")
+        if(!all(lib.factor %in% colnames(obj@colAnnot))) {
+            stop("character input for lib.factor must be names of columns in object's colAnnot")
         }
-        lib.factor <- obj@colAnnot[,lib.factor]
+        if(length(lib.factor) == 1) {
+            lib.factor <- obj@colAnnot[,lib.factor]
+        } else {
+            lib.factor <- do.call(paste0, obj@colAnnot[,lib.factor])
+        }
     }
 
     est <- DEPTH_EST_FUNCTIONS[[depthEstimator]]
@@ -67,6 +71,7 @@ compute.depth <- function(data, lib.factor, func) {
     lib.factor <- as.factor(lib.factor)
 
     depth <- by(data = t(data), INDICES = lib.factor, FUN = func)
+    print(depth)
     if(median(depth) > 0) {
         depth <- depth / median(depth)
     }
