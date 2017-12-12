@@ -71,7 +71,6 @@ compute.depth <- function(data, lib.factor, func) {
     lib.factor <- as.factor(lib.factor)
 
     depth <- by(data = t(data), INDICES = lib.factor, FUN = func)
-    print(depth)
     if(median(depth) > 0) {
         depth <- depth / median(depth)
     }

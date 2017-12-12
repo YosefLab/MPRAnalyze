@@ -145,8 +145,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
 }
 
 #' @rdname fit.dnarna
-fit.dnarna.wctrlobs.iter <- function(model,
-                                     dcounts, rcounts,
+fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
                                      ddepth, rdepth, rctrlscale=NULL,
                                      ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
                                      theta.d.ctrl.prefit,
@@ -230,6 +229,7 @@ fit.dnarna.wctrlobs.iter <- function(model,
                       log.rdepth = log.rdepth.valid, 
                       ddesign.mat = ddmat.valid, 
                       rdesign.mat = rdmat.valid,
+                      ddesign.ctrl.mat = ddesign.mat,
                       rdesign.ctrl.mat = rdmat.ctrl.valid,
                       method = "BFGS", hessian = compute.hessian))
         
@@ -301,9 +301,8 @@ fit.dnarna.wctrlobs.iter <- function(model,
 
 #' @rdname fit.dnarna
 fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
-                                     ddepth, rdepth, rctrlscale=NULL,
-                                     ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL,
-                                     theta.d.ctrl.prefit=NULL, compute.hessian=NULL,
+                                     ddepth, rdepth,
+                                     ddesign.mat, rdesign.mat,
                                      BPPARAM) {
     
     ## get cost function

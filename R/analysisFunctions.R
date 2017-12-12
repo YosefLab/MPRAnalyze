@@ -145,6 +145,11 @@ analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
 }
 
 analyze.quantitative.emppval <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
+    ## validate
+    if(!checkForIntercept(obj@designs@rnaFull)) {
+        stop("Design matrix must have an intercept in empirical mode")
+    }
+
     ## fit model
     obj@designs@rnaRed <- NULL
     obj@designs@rnaCtrlFull <- NULL
@@ -152,6 +157,7 @@ analyze.quantitative.emppval <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
     obj@modelPreFits.dna.ctrl <- NULL
     obj@controls.forfit <- NULL
     
+    message("Fitting Model...")    
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fit.dnarna.noctrlobs(model=obj@model,
                       dcounts=obj@dnaCounts[rn,,drop=FALSE],

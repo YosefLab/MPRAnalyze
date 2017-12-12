@@ -142,6 +142,8 @@ cost.dnarna.wctrl <- function(theta, theta.d.ctrl.prefit,
                               dcounts, rcounts,
                               log.ddepth, log.rdepth, 
                               ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
+    ##TODO: is not used, does not work
+    
     ## extract parameter vectors by model part
     # first parameter of DNA model is the variance(-link) parameter
     theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
@@ -206,7 +208,8 @@ cost.rna.wctrl <- function(theta, theta.d, theta.d.ctrl.prefit,
                            llfnRNA, 
                            rcounts,
                            log.ddepth, log.rdepth, 
-                           ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
+                           ddesign.mat, rdesign.mat, 
+                           ddesign.ctrl.mat, rdesign.ctrl.mat) {
     ## extract parameter vectors by model part
     theta.r <- theta[seq(1, 1+NCOL(rdesign.mat), by=1)]
     if(!is.null(rdesign.ctrl.mat)) {
@@ -233,7 +236,7 @@ cost.rna.wctrl <- function(theta, theta.d, theta.d.ctrl.prefit,
         theta.d = theta.d.ctrl.prefit,
         rcounts = rcounts[-1,,drop=FALSE],
         log.rdepth = log.rdepth,
-        ddesign.mat = ddesign.mat,
+        ddesign.mat = ddesign.ctrl.mat,
         rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
     
     return(r.ll.case + r.ll.ctrl)

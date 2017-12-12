@@ -41,3 +41,12 @@ getDesignMat <- function(obj, design, testcondition=NULL) {
     }
     return(dmat)
 }
+
+#' TODO
+checkForIntercept <- function(design) {
+    if(is.matrix(design)) {
+        return(all(design[,1] == 1))
+    } else {
+        return(as.logical(attr(terms(design), "intercept")))
+    }
+}
