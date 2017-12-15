@@ -124,13 +124,11 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     ## standard error of the estimates
     if (compute.hessian) {
         se <- sqrt(diag(solve(fit$hessian)))
-        
-        d.se <- rep(NA, 1 + NCOL(ddesign.mat))
-        d.se[c(1, 1 + which(valid.df))] <- se[seq(1, 1+NCOL(ddmat.valid))]
-        
-        r.se <- rep(NA, 1 + NCOL(rdesign.mat))
-        r.se[c(1, 1 + which(valid.rf))] <- se[c(1, seq(1+NCOL(ddmat.valid)+1,
-                                        1+NCOL(ddmat.valid)+NCOL(rdmat.valid)+1))]
+        d.se <- c(se[1], rep(NA, NCOL(ddesign.mat)))
+        d.se[1 + which(valid.df)] <- se[seq(2, 1+NCOL(ddmat.valid))]
+        r.se <- c(se[1], rep(NA, NCOL(rdesign.mat)))
+        r.se[1 + which(valid.rf)] <- se[seq(1+NCOL(ddmat.valid)+1,
+                                        1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
     } else {
         d.se <- NULL
         r.se <- NULL

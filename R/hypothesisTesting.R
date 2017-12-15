@@ -30,3 +30,16 @@ test.lrt <- function(obj) {
     
     return(data.frame(statistic=lrt, pval=pval, fdr=fdr))
 }
+
+test.ttest <- function(obj, condition) {
+    ## check if there is an intercept or not
+    
+    ## mode: comparative.ttest.1ref (has intercept, coeff = offset)
+    ## mode: comparative.ttest.mrefs (no intercept, all pairs possible)
+    
+    ## extract slopes, reformat for results data.frame
+    ## TODO: test.ttest:
+    ##    if .1ref: get one argmuent, compute ttest
+    ##    if .mrefs: get two arguments, compute ttest
+    ##    return results and append them to the results data.frame
+}

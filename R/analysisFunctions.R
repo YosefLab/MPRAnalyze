@@ -66,20 +66,34 @@ analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL,
 #' TODO:
 #' 
 #' @export
-analyze.comparative.ttest <- function(obj, dnaDesign, rnaDesign, condition){
+analyze.comparative.ttest <- function(obj, dnaDesign, rnaDesign){
+    if(length(obj@dnaDepth) == 0) {
+        stop("library depth factors must be estimated or provided before analysis")
+    }
     if(length(obj@model) == 0) {
         obj <- autoChooseModel(obj)
     }
-    ## check if there is an intercept or not
-    ## make sure condition is first term in formula
-    ## mode: comparative.ttest.1ref (has intercept, coeff = offset)
-    ## mode: comparative.ttest.mrefs (no intercept, all pairs possible)
+    obj@designs@dna <- getDesignMat(obj=obj, design=dnaDesign)
+    obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
+    obj@mode <- "comparative.ttest"
+    
     ## fit model
-    ## extract slopes, reformat for results data.frame
-    ## TODO: test.ttest:
-    ##    if .1ref: get one argmuent, compute ttest
-    ##    if .mrefs: get two arguments, compute ttest
-    ##    return results and append them to the results data.frame
+    obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
+        return(fit.dnarna.noctrlobs(model=obj@model,
+                                    dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                                    rcounts=obj@rnaCounts[rn,,drop=FALSE],
+                                    ddepth=obj@dnaDepth,
+                                    rdepth=obj@rnaDepth,
+                                    rctrlscale=NULL,
+                                    ddesign.mat=obj@designs@dna,
+                                    rdesign.mat=obj@designs@rnaFull,
+                                    rdesign.ctrl.mat=NULL,
+                                    theta.d.ctrl.prefit=NULL,
+                                    compute.hessian=TRUE))
+    }, BPPARAM = obj@BPPARAM)
+    names(obj@modelFits) <- rownames(obj@dnaCounts)
+    
+    return(obj)
 }
 
 #' Perform quantitative analysis on the MPRA data. This analysis aims to determine
@@ -137,7 +151,7 @@ analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
     }
     
     obj@mode <- paste0("quantitative.", mode)
-    
+
     obj@designs@dna <- getDesignMat(obj=obj, design=dnaDesign)
     obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
     
