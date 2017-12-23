@@ -104,8 +104,8 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
                  ddesign.mat = ddmat.valid, 
                  rdesign.mat = rdmat.valid,
                  rctrldesign.mat = rdmat.ctrl.valid,
-                 method = "BFGS", 
-                 hessian = compute.hessian))
+                 hessian = compute.hessian,
+                 method = "BFGS", control = list(maxit=1000)))
     
     ## split parameters to the two parts of the model
     fit$par <- pmax(pmin(fit$par, 23), -23)
@@ -122,16 +122,25 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     r.df <- length(r.par) - 1
     
     ## standard error of the estimates
+    se <- NULL
+    d.se <- NULL
+    r.se <- NULL
+    hess <- NULL
     if (compute.hessian) {
-        se <- sqrt(diag(solve(fit$hessian)))
-        d.se <- c(se[1], rep(NA, NCOL(ddesign.mat)))
-        d.se[1 + which(valid.df)] <- se[seq(2, 1+NCOL(ddmat.valid))]
-        r.se <- c(se[1], rep(NA, NCOL(rdesign.mat)))
-        r.se[1 + which(valid.rf)] <- se[seq(1+NCOL(ddmat.valid)+1,
-                                        1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
-    } else {
-        d.se <- NULL
-        r.se <- NULL
+        hess <- fit$hessian
+        se.comp <- tryCatch({
+            se <- sqrt(diag(solve(hess)))
+        }, error = function(e) return(e))
+        
+        if(!inherits(se.comp, "error")) {
+            d.se <- c(se[1], rep(NA, NCOL(ddesign.mat)))
+            d.se[1 + which(valid.df)] <- se[seq(2, 1+NCOL(ddmat.valid))]
+            r.se <- c(se[1], rep(NA, NCOL(rdesign.mat)))
+            r.se[1 + which(valid.rf)] <- se[seq(1+NCOL(ddmat.valid)+1,
+                                                1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
+        } else {
+            message(se.comp$message)
+        }
     }
     
     return(list(
@@ -211,7 +220,8 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
                       log.rdepth = log.rdepth.valid,
                       ddesign.mat = ddmat.valid, 
                       rdesign.mat = rdmat.valid,
-                      method = "BFGS", hessian = compute.hessian))
+                      hessian = compute.hessian,
+                      method = "BFGS", control=list(maxit=1000)))
         
         dfit$par <- pmax(pmin(dfit$par, 23), -23)
         d.par <- dfit$par[seq(1, length(d.par))]
@@ -229,7 +239,8 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
                       rdesign.mat = rdmat.valid,
                       ddesign.ctrl.mat = ddesign.mat,
                       rdesign.ctrl.mat = rdmat.ctrl.valid,
-                      method = "BFGS", hessian = compute.hessian))
+                      hessian = compute.hessian, 
+                      method = "BFGS", control=list(maxit=1000)))
         
         rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par[seq_len(length(r.par))]
@@ -263,35 +274,10 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
         r.ctrl.coef <- NULL
         r.ctrl.df <- 0
     }
-    ## standard error of the estimates
-    if (compute.hessian) {
-        se <- sqrt(diag(solve(fit$hessian)))
-        
-        d.se <- rep(NA, 1 + NCOL(ddesign.mat))
-        d.se[c(1, 1 + which(valid.df))] <- se[seq(1, 1+NCOL(ddmat.valid))]
-        
-        r.se <- rep(NA, 1 + NCOL(rdesign.mat))
-        r.se[which(valid.rf)] <- 
-            se[seq(1+NCOL(ddmat.valid)+1,
-                   1+NCOL(ddmat.valid)+1+NCOL(rdmat.valid))]
-        
-        if(!is.null(rdesign.ctrl.mat)){
-            r.ctrl.se <- rep(NA, NCOL(rdesign.ctrl.mat))
-            r.ctrl.se[which(valid.rf.ctrl)] <- 
-                se[seq(1+NCOL(ddmat.valid)+1+NCOL(rdmat.valid)+1,
-                       1+NCOL(ddmat.valid)+1+NCOL(rdmat.valid)+NCOL(rdmat.ctrl.valid))]
-        } else {
-            r.ctrl.se <- NULL
-        }
-    } else {
-        d.se <- NULL
-        r.se <- NULL
-        r.ctrl.se <- NULL
-    }
     
     return(list(
-        d.coef = d.coef, d.se = d.se, d.df = d.df,
-        r.coef = r.coef, r.se = r.se, r.df = r.df,
+        d.coef = d.coef, d.se = NULL, d.df = d.df,
+        r.coef = r.coef, r.se = NULL, r.df = r.df,
         r.ctrl.coef = r.ctrl.coef, r.ctrl.se = r.ctrl.se, r.ctrl.df = r.ctrl.df,
         converged = converged,
         ll = llnew))
@@ -346,7 +332,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                          log.rdepth = log.rdepth[valid.c.d[i,]],
                          ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
                          rdesign.mat = rdesign.mat[valid.c.d[i,],valid.rf,drop=FALSE], 
-                         method = "BFGS", hessian = FALSE))
+                         hessian = FALSE, 
+                         method = "BFGS", control=list(maxit=1000)))
             fit$par <- pmax(pmin(fit$par, 23), -23)
             return(fit)
         }, BPPARAM = BPPARAM)
@@ -369,7 +356,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                       log.rdepth = log.rdepth[valid.c.r],
                       ddesign.mat = ddesign.mat[valid.rf,,drop=FALSE], 
                       rdesign.mat = rdesign.mat[valid.rf,,drop=FALSE], 
-                      method = "BFGS", hessian = FALSE))
+                      hessian = FALSE, 
+                      method = "BFGS", control=list(maxit=1000)))
         rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par
         names(r.par) <- NULL
