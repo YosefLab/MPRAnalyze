@@ -63,33 +63,84 @@ analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL,
                        dnaDesign=dnaDesign, rnaDesign=rnaDesign))
 }
 
-#' TODO:
+#' Fit the model to enable coefficient-based testing (using the test.coef).
+#' This method should be used when multiple conditions in the data are to be
+#' tested using the same model.
+#' For example, various stimulations compared with unstimulated.
+#' 
+#' @note Currently, this mode only supports a single reference (intercept term).
+#' 
+#' @param obj the MpraObject
+#' @param dnaDesign the design of the DNA model
+#' @param rnaDesign the design of the RNA model
+#' @param useControls if the experiment has negative controls, thes can be 
+#' included in the model and used to correct for unwanted variation. Default is 
+#' TRUE, and this is ignored if no controls exist in the experiment.
+#' 
+#' @return the MpraObject with the fitted model, that can be passed to test.coef 
+#' to test for significance of any coefficient in the model.
 #' 
 #' @export
-analyze.comparative.ttest <- function(obj, dnaDesign, rnaDesign){
+analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign, 
+                                     useControls=TRUE){
+    ## TODO: add control-based correction?
     if(length(obj@dnaDepth) == 0) {
         stop("library depth factors must be estimated or provided before analysis")
     }
+    if(!checkForIntercept(rnaDesign)) {
+        stop("only designs with an intercept term are currently supported in this mode")
+    }
+    
     if(length(obj@model) == 0) {
         obj <- autoChooseModel(obj)
     }
+    
     obj@designs@dna <- getDesignMat(obj=obj, design=dnaDesign)
     obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
-    obj@mode <- "comparative.ttest"
+    obj@mode <- "comparative.coef"
     
+    if(useControls & !is.null(obj@controls)) {
+        message("Fitting controls-based background model...")
+        obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
+            model=obj@model,
+            dcounts = obj@dnaCounts[obj@controls,],
+            rcounts = obj@rnaCounts[obj@controls,],
+            ddepth=obj@dnaDepth,
+            rdepth=obj@rnaDepth,
+            ddesign.mat=obj@designs@dna,
+            rdesign.mat=obj@designs@rnaFull,
+            BPPARAM = obj@BPPARAM)
+        
+        obj@designs@rnaCtrlFull <- obj@designs@rnaFull
+        obj@designs@rnaCtrlRed <- obj@designs@rnaFull
+        obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
+        obj@controls.forfit <- NULL
+        fitfun <- fit.dnarna.noctrlobs
+        obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl[[1]]$r.coef
+        theta.d.ctrl.prefit <- do.call(cbind, lapply(obj@modelPreFits.dna.ctrl,
+                                                     function(x) x$d.coef))
+    } else {
+        obj@designs@rnaCtrlFull <- NULL
+        obj@designs@rnaCtrlRed <- NULL
+        obj@modelPreFits.dna.ctrl <- NULL
+        obj@controls.forfit <- NULL
+        theta.d.ctrl.prefit <- NULL
+    }
     ## fit model
+    message("Fitting model...")
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fit.dnarna.noctrlobs(model=obj@model,
-                                    dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                                    rcounts=obj@rnaCounts[rn,,drop=FALSE],
-                                    ddepth=obj@dnaDepth,
-                                    rdepth=obj@rnaDepth,
-                                    rctrlscale=NULL,
-                                    ddesign.mat=obj@designs@dna,
-                                    rdesign.mat=obj@designs@rnaFull,
-                                    rdesign.ctrl.mat=NULL,
-                                    theta.d.ctrl.prefit=NULL,
-                                    compute.hessian=TRUE))
+                      dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                      rcounts=rbind(obj@rnaCounts[rn,], 
+                                    obj@rnaCounts[obj@controls.forfit,]),
+                      ddepth=obj@dnaDepth,
+                      rdepth=obj@rnaDepth,
+                      rctrlscale=obj@rnaCtrlScale,
+                      ddesign.mat=obj@designs@dna,
+                      rdesign.mat=obj@designs@rnaFull,
+                      rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
+                      theta.d.ctrl.prefit=theta.d.ctrl.prefit,
+                      compute.hessian=TRUE))
     }, BPPARAM = obj@BPPARAM)
     names(obj@modelFits) <- rownames(obj@dnaCounts)
     
@@ -151,10 +202,10 @@ analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
     }
     
     obj@mode <- paste0("quantitative.", mode)
-
+    
     obj@designs@dna <- getDesignMat(obj=obj, design=dnaDesign)
     obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
-    
+
     return(QUANT_ANALYSIS[[obj@mode]](obj, dnaDesign, rnaDesign))
 }
 
@@ -171,7 +222,7 @@ analyze.quantitative.emppval <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
     obj@modelPreFits.dna.ctrl <- NULL
     obj@controls.forfit <- NULL
     
-    message("Fitting Model...")    
+    message("Fitting model...")    
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fit.dnarna.noctrlobs(model=obj@model,
                       dcounts=obj@dnaCounts[rn,,drop=FALSE],
@@ -196,7 +247,7 @@ analyze.quantitative.emppval <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
     ctrl.cdf <- ecdf(ctrls)
     epval <- 1 - ctrl.cdf(slopes)
     obj@results <- data.frame(row.names=names(slopes),
-                              coef=slopes,
+                              statistic=slopes,
                               pval=epval,
                               fdr=p.adjust(epval, 'BH'))
     
@@ -210,9 +261,40 @@ analyze.quantitative.globalscale <- function(obj, dnaDesign=NULL, rnaDesign=NULL
     ## TODO: look at DESeq2 to see what exactly it is they do
 }
 
+#' TODO
+#' 
+#' @import idr
 analyze.quantitative.idr <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
+    ## fix rna design to include library as first condition, with no intercept
+    corrected.des <- correctForIDR(obj, rnaDesign)
+    
     ## fit model
+    obj@designs@rnaRed <- NULL
+    obj@designs@rnaCtrlFull <- NULL
+    obj@designs@rnaCtrlRed <- NULL
+    obj@modelPreFits.dna.ctrl <- NULL
+    obj@controls.forfit <- NULL
+    
+    obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
+        return(fit.dnarna.noctrlobs(model=obj@model,
+                                    dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                                    rcounts=obj@rnaCounts[rn,,drop=FALSE],
+                                    ddepth=obj@dnaDepth,
+                                    rdepth=obj@rnaDepth,
+                                    rctrlscale=NULL,
+                                    ddesign.mat=obj@designs@dna,
+                                    rdesign.mat=corrected.des$desmat,
+                                    rdesign.ctrl.mat=NULL,
+                                    theta.d.ctrl.prefit=NULL,
+                                    compute.hessian=FALSE))
+    }, BPPARAM = obj@BPPARAM)
+    names(obj@modelFits) <- rownames(obj@dnaCounts)
+    
     ## extract library-specific slopes
+    lib.coef <- do.call(rbind, lapply(obj@modelFits, function(fit) {
+        return(fit$r.coef[1:corrected.des$num.libs])
+    }))
+    
     ## feed rankings to idr and get significance estimates
 }
 
@@ -272,7 +354,7 @@ analyze.lrt <- function(obj, condition=NULL,
     theta.d.ctrl.prefit <- do.call(cbind, lapply(obj@modelPreFits.dna.ctrl,
                                                  function(x) x$d.coef))
     
-    message("Fitting full model...")
+    message("Fitting model...")
     obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fitfun(model=obj@model,
                       dcounts=obj@dnaCounts[rn,,drop=FALSE],

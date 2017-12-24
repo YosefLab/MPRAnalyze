@@ -123,18 +123,14 @@ getDNAFits <- function(obj, enhancers=NULL, depth=FALSE, full=TRUE){
     } else {
         fit <- obj@modelFits.red
     }
+    
+    coef.mat <- do.call(cbind, lapply(fit[enhancers], function(x) x$d.coef))
+    coef.mat[is.na(coef.mat)] <- 0
+    
     if(obj@model == "gamma.pois") {
-        # mu_gamma = alpha / beta 
-        #          = alpha * model_dna
-        # shape_gamma = alpha
-        # rate_gamma = beta = 1/model_dna
-        dfit <- do.call(cbind, lapply(enhancers, function(i) {
-            exp(fit[[i]]$d.coef[1] + obj@designs@dna %*% fit[[i]]$d.coef[-1])
-        }))
+        dfit <- exp(coef.mat[1,] + obj@designs@dna %*% coef.mat[-1,])
     } else if(obj@model == "ln.nb") {
-        dfit <- do.call(cbind, lapply(enhancers, function(i) {
-            exp(obj@designs@dna %*% fit[[i]]$d.coef[-1])
-        }))
+        dfit <- exp(obj@designs@dna %*% coef.mat[-1])
     }
     
     if(depth == TRUE){
@@ -177,10 +173,16 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
         rctrldesign <- NULL # overwrite initialisation
         rctrlscale <- NULL
     }
+    
     dfit <- getDNAFits(obj=obj, enhancers=enhancers, 
                        depth=FALSE, full=full)
     
     joint.des.mat <- cbind(rdesign, rctrldesign)
+    
+    coef.mat <- do.call(cbind, lapply(fit[enhancers], function(x) x$r.coef))
+    
+    rfit <- exp(joint.des.mat %*% coef.mat[-1,])
+    
     rfit <- do.call(cbind, lapply(enhancers, function(i) {
         exp(joint.des.mat %*% c(fit[[i]]$r.coef[-1], rctrlscale))
     }))
@@ -196,3 +198,78 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
     colnames(rfit) <- rownames(obj@colAnnot)
     return(rfit)
 }
+
+#' extract the DNA model parameters
+#' @param obj the MpraObject to extract the parameters from
+#' @param features the features to extract the parameters from (be default, 
+#' parameters will be returned for all features)
+#' @param full if TRUE (default), return the parameters of the full model. 
+#' Otherwise, return the parameters of the reduced odel
+#' @return a data.frame of features (rows) by parameters (cols). By convension, the
+#' first parameter is related to the second moment, and the interpretation of 
+#' it depends on the distributional model used (`alpha` for `gamma.pois`, variance 
+#' for `ln.nb`)
+#' @export
+extractModeParameters.DNA <- function(obj, features=NULL, full=TRUE) {
+    if(is.null(features)) {
+        features <- 1:length(obj@modelFits)
+    }
+    if(is.null(obj@modelFits)){
+        stop("can't extract model parameters before fitting a model. An analysis function must be called first.")
+    }
+    if(full) {
+        coef.mat <- do.call(rbind, lapply(obj@modelFits[features], 
+                                          function(x) x$d.coef))
+    } else if (!full & !is.null(obj@modelFits.red)) {
+        coef.mat <- do.call(rbind, lapply(obj@modelFits.red[features], 
+                                          function(x) x$d.coef))
+    } else {
+        stop("Parameters can't be extracted from reduced model, since analysis did not include fitting a reduced model")
+    }
+    colnames(coef.mat) <- c("disp", colnames(obj@designs@dna))
+    rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
+    return(as.data.frame(coef.mat))
+}
+
+#' extract the DNA model parameters
+#' @param obj the MpraObject to extract the parameters from
+#' @param features the features to extract the parameters from (be default, 
+#' parameters will be returned for all features)
+#' @param full if TRUE (default), return the parameters of the full model. 
+#' Otherwise, return the parameters of the reduced odel
+#' @return a data.frame of features (rows) by parameters (cols). By convension, the
+#' first parameter is related to the second moment, and the interpretation of 
+#' it depends on the distributional model used (`alpha` for `gamma.pois`,  
+#' `psi`for `ln.nb`)
+#' @export
+extractModeParameters.RNA <- function(obj, features=NULL, full=TRUE) {
+    if(is.null(obj@modelFits)){
+        stop("can't extract model parameters before fitting a model. An analysis function must be called first.")
+    }
+    if(full) {
+        if(is.null(features)) {
+            features <- 1:length(obj@modelFits)
+        }
+        coef.mat <- do.call(rbind, lapply(obj@modelFits[features], 
+                                          function(x) x$r.coef))
+        colnames(coef.mat) <- c("disp", colnames(obj@designs@rnaFull))
+    } else if (!full & !is.null(obj@modelFits.red)) {
+        if(is.null(features)) {
+            features <- 1:length(obj@modelFits.red)
+        }
+        coef.mat <- do.call(rbind, lapply(obj@modelFits.red[features], 
+                                          function(x) x$r.coef))
+        colnames(coef.mat) <- c("disp", colnames(obj@designs@rnaRed))
+    } else {
+        stop("Parameters can't be extracted from reduced model, since analysis did not include fitting a reduced model")
+    }
+    rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
+    return(as.data.frame(coef.mat))
+}
+
+#' Get the analysis results after running an analysis function
+#' @export
+#' @param obj the MpraObject
+#' @return a fata.frame with the analysis results. Columns vary according to
+#' the type of analysis
+getResults <- function(obj) {return(obj@results)}

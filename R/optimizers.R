@@ -125,11 +125,9 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     se <- NULL
     d.se <- NULL
     r.se <- NULL
-    hess <- NULL
     if (compute.hessian) {
-        hess <- fit$hessian
         se.comp <- tryCatch({
-            se <- sqrt(diag(solve(hess)))
+            se <- sqrt(diag(solve(fit$hessian)))
         }, error = function(e) return(e))
         
         if(!inherits(se.comp, "error")) {

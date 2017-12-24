@@ -18,9 +18,8 @@ fit.dnarna.wctrlobs.iter(model, dcounts, rcounts, ddepth, rdepth,
   rctrlscale = NULL, ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
   theta.d.ctrl.prefit, compute.hessian, BPPARAM = NULL)
 
-fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth,
-  rctrlscale = NULL, ddesign.mat, rdesign.mat, rdesign.ctrl.mat = NULL,
-  theta.d.ctrl.prefit = NULL, compute.hessian = NULL, BPPARAM)
+fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth, ddesign.mat,
+  rdesign.mat, BPPARAM)
 }
 \arguments{
 \item{model}{noise model}

@@ -26,6 +26,8 @@ biocViews: Software,
     GeneExpression,
     CellBiology,
     CellBasedAssays
+Suggests:
+    knitr
 ByteCompile: true
 BugReports: https://github.com/YosefLab/MPRAnalyze
 RoxygenNote: 6.0.1

@@ -23,7 +23,6 @@ knitr::opts_chunk$set(fig.align="center",
                       out.width="600px", 
                       out.height="600px",
                       message=FALSE,
-                      warning=FALSE,
                       results="hide", 
                       echo=TRUE, 
                       eval=TRUE)
@@ -47,6 +46,11 @@ MPRA experiments can be conducted with barcoded plasmids such that multiple plas
 These barcodes are additional to the UMI barcodes.
 Such plasmid barcoding may increase the reliability of the data and the added information can be used with MPRAnalyze.
 We suggest to NOT MERGE the plasmid counts by barcode but to treat them as separate samples and to add the barcode identity into the DNA model as done below.
+
+# Quantitative Analysis - single condition
+# Comparative Analysis - multiple condition
+
+---------------------------------------
 
 # Without scrambled sequences
 ## Compare the strength of enhancers
@@ -108,6 +112,30 @@ abline(a = 0, b = 1, col="red")
 plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
 plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
 plotBoxplots(mpraobj, "case_3", condition = "cond", batch = "rep")
+```
+
+```{r ttest, results='markdown'}
+# ln.nb: does not work
+# gamma.pois: yes
+# devtools::load_all()
+# Produce example data: lognormal distributed DNA and poisson distributed RNA
+sim <- simulateMPRA(n.case = 20, n.ctrl = 5, n.reps = 2,  
+                    sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
+                    sd.rna = 1, sd.rna.cond = 0.5)
+ctrls <- which(sim$rowAnnot$type == "ctrl")
+if(length(ctrls)  == 0) {
+    ctrls <- NULL
+}
+# Run MPRAnalyze
+mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna, BPPARAM = SerialParam(),
+                      colAnnot=sim$colAnnot, controls=ctrls)
+mpraobj <- estimateDepthFactors(mpraobj)
+mpraobj <- setModel(obj = mpraobj, model = "gamma.pois")
+mpraobj <- analyze.comparative.coef(obj = mpraobj,
+                                     dnaDesign = ~barcode+cond, 
+                                     rnaDesign = ~cond)
+res <- test.coefficient(mpraobj, factor = "cond", contrast = "cond_2")
+
 ```
 
 # With scrambled/control enhancers

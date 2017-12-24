@@ -18,7 +18,8 @@ cost.dna.wctrl(theta, theta.r, llfnDNA, llfnRNA, dcounts, rcounts, log.ddepth,
   log.rdepth, ddesign.mat, rdesign.mat)
 
 cost.rna.wctrl(theta, theta.d, theta.d.ctrl.prefit, llfnRNA, rcounts,
-  log.ddepth, log.rdepth, ddesign.mat, rdesign.mat, rdesign.ctrl.mat)
+  log.ddepth, log.rdepth, ddesign.mat, rdesign.mat, ddesign.ctrl.mat,
+  rdesign.ctrl.mat)
 }
 \arguments{
 \item{theta}{vector of model parameters to evaluate likelihood for

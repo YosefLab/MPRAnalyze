@@ -43,6 +43,9 @@ getDesignMat <- function(obj, design, testcondition=NULL) {
 }
 
 #' TODO
+#' Return TRUE iff the given design has an intercept term
+#' @param design either a formula or a design matrix
+#' @return TRUE iff the design has an intercept term
 checkForIntercept <- function(design) {
     if(is.matrix(design)) {
         return(all(design[,1] == 1))
