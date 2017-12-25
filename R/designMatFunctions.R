@@ -7,14 +7,13 @@
 #' used for the mean model, ie. if the first parameter to estimate is not 
 #' part of the GLM that defines the mean parameter.
 #'
+#' @import methods
+#'
 #' @param obj the MpraObject
 #' @param design the input design. A matrix is returned as is, a formula is
 #' expanded to a model matrix using the object colAnnot. If design is NULL, an
 #' intercept-only design matrix is created and returned
 #' @param testcondition condition to substract from formula
-#' @param rna whether this is a rna model. Together with the noise model set
-#' in obj@model, this defines whether an extra column for the variance link
-#' parameter is allowed in the design matrix.
 #'
 #' @return a design matrix
 getDesignMat <- function(obj, design, testcondition=NULL) {
@@ -42,7 +41,6 @@ getDesignMat <- function(obj, design, testcondition=NULL) {
     return(dmat)
 }
 
-#' TODO
 #' Return TRUE iff the given design has an intercept term
 #' @param design either a formula or a design matrix
 #' @return TRUE iff the design has an intercept term

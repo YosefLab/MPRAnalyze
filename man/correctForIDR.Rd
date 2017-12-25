@@ -6,6 +6,18 @@
 \usage{
 correctForIDR(obj, rnaDesign)
 }
+\arguments{
+\item{obj}{the MpraObject}
+
+\item{rnaDesign}{the given design to alter if necessary}
+}
+\value{
+a list:
+\itemize{
+    \item num.libs: the number of libraries n the data
+    \item desmat: the new design matrix
+}
+}
 \description{
 For IDR analysis we need a library-specific slope estimate. Since the library
 isn't necessarily included in the design by the user, this function is used

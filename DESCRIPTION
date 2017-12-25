@@ -17,9 +17,7 @@ Imports:
     BiocParallel,
     ggplot2,
     methods,
-    S4Vectors,
-    stats,
-    utils
+    stats
 biocViews: Software,
     StatisticalMethod,
     Sequencing,

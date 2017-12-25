@@ -14,10 +14,6 @@ expanded to a model matrix using the object colAnnot. If design is NULL, an
 intercept-only design matrix is created and returned}
 
 \item{testcondition}{condition to substract from formula}
-
-\item{rna}{whether this is a rna model. Together with the noise model set
-in obj@model, this defines whether an extra column for the variance link
-parameter is allowed in the design matrix.}
 }
 \value{
 a design matrix

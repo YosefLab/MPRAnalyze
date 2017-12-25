@@ -16,8 +16,6 @@ annotation of the object. Ignored in "full" mode.}
 \item{dnaDesign}{the design of the DNA model. See details}
 
 \item{rnaDesign}{the design of the RNA model. See details}
-
-\item{mode}{the LRT mode to run in. See details}
 }
 \value{
 the MPRAnalyze object, populated with fitted models

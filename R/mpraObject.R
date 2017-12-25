@@ -40,15 +40,33 @@ validateMpraObject <- function(object) {
     }
 }
 
-##TODO: document this
+#' The main container class for MPRAnalyze
+#' @slot dnaCounts matrix of DNA counts
+#' @slot rnaCounts matrix of RNA counts
+#' @slot colAnnot column annotations (info on condition, batch, barcode, etc)
+#' @slot controls indices of negative controls
+#' @slot controls.forfit indices of negative controls used for fitting in `full` 
+#' mode
+#' @slot lib.factor a factor with a level for each library, used for depth 
+#' estimation and in `idr` quantitative mode
+#' @slot dnaDepth library depth correction factors for DNA libraries
+#' @slot rnaDepth library depth correction factors for RNA libraries
+#' @slot rnaCtrlScale control-based correction factors for `scaled` modes
+#' @slot mode analysis mode (identifies the type of analysis performed)
+#' @slot model id of the distributional model used
+#' @slot designs a Designs object containing the various design matrices used
+#' @slot modelFits fitted models, populated by an analysis function
+#' @slot modelFits.red fitted reduced models, populated by an LRT analysis function
+#' @slot modelPreFits.dna.ctrl fitted models for control DNA
+#' @slot BPPARAM The BiocParallel parallelization backend to use throughout
 setClass("MpraObject", validity = validateMpraObject,
          slots = c(
              ## provided by user
              dnaCounts = "matrix",
              rnaCounts = "matrix",
              colAnnot = "data.frame",
-             controls = "integerORNULL", #idx of negative controls
-             controls.forfit = "integerORNULL", #idx of negative controls used in fitting of full and red
+             controls = "integerORNULL", 
+             controls.forfit = "integerORNULL", 
              
              lib.factor = "factor",
              dnaDepth = "numeric",
@@ -59,10 +77,8 @@ setClass("MpraObject", validity = validateMpraObject,
              model = "character",
              designs = "Designs",
              modelFits = "list",
-             modelFits.red = "list", ##only used for LRT diff mode
-             modelPreFits.dna.ctrl = "listORNULL", ##only used for LRT_iter diff mode 
-             
-             results = "data.frame",
+             modelFits.red = "list", 
+             modelPreFits.dna.ctrl = "listORNULL", 
              
              BPPARAM = "BiocParallelParam"
          ))
@@ -81,17 +97,10 @@ setClass("MpraObject", validity = validateMpraObject,
 #' the analysis
 #'
 #' @export
-#'
-#' @examples
-#' ##TODO
 MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_,
-                       BPPARAM=NULL, ncores=NULL) {
-    if(is.null(BPPARAM) & is.null(ncores)) {
+                       BPPARAM=NULL) {
+    if(is.null(BPPARAM)) {
         BPPARAM <- SerialParam()
-    } else if(is.null(BPPARAM) & !is.null(ncores)) {
-        BPPARAM <- MulticoreParam(workers = ncores)
-    } else if(!is.null(BPPARAM) & !is.null(ncores)) {
-        stop("supply either BPPARAM or ncores but not both")
     }
     
     if(is.logical(controls)) {
@@ -266,10 +275,3 @@ extractModeParameters.RNA <- function(obj, features=NULL, full=TRUE) {
     rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
     return(as.data.frame(coef.mat))
 }
-
-#' Get the analysis results after running an analysis function
-#' @export
-#' @param obj the MpraObject
-#' @return a fata.frame with the analysis results. Columns vary according to
-#' the type of analysis
-getResults <- function(obj) {return(obj@results)}

@@ -25,24 +25,16 @@ which sequences have a regulatory function, when no condition is being tested.
 }
 \details{
 quantitative analysis can be performed in several ways, depending on
-the experimental design and user preference:
+the experimental design and user preference. This decision effects the model
+fitting and may cause certain types of hypothesis testing to be enabled or 
+disabled.
 \itemize{
-  \item empirical: default mode if negative controls are provided. After the
-  fit, the 'slope' factor is extracted from the model (this is the factor 
-  that captures transcriptional rate). An empricial pvalue is computed for 
-  each candidate based on the distribution of the control enhancers.
+  \item epirical: the model is fitted as specified, enabling future empirical
+  testing (either empirical p-value if negative controls are provided, or a
+  global devience analysis, see details in `test.empirical`)
   \item lrt: only available if negative controls are provided. A likelihood
   ratio test is used, with the null hypothesis a joint model of the controls
-  and a given candidate sequence, and the alternative model being a joint model
-  with an additional factor allowing for a separation of controls and the candidate.
-  \item idr: default mode if no controls are available, but multiple libraries
-  exist in the experiment. In this mode, the library factor used for depth
-  estimation is used. We fit the model, then the library-specific slope is
-  extracted from the model and a ranking vector of the slopes is computed.
-  The Irreproducible-Discovery-Rate (IDR) method is then used to estimate 
-  significance.
-  \item globalScale: this is the default method for scenarios in which the 
-  experiment has a single library and no controls (this is also the only
-  method that supports that scenario). TODO
+  and a given candidate sequence, and the alternative model being a separate
+  model for controls and candidates.
 }
 }

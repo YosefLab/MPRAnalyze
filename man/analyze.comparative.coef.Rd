@@ -7,7 +7,7 @@ This method should be used when multiple conditions in the data are to be
 tested using the same model.
 For example, various stimulations compared with unstimulated.}
 \usage{
-analyze.comparative.coef(obj, dnaDesign, rnaDesign, useControls = TRUE)
+analyze.comparative.coef(obj, dnaDesign, rnaDesign, use.controls = TRUE)
 }
 \arguments{
 \item{obj}{the MpraObject}

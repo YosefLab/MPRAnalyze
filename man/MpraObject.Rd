@@ -5,7 +5,7 @@
 \title{Initialize a MpraObject object}
 \usage{
 MpraObject(dnaCounts, rnaCounts, colAnnot = NULL, controls = NA_integer_,
-  BPPARAM = NULL, ncores = NULL)
+  BPPARAM = NULL)
 }
 \arguments{
 \item{dnaCounts}{the DNA counts matrix}
@@ -22,7 +22,4 @@ the analysis}
 }
 \description{
 Initialize a MpraObject object
-}
-\examples{
-##TODO
 }

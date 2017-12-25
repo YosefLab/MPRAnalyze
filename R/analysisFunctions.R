@@ -82,8 +82,7 @@ analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL,
 #' 
 #' @export
 analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign, 
-                                     useControls=TRUE){
-    ## TODO: add control-based correction?
+                                     use.controls=TRUE){
     if(length(obj@dnaDepth) == 0) {
         stop("library depth factors must be estimated or provided before analysis")
     }
@@ -99,7 +98,7 @@ analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign,
     obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
     obj@mode <- "comparative.coef"
     
-    if(useControls & !is.null(obj@controls)) {
+    if(use.controls & !is.null(obj@controls)) {
         message("Fitting controls-based background model...")
         obj@modelPreFits.dna.ctrl <- fit.dnarna.onlyctrl.iter(
             model=obj@model,
@@ -151,25 +150,17 @@ analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign,
 #' which sequences have a regulatory function, when no condition is being tested.
 #' 
 #' @details quantitative analysis can be performed in several ways, depending on
-#' the experimental design and user preference:
+#' the experimental design and user preference. This decision effects the model
+#' fitting and may cause certain types of hypothesis testing to be enabled or 
+#' disabled.
 #' \itemize{
-#'   \item empirical: default mode if negative controls are provided. After the
-#'   fit, the 'slope' factor is extracted from the model (this is the factor 
-#'   that captures transcriptional rate). An empricial pvalue is computed for 
-#'   each candidate based on the distribution of the control enhancers.
+#'   \item epirical: the model is fitted as specified, enabling future empirical
+#'   testing (either empirical p-value if negative controls are provided, or a
+#'   global devience analysis, see details in `test.empirical`)
 #'   \item lrt: only available if negative controls are provided. A likelihood
 #'   ratio test is used, with the null hypothesis a joint model of the controls
-#'   and a given candidate sequence, and the alternative model being a joint model
-#'   with an additional factor allowing for a separation of controls and the candidate.
-#'   \item idr: default mode if no controls are available, but multiple libraries
-#'   exist in the experiment. In this mode, the library factor used for depth
-#'   estimation is used. We fit the model, then the library-specific slope is
-#'   extracted from the model and a ranking vector of the slopes is computed.
-#'   The Irreproducible-Discovery-Rate (IDR) method is then used to estimate 
-#'   significance.
-#'   \item globalScale: this is the default method for scenarios in which the 
-#'   experiment has a single library and no controls (this is also the only
-#'   method that supports that scenario). TODO
+#'   and a given candidate sequence, and the alternative model being a separate
+#'   model for controls and candidates.
 #' }
 #' 
 #' @param obj the MpraObject
@@ -188,16 +179,8 @@ analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
         obj <- autoChooseModel(obj)
     }
     if(is.null(mode)) {
-        if(is.null(obj@controls)) {
-            if(length(levels(obj@lib.factor)) > 1) {
-                mode <- "IDR"
-            } else {
-                mode <- "globalScale"
-            }
-        } else {
-            mode <- "empirical"
-        }
-    } else if (!(mode %in% c("IDR", "lrt", "globalScale", "empirical"))) {
+        mode <- "empirical"
+    } else if (!(mode %in% c("lrt", "empirical"))) {
         stop("mode ", mode, " is not supported")
     }
     
@@ -209,12 +192,12 @@ analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
     return(QUANT_ANALYSIS[[obj@mode]](obj, dnaDesign, rnaDesign))
 }
 
-analyze.quantitative.emppval <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
-    ## validate
-    if(!checkForIntercept(obj@designs@rnaFull)) {
-        stop("Design matrix must have an intercept in empirical mode")
-    }
-
+#' Fit the model for quantitative analysis
+#' @param obj the MpraObject
+#' @param dnaDesign the design of the DNA model
+#' @param rnaDesign the design of the RNA model
+#' @return the MpraObject with fitted models
+analyze.quantitative.empirical <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
     ## fit model
     obj@designs@rnaRed <- NULL
     obj@designs@rnaCtrlFull <- NULL
@@ -238,79 +221,20 @@ analyze.quantitative.emppval <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
     }, BPPARAM = obj@BPPARAM)
     names(obj@modelFits) <- rownames(obj@dnaCounts)
     
-    ## extract slope - second coefficient of the rna model
-    slopes <- vapply(obj@modelFits, function(x) x$r.coef[2], 0.0)
-    names(slopes) <- names(obj@modelFits)
-    
-    ## create ecdf and compute epvalues
-    ctrls <- slopes[obj@controls]
-    ctrl.cdf <- ecdf(ctrls)
-    epval <- 1 - ctrl.cdf(slopes)
-    obj@results <- data.frame(row.names=names(slopes),
-                              statistic=slopes,
-                              pval=epval,
-                              fdr=p.adjust(epval, 'BH'))
-    
     return(obj)
 }
 
-analyze.quantitative.globalscale <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
-    ## fit model
-    ## take median of slopes as global scaler
-    ## look for deviance from 1
-    ## TODO: look at DESeq2 to see what exactly it is they do
-}
-
-#' TODO
-#' 
-#' @import idr
-analyze.quantitative.idr <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
-    ## fix rna design to include library as first condition, with no intercept
-    corrected.des <- correctForIDR(obj, rnaDesign)
-    
-    ## fit model
-    obj@designs@rnaRed <- NULL
-    obj@designs@rnaCtrlFull <- NULL
-    obj@designs@rnaCtrlRed <- NULL
-    obj@modelPreFits.dna.ctrl <- NULL
-    obj@controls.forfit <- NULL
-    
-    obj@modelFits <- bplapply(rownames(obj@dnaCounts), function(rn) {
-        return(fit.dnarna.noctrlobs(model=obj@model,
-                                    dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                                    rcounts=obj@rnaCounts[rn,,drop=FALSE],
-                                    ddepth=obj@dnaDepth,
-                                    rdepth=obj@rnaDepth,
-                                    rctrlscale=NULL,
-                                    ddesign.mat=obj@designs@dna,
-                                    rdesign.mat=corrected.des$desmat,
-                                    rdesign.ctrl.mat=NULL,
-                                    theta.d.ctrl.prefit=NULL,
-                                    compute.hessian=FALSE))
-    }, BPPARAM = obj@BPPARAM)
-    names(obj@modelFits) <- rownames(obj@dnaCounts)
-    
-    ## extract library-specific slopes
-    lib.coef <- do.call(rbind, lapply(obj@modelFits, function(fit) {
-        return(fit$r.coef[1:corrected.des$num.libs])
-    }))
-    
-    ## feed rankings to idr and get significance estimates
-}
 
 #' run LRT-based analysis
 #' @param obj the MPRAnalyze object
 #' @param condition the condition to test. Must be a valid column name in the 
 #' annotation of the object. Ignored in "full" mode.
-#' @param mode the LRT mode to run in. See details
 #' @param dnaDesign the design of the DNA model. See details
 #' @param rnaDesign the design of the RNA model. See details
 #' 
 #' @return the MPRAnalyze object, populated with fitted models
 analyze.lrt <- function(obj, condition=NULL, 
                         dnaDesign=NULL, rnaDesign= ~condition) {
-    ##TODO: verify mode quantitative.lrt!!! works
-    
     ## get distributional model
     if(is.null(obj@model)) {
         obj@model <- autoChooseModel(obj)
@@ -388,13 +312,8 @@ analyze.lrt <- function(obj, condition=NULL,
     }, BPPARAM = obj@BPPARAM)
     names(obj@modelFits.red) <- rownames(obj@dnaCounts)
     
-    message("Computing statistical test...")
-    obj@results <- test.lrt(obj)
-    
     return(obj)
 }
 
-QUANT_ANALYSIS <- list(quantitative.IDR = analyze.quantitative.idr,
-                       quantitative.lrt = analyze.lrt,
-                       quantitative.globalScale = analyze.quantitative.globalscale,
-                       quantitative.empirical = analyze.quantitative.emppval)
+QUANT_ANALYSIS <- list(quantitative.lrt = analyze.lrt,
+                       quantitative.empirical = analyze.quantitative.empirical)

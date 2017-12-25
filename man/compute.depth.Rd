@@ -11,6 +11,8 @@ compute.depth(data, lib.factor, func)
 
 \item{lib.factor}{the partitioning of the data matrix columns into library.
 A separate depth factor is computer per library.}
+
+\item{func}{the function to use to compute the library depth}
 }
 \value{
 a numeric of length NCOL(data) with the appropriate epth factor for

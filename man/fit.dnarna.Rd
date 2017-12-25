@@ -32,6 +32,8 @@ fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth, ddesign.mat,
 
 \item{rdepth}{rna library size correction vector (numeric, samples)}
 
+\item{rctrlscale}{control-based correction scalers}
+
 \item{ddesign.mat}{the dna model design matrix (logical, samples x dna parameters)}
 
 \item{rdesign.mat}{the rna model design matrix (logical, samples x rna parameters)}

@@ -1,18 +1,19 @@
 #' Calculate likelihood ratio test for the specific nested model
+#' @import stats
 #'
-#' @note Must be run after running fit.differential
-#' TODO: adatapt this to only perform test and not fit reduced model
+#' @note Must be run after running an LRT-based analysis
 #'
 #' @param obj the MpraObject containing the full and reduced
-#' @param dnaDesign.reduced the design of the DNA reduced model. If NULL, DNA is
-#' assumed to follow same model as the full model - and raDesign.reduced must be
-#' provided 
-#' @param rnaDesign.reduced the design of the RNA reduced model. If NULL, RNA is
-#' assumed to follow same model as the full model, and dnaDesign.reduced must be
-#' provided
 #' 
+#' @export 
 #' @return results data frame
 test.lrt <- function(obj) {
+    if(is.null(obj@modelFits) | is.null(obj@modelFits.red)) {
+        stop("An LRT analysis must be performed before computing the test")
+    }
+    
+    message("Performing Likelihood Ratio Test...")
+    
     ##TODO: format these as a data.frame to begin with?
     ll.full <- sapply(obj@modelFits, function(x) x$ll)
     ll.red <- sapply(obj@modelFits.red, function(x) x$ll)
@@ -44,10 +45,13 @@ test.lrt <- function(obj) {
 
 #' Calculate the significance of a factor in the regression model
 #' 
+#' @import stats
+#' 
 #' @param obj the MpraObject
 #' @param factor the name of the factor to make the comparison on
 #' @param contrast the character value of the factor to use as a contrast. See details.
 #' 
+#' @export
 #' @return a data.frame of the results
 #' this include the test statistic, logFC, p-value and BH-corrected FDR.
 test.coefficient <- function(obj, factor, contrast) {
@@ -65,7 +69,7 @@ test.coefficient <- function(obj, factor, contrast) {
         stop("no matching coefficient for given arguments")
     }
     
-    message("comparing ", contrast, " to ", ref, " in factor ", factor, "...")
+    message("Testing for significance:  ", contrast, " vs. ", ref, ", in factor ", factor, "...")
     coef.id <- 1 + which(coef.id)
     valids <- vapply(obj@modelFits, function(x) !is.null(x$r.se), TRUE)
     logFC <- se <- statistic <- pval <- fdr <- rep(NA, length(obj@modelFits))
@@ -78,3 +82,47 @@ test.coefficient <- function(obj, factor, contrast) {
     
     return(data.frame(logFC=logFC, statistic=statistic, pval=pval, fdr=fdr, row.names = names(obj@modelFits)))
 }
+
+#' test for significant activity (quantitative analysis) using various empirical
+#' tests (see details)
+#' 
+#' @param obj the MpraObject, after running an analysis function
+#' @param statistic if null [default], the intercept term is used as the score.
+#' An alternate score can be provided by setting 'statistic'. Must be a numeric
+#' vector.
+#' 
+#' @details TODO
+#' 
+#' @export
+#' @return TODO
+test.empirical <- function(obj, statistic=NULL) {
+    
+    if(is.null(statistic)) {
+        ## extract slope - second coefficient of the rna model
+        statistic <- vapply(obj@modelFits, function(x) x$r.coef[2], 0.0)
+        names(statistic) <- names(obj@modelFits)
+    }
+    
+    zscore <- (statistic - mean(statistic, na.rm=TRUE)) / sd(statistic, 
+                                                             na.rm=TRUE)
+    mad.score <- (statistic - median(statistic, na.rm=TRUE)) / mad(statistic, 
+                                                                   na.rm=TRUE)
+    
+    res <- data.frame(statistic=statistic,
+                      zscore=zscore,
+                      mad.score=mad.score)
+    
+    if(!is.null(obj@controls)) {
+        ctrls <- statistic[obj@controls]
+        res$zscore.ctrl <- ((statistic - mean(ctrls, na.rm=TRUE)) / 
+                                sd(ctrls, na.rm=TRUE))
+        res$mad.score.ctrl <- ((statistic - median(ctrls, na.rm=TRUE)) / 
+                                   mad(ctrls, na.rm=TRUE))
+        
+        res$epval <- 1 - ecdf(ctrls)(statistic)
+        res$fdr <- p.adjust(res$epval, "BH")
+    }
+    
+    return(res)
+}
+    

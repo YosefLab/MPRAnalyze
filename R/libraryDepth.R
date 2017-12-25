@@ -64,6 +64,7 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, depthEstimator='uq') {
 #' @param data the data matrix to compute the depth factor for
 #' @param lib.factor the partitioning of the data matrix columns into library.
 #' A separate depth factor is computer per library.
+#' @param func the function to use to compute the library depth
 #'
 #' @return a numeric of length NCOL(data) with the appropriate epth factor for
 #' each column (these are not unique values)

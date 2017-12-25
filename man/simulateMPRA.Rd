@@ -17,7 +17,11 @@ simulateMPRA(n.case = 100, n.ctrl = 20, n.cond = 2, n.bc = 25,
 
 \item{n.bc}{number of barcodes observed per condition}
 
+\item{n.reps}{number of repeats to generate}
+
 \item{mu.dna}{mean dna level}
+
+\item{log.sd.dna}{sd to draw DNA from}
 
 \item{sd.dna.cond}{stddev to draw dna fold change 
 by condition from (centred at 1)}

@@ -54,7 +54,7 @@ NULL
 cost.dnarna <- function(theta, dcounts, rcounts,
                         llfnDNA, llfnRNA,
                         log.ddepth, log.rdepth, rctrlscale=NULL,
-                        ddesign.mat, rdesign.mat, rctrldesign.mat=NULL) {
+                        ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
     ## extract parameter vectors by model part
     # first parameter of DNA model is the variance(-link) parameter
     theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
@@ -73,7 +73,7 @@ cost.dnarna <- function(theta, dcounts, rcounts,
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
                     ddesign.mat = ddesign.mat,
-                    rdesign.mat = cbind(rdesign.mat, rctrldesign.mat)) 
+                    rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat)) 
     
     return(d.ll + r.ll)
 }
@@ -124,62 +124,18 @@ cost.rna <- function(theta, theta.d, llfnRNA, rcounts,
 #' @rdname cost.model.wctrl
 #' 
 #' @aliases 
-#' cost.dnarna
-#' cost.dna
-#' cost.rna
+#' cost.dna.wctrl
+#' cost.rna.wctrl
 #' 
 #' @inheritParams cost.model
 #' @param theta.d.ctrl.prefit prefit control DNA model parameters
 #' (numeric, control enhancers x dna model parameters)
+#' @param ddesign.ctrl.mat prefit control DNA model design
+#' (logical, samples x dna parameters)
 #' 
 #' @return negative sum of log likelihood terms with non-zero derivative
 #' with respect to case model 
 NULL
-
-#' @rdname cost.model.wctrl
-cost.dnarna.wctrl <- function(theta, theta.d.ctrl.prefit,
-                              llfnDNA, llfnRNA,
-                              dcounts, rcounts,
-                              log.ddepth, log.rdepth, 
-                              ddesign.mat, rdesign.mat, rdesign.ctrl.mat) {
-    ##TODO: is not used, does not work
-    
-    ## extract parameter vectors by model part
-    # first parameter of DNA model is the variance(-link) parameter
-    theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
-    theta.r <- theta[seq(1+NCOL(ddesign.mat)+1, 
-                         1+NCOL(ddesign.mat)+NCOL(rdesign.mat), by=1)]
-    if(!is.null(rdesign.ctrl.mat)) {
-        theta.r.ctrl <- theta[
-            seq(1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+1, 
-                1+NCOL(ddesign.mat)+NCOL(rdesign.mat)+NCOL(rdesign.ctrl.mat), by=1)]
-    } else {
-        theta.r.ctrl <- NULL
-    }
-    
-    ## compute likelihood
-    # likelihood of case dna observations
-    d.ll <- llfnDNA(theta = theta.d,
-                    dcounts = dcounts,
-                    log.ddepth = log.ddepth, 
-                    ddesign.mat = ddesign.mat)
-    # likelihood of case rna observations
-    r.ll.case <- llfnRNA(theta = theta.r,
-                         theta.d = t(as.matrix(theta.d)),
-                         rcounts = rcounts[1,,drop=FALSE],
-                         log.rdepth = log.rdepth,
-                         ddesign.mat = ddesign.mat,
-                         rdesign.mat = rdesign.mat )
-    # likelihood of ctrl rna observations
-    r.ll.ctrl <- llfnRNA(theta = c(theta.r, theta.r.ctrl),
-                         theta.d = theta.d.ctrl.prefit,
-                         rcounts = rcounts[-1,],
-                         log.rdepth = log.rdepth,
-                         ddesign.mat = ddesign.mat,
-                         rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
-    
-    return(d.ll + r.ll.case + r.ll.ctrl)
-}
 
 #' @rdname cost.model.wctrl
 cost.dna.wctrl <- function(theta, theta.r, llfnDNA, llfnRNA,

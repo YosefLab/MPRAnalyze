@@ -12,7 +12,7 @@
 with respect to case dna model and rna model without control enhancer observations}
 \usage{
 cost.dnarna(theta, dcounts, rcounts, llfnDNA, llfnRNA, log.ddepth, log.rdepth,
-  rctrlscale = NULL, ddesign.mat, rdesign.mat, rctrldesign.mat = NULL)
+  rctrlscale = NULL, ddesign.mat, rdesign.mat, rdesign.ctrl.mat = NULL)
 
 cost.dna(theta, theta.r, llfnDNA, llfnRNA, dcounts, rcounts, log.ddepth,
   log.rdepth, rctrlscale = NULL, ddesign.mat, rdesign.mat,
@@ -45,11 +45,11 @@ variation between conditions pre-fit on control enhancers
 
 \item{rdesign.mat}{the rna model design matrix (logical, samples x rna parameters)}
 
-\item{theta.r}{vector of rna model parameters to condition likelihood on
-(numeric, rna parameters)}
-
 \item{rdesign.ctrl.mat}{the control rna model design matrix 
 (logical, samples x rna parameters)}
+
+\item{theta.r}{vector of rna model parameters to condition likelihood on
+(numeric, rna parameters)}
 
 \item{theta.d}{vector of dna model parameters to condition likelihood on
 (numeric, dna parameters)}

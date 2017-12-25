@@ -7,6 +7,8 @@
 #' @name fit.dnarna
 #' @rdname fit.dnarna
 #' 
+#' @import stats
+#' 
 #' @aliases 
 #' fit.dnarna.noctrlobs
 #' fit.dnarna.wctrlobs.iter
@@ -40,6 +42,7 @@
 #' @param rdepth rna library size correction vector (numeric, samples)
 #' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
 #' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
+#' @param rctrlscale control-based correction scalers
 #' @param rdesign.ctrl.mat the control rna model design matrix 
 #' (logical, samples x rna parameters)
 #' @param theta.d.ctrl.prefit ctrl dna model parameters to condition likelihood on
@@ -103,7 +106,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
                  rctrlscale = rctrlscale,
                  ddesign.mat = ddmat.valid, 
                  rdesign.mat = rdmat.valid,
-                 rctrldesign.mat = rdmat.ctrl.valid,
+                 rdesign.ctrl.mat = rdmat.ctrl.valid,
                  hessian = compute.hessian,
                  method = "BFGS", control = list(maxit=1000)))
     
@@ -276,7 +279,7 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
     return(list(
         d.coef = d.coef, d.se = NULL, d.df = d.df,
         r.coef = r.coef, r.se = NULL, r.df = r.df,
-        r.ctrl.coef = r.ctrl.coef, r.ctrl.se = r.ctrl.se, r.ctrl.df = r.ctrl.df,
+        r.ctrl.coef = r.ctrl.coef, r.ctrl.se = NULL, r.ctrl.df = r.ctrl.df,
         converged = converged,
         ll = llnew))
 }

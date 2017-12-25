@@ -1,10 +1,15 @@
 #' Simulate MPRA data
 #' 
+#' @import stats
+#' @import methods
+#' 
 #' @param n.case number of case enhancers
 #' @param n.ctrl number of control/scrambled enhancers
 #' @param n.cond number of conditions
 #' @param n.bc number of barcodes observed per condition
+#' @param n.reps number of repeats to generate
 #' @param mu.dna mean dna level
+#' @param log.sd.dna sd to draw DNA from
 #' @param sd.dna.cond stddev to draw dna fold change 
 #' by condition from (centred at 1)
 #' @param sd.dna.bc stddev to draw dna fold change 
