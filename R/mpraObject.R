@@ -213,13 +213,14 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
 #' @param features the features to extract the parameters from (be default, 
 #' parameters will be returned for all features)
 #' @param full if TRUE (default), return the parameters of the full model. 
-#' Otherwise, return the parameters of the reduced odel
+#' Otherwise, return the parameters of the reduced model (only relevant for 
+#' LRT-based analyses)
 #' @return a data.frame of features (rows) by parameters (cols). By convension, the
 #' first parameter is related to the second moment, and the interpretation of 
 #' it depends on the distributional model used (`alpha` for `gamma.pois`, variance 
 #' for `ln.nb`)
 #' @export
-extractModeParameters.DNA <- function(obj, features=NULL, full=TRUE) {
+extractModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(features)) {
         features <- 1:length(obj@modelFits)
     }
@@ -251,7 +252,7 @@ extractModeParameters.DNA <- function(obj, features=NULL, full=TRUE) {
 #' it depends on the distributional model used (`alpha` for `gamma.pois`,  
 #' `psi`for `ln.nb`)
 #' @export
-extractModeParameters.RNA <- function(obj, features=NULL, full=TRUE) {
+extractModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(obj@modelFits)){
         stop("can't extract model parameters before fitting a model. An analysis function must be called first.")
     }

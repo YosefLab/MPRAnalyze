@@ -73,7 +73,7 @@ analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL,
 #' @param obj the MpraObject
 #' @param dnaDesign the design of the DNA model
 #' @param rnaDesign the design of the RNA model
-#' @param useControls if the experiment has negative controls, thes can be 
+#' @param use.controls if the experiment has negative controls, thes can be 
 #' included in the model and used to correct for unwanted variation. Default is 
 #' TRUE, and this is ignored if no controls exist in the experiment.
 #' 

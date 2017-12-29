@@ -16,7 +16,7 @@ analyze.comparative.coef(obj, dnaDesign, rnaDesign, use.controls = TRUE)
 
 \item{rnaDesign}{the design of the RNA model}
 
-\item{useControls}{if the experiment has negative controls, thes can be 
+\item{use.controls}{if the experiment has negative controls, thes can be 
 included in the model and used to correct for unwanted variation. Default is 
 TRUE, and this is ignored if no controls exist in the experiment.}
 }

@@ -11,7 +11,8 @@ test.coefficient(obj, factor, contrast)
 
 \item{factor}{the name of the factor to make the comparison on}
 
-\item{contrast}{the character value of the factor to use as a contrast. See details.}
+\item{contrast}{the character value of the factor to use as a contrast. See 
+details.}
 }
 \value{
 a data.frame of the results

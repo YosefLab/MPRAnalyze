@@ -8,7 +8,7 @@
 #' @export 
 #' @return results data frame
 test.lrt <- function(obj) {
-    if(is.null(obj@modelFits) | is.null(obj@modelFits.red)) {
+    if(length(obj@modelFits) == 0 | length(obj@modelFits.red) == 0) {
         stop("An LRT analysis must be performed before computing the test")
     }
     
@@ -31,13 +31,12 @@ test.lrt <- function(obj) {
     res <- data.frame(statistic=lrt, pval=pval, fdr=fdr, df.test=df,
                       df.dna=df.dna, df.rna.full=df.rna.full, 
                       df.rna.red=df.rna.red)
-    
     ## if condition is single term, extract the corresponding coefficient as logFC
     condition.name <- colnames(obj@designs@rnaFull)[!(colnames(obj@designs@rnaFull) %in% 
                                  colnames(obj@designs@rnaRed))]
     if(length(condition.name) == 1) {
         ## single coefficient is the log Fold Change
-        res$logFC <- extractModeParameters.RNA(obj)[,condition.name]
+        res$logFC <- extractModelParameters.RNA(obj)[,condition.name]
     }
     
     return(res)
@@ -49,7 +48,8 @@ test.lrt <- function(obj) {
 #' 
 #' @param obj the MpraObject
 #' @param factor the name of the factor to make the comparison on
-#' @param contrast the character value of the factor to use as a contrast. See details.
+#' @param contrast the character value of the factor to use as a contrast. See 
+#' details.
 #' 
 #' @export
 #' @return a data.frame of the results
@@ -91,10 +91,27 @@ test.coefficient <- function(obj, factor, contrast) {
 #' An alternate score can be provided by setting 'statistic'. Must be a numeric
 #' vector.
 #' 
-#' @details TODO
-#' 
 #' @export
-#' @return TODO
+#' @return a data.frame of empirical summary statistics based on the model's 
+#' estimate of slope, or the given statistic. These are:
+#' \itemize{
+#'     \item statistic: the statistic (either the provided, or extracted from the
+#'     models)
+#'     \item zscore: Z-score of the statistic (number of standard devisations 
+#'     from the mean)
+#'     \item mad.score: a median-baed equivalent of the Z-score, with less 
+#'     sensitivity to outlier values
+#'     \item zscore.ctrl: only available if negative controls are provided.
+#'     a Z-score based on the controls distribution, instead of the distribution 
+#'     of the complete set of observations
+#'     \item mad.score.ctrl: only available if negative controls are provided.
+#'     a MAD-score based on the controls distribution, instead of the distribution 
+#'     of the complete set of observations
+#'     \item epval: only available if negative controls are provided. empirical 
+#'     P-value, using the control distribution as the null
+#'     \item fdr: only available if negative controls are provided. BH adjusted-
+#'     empricial p-values
+#' }
 test.empirical <- function(obj, statistic=NULL) {
     
     if(is.null(statistic)) {
