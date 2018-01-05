@@ -12,11 +12,11 @@
 \usage{
 fit.dnarna.noctrlobs(model, dcounts, rcounts, ddepth, rdepth, rctrlscale,
   ddesign.mat, rdesign.mat, rdesign.ctrl.mat, theta.d.ctrl.prefit,
-  compute.hessian, BPPARAM = NULL)
+  compute.hessian)
 
 fit.dnarna.wctrlobs.iter(model, dcounts, rcounts, ddepth, rdepth,
   rctrlscale = NULL, ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
-  theta.d.ctrl.prefit, compute.hessian, BPPARAM = NULL)
+  theta.d.ctrl.prefit, compute.hessian)
 
 fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth, ddesign.mat,
   rdesign.mat, BPPARAM)

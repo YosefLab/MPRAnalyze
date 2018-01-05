@@ -29,7 +29,7 @@ setModel <- function(obj, model) {
     if(model %in% c("ln.nb", "gamma.pois")) {
         obj@model <- model
     } else {
-        stop("model", model, "not supported.")
+        stop("model '", model, "' not supported.")
     }
     return(obj)
 }

@@ -71,7 +71,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
                                  ddepth, rdepth, rctrlscale,
                                  ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
                                  theta.d.ctrl.prefit,
-                                 compute.hessian, BPPARAM=NULL) {
+                                 compute.hessian) {
     ## get likelihood function
     ll.funs <- get.ll.functions(model)
     
@@ -157,7 +157,7 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
                                      ddepth, rdepth, rctrlscale=NULL,
                                      ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
                                      theta.d.ctrl.prefit,
-                                     compute.hessian, BPPARAM=NULL) {
+                                     compute.hessian) {
     ## set cost function
     ll.funs <- get.ll.functions(model)
     ## filter invalid counts (NAs) from data and design
@@ -299,7 +299,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     log.ddepth <- log(ddepth)
     log.rdepth <- log(rdepth)
     
-    ## clean design matrix from unused factors: note that these should be
+    ## clean design matrix from unused factors
     valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2, 
                       function(x) !all(x==0))
     
@@ -386,4 +386,61 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
             converged = converged,
             ll = NA)
     }))
+}
+
+#' Fit the DNA model conditioned on an RNA model
+#' 
+#' This is used to optimize an enhancer-based model for each enhancer while
+#' assuming that the RNA model is identica to the control model. This model
+#' can be used as a reduced model in LRT settings.
+#' 
+#' @inheritParams fit.dnarna
+fit.dna.controlrna <- function(model, dcounts, rcounts, r.coef,
+                               ddepth, rdepth,
+                               ddesign.mat, rdesign.mat) {
+    ## Fit the DNA model conditioned on the provided RNA model
+    ll.funs <- get.ll.functions(model)
+
+    log.ddepth <- log(ddepth)
+    log.rdepth <- log(rdepth)
+    
+    valid.c <- (dcounts > 0) & !is.na(dcounts) & !is.na(rcounts)     
+    valid.df <- apply(ddesign.mat[valid.c,,drop=FALSE], 2, 
+                      function(x) !all(x==0))
+    valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2, 
+                      function(x) !all(x==0))
+    
+    ddmat.valid <- ddesign.mat[valid.c, valid.df, drop=FALSE]
+    rdmat.valid <- rdesign.mat[valid.c, valid.rf, drop=FALSE]
+    theta.r <- r.coef[valid.rf]
+    
+    par <- rep(0, 1 + NCOL(ddmat.valid))
+    
+    suppressWarnings(
+    fit <- optim(par = par, 
+                 fn = cost.dna,
+                 theta.r = theta.r,
+                 llfnDNA = ll.funs$dna, 
+                 llfnRNA = ll.funs$rna,
+                 dcounts = dcounts[valid.c],
+                 rcounts = rcounts[valid.c],
+                 log.ddepth = log.ddepth[valid.c], 
+                 log.rdepth = log.rdepth[valid.c],
+                 ddesign.mat = ddmat.valid,
+                 rdesign.mat = rdmat.valid,
+                 hessian = FALSE, 
+                 method = "BFGS", control=list(maxit=1000)))
+    
+    fit$par <- pmax(pmin(fit$par, 23), -23)
+    d.coef <- c(fit$par[1], rep(NA, NCOL(ddesign.mat)))
+    d.coef[1 + which(valid.df)] <- fit$par[-1]
+    d.df <- length(fit$par)
+    
+    ## standard error of the estimates
+    return(list(
+        d.coef = d.coef, d.se = NULL, d.df = d.df,
+        r.coef = r.coef, r.se = NULL, r.df = length(r.coef),
+        r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = 0,
+        converged = fit$convergence,
+        ll = -fit$value))
 }

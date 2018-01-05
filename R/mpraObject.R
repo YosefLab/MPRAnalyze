@@ -133,7 +133,7 @@ getDNAFits <- function(obj, enhancers=NULL, depth=FALSE, full=TRUE){
         fit <- obj@modelFits.red
     }
     
-    coef.mat <- do.call(cbind, lapply(fit[enhancers], function(x) x$d.coef))
+    coef.mat <- t(fit$d.coef[enhancers,,drop=FALSE])
     coef.mat[is.na(coef.mat)] <- 0
     
     if(obj@model == "gamma.pois") {
@@ -183,18 +183,16 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
         rctrlscale <- NULL
     }
     
-    dfit <- getDNAFits(obj=obj, enhancers=enhancers, 
-                       depth=FALSE, full=full)
+    dfit <- getDNAFits(obj=obj, enhancers=enhancers, depth=FALSE, full=full)
     
     joint.des.mat <- cbind(rdesign, rctrldesign)
     
-    coef.mat <- do.call(cbind, lapply(fit[enhancers], function(x) x$r.coef))
-    
-    rfit <- exp(joint.des.mat %*% coef.mat[-1,])
-    
-    rfit <- do.call(cbind, lapply(enhancers, function(i) {
-        exp(joint.des.mat %*% c(fit[[i]]$r.coef[-1], rctrlscale))
-    }))
+    coef.mat <- t(fit$r.coef[enhancers,-1,drop=FALSE])
+    if(rnascale) {
+        coef.mat <- rbind(coef.mat, 
+                          replicate(NCOL(coef.mat), obj@modelPreFits.dna.ctrl$r.coef[1,]))
+    }
+    rfit <- exp(joint.des.mat %*% coef.mat)
         
     if(depth == TRUE){
         rfit <- rfit * matrix(obj@rnaDepth, nrow = NROW(rfit), 
@@ -222,17 +220,18 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
 #' @export
 extractModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(features)) {
-        features <- 1:length(obj@modelFits)
+        features <- 1:NROW(obj@dnaCounts)
+    } else if (is.character(features)) {
+        features <- which(rownames(obj@dnaCounts) %in% features)
     }
+    
     if(is.null(obj@modelFits)){
         stop("can't extract model parameters before fitting a model. An analysis function must be called first.")
     }
     if(full) {
-        coef.mat <- do.call(rbind, lapply(obj@modelFits[features], 
-                                          function(x) x$d.coef))
+        coef.mat <- obj@modelFits$d.coef[features,,drop=FALSE] 
     } else if (!full & !is.null(obj@modelFits.red)) {
-        coef.mat <- do.call(rbind, lapply(obj@modelFits.red[features], 
-                                          function(x) x$d.coef))
+        coef.mat <- obj@modelFits.red$d.coef[features,,drop=FALSE] 
     } else {
         stop("Parameters can't be extracted from reduced model, since analysis did not include fitting a reduced model")
     }
@@ -256,19 +255,16 @@ extractModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(obj@modelFits)){
         stop("can't extract model parameters before fitting a model. An analysis function must be called first.")
     }
+    if(is.null(features)) {
+        features <- 1:NROW(obj@dnaCounts)
+    } else if (is.character(features)) {
+        features <- which(rownames(obj@dnaCounts) %in% features)
+    }
     if(full) {
-        if(is.null(features)) {
-            features <- 1:length(obj@modelFits)
-        }
-        coef.mat <- do.call(rbind, lapply(obj@modelFits[features], 
-                                          function(x) x$r.coef))
+        coef.mat <- obj@modelFits$r.coef[features,,drop=FALSE] 
         colnames(coef.mat) <- c("disp", colnames(obj@designs@rnaFull))
     } else if (!full & !is.null(obj@modelFits.red)) {
-        if(is.null(features)) {
-            features <- 1:length(obj@modelFits.red)
-        }
-        coef.mat <- do.call(rbind, lapply(obj@modelFits.red[features], 
-                                          function(x) x$r.coef))
+        coef.mat <- obj@modelFits.red$r.coef[features,,drop=FALSE] 
         colnames(coef.mat) <- c("disp", colnames(obj@designs@rnaRed))
     } else {
         stop("Parameters can't be extracted from reduced model, since analysis did not include fitting a reduced model")

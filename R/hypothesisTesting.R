@@ -14,14 +14,13 @@ test.lrt <- function(obj) {
     
     message("Performing Likelihood Ratio Test...")
     
-    ##TODO: format these as a data.frame to begin with?
-    ll.full <- sapply(obj@modelFits, function(x) x$ll)
-    ll.red <- sapply(obj@modelFits.red, function(x) x$ll)
-    df.dna <- sapply(obj@modelFits, function(x) x$d.df)
-    df.rna.full <- sapply(obj@modelFits, function(x) x$r.df)
-    df.rna.red <- sapply(obj@modelFits.red, function(x) x$r.df)
-    df.full <- sapply(obj@modelFits, function(x) x$d.df + x$r.df + x$r.ctrl.df)
-    df.red <- sapply(obj@modelFits.red, function(x) x$d.df + x$r.df + x$r.ctrl.df)
+    ll.full <- obj@modelFits$ll
+    ll.red <- obj@modelFits.red$ll
+    df.dna <- obj@modelFits$d.df
+    df.rna.full <- obj@modelFits$r.df
+    df.rna.red <- obj@modelFits.red$r.df
+    df.full <- df.dna + df.rna.full + obj@modelFits$r.ctrl.df
+    df.red <- df.dna + df.rna.red + obj@modelFits.red$r.ctrl.df
     
     lrt <- 2*(ll.full - ll.red)
     df <- df.full-df.red
@@ -56,31 +55,38 @@ test.lrt <- function(obj) {
 #' this include the test statistic, logFC, p-value and BH-corrected FDR.
 test.coefficient <- function(obj, factor, contrast) {
     if(!(obj@mode == "comparative.coef")) {
-        stop("function `analyze.comparative.coef` must be run first for this functionality to be available")
+        stop("function `analyze.comparative.coef` must be run first")
     } else if(!(factor %in% colnames(obj@colAnnot))) {
-        stop("given factor: ", factor, " is not included in object annotations")
+        stop("given factor: ", factor, 
+             " is not included in object annotations")
     } 
     ref <- levels(as.factor(obj@colAnnot[,factor]))[1]
     if (ref == contrast) {
-        stop("given contrast ", contrast, " is the reference level of factor ", factor)
+        stop("given contrast ", contrast, 
+             " is the reference level of factor ", factor)
     }
     coef.id <- colnames(obj@designs@rnaFull) %in% paste0(factor, contrast)
     if(!any(coef.id)) {
         stop("no matching coefficient for given arguments")
     }
     
-    message("Testing for significance:  ", contrast, " vs. ", ref, ", in factor ", factor, "...")
+    message("Testing for significance:  ", contrast, " vs. ", ref, 
+            ", in factor ", factor, "...")
     coef.id <- 1 + which(coef.id)
-    valids <- vapply(obj@modelFits, function(x) !is.null(x$r.se), TRUE)
-    logFC <- se <- statistic <- pval <- fdr <- rep(NA, length(obj@modelFits))
     
-    logFC[valids] <- vapply(obj@modelFits[valids], function(x) x$r.coef[coef.id], 0.0)
-    se[valids] <- vapply(obj@modelFits[valids], function(x) x$r.se[coef.id], 0.0)
+    # valids <- !is.null(obj@modelFits$r.se)
+    valids <- apply(obj@modelFits$r.se, function(x) !all(is.na(x)))
+    
+    logFC <- se <- statistic <- pval <- fdr <- rep(NA, NROW(obj@dnaCounts))
+    
+    logFC[valids] <- obj@modelFits$r.coef[valids,coef.id]
+    se[valids] <- obj@modelFits$r.se[valids,coef.id]
     statistic <- (logFC / se) ^ 2
     pval <- pchisq(q = statistic, df = 1, lower.tail = FALSE)
     fdr <- p.adjust(pval, 'BH')
     
-    return(data.frame(logFC=logFC, statistic=statistic, pval=pval, fdr=fdr, row.names = names(obj@modelFits)))
+    return(data.frame(logFC=logFC, statistic=statistic, pval=pval, fdr=fdr, 
+                      row.names = rownames(obj@dnaCounts)))
 }
 
 #' test for significant activity (quantitative analysis) using various empirical
@@ -116,8 +122,7 @@ test.empirical <- function(obj, statistic=NULL) {
     
     if(is.null(statistic)) {
         ## extract slope - second coefficient of the rna model
-        statistic <- vapply(obj@modelFits, function(x) x$r.coef[2], 0.0)
-        names(statistic) <- names(obj@modelFits)
+        statistic <- obj@modelFits$r.coef[,2]
     }
     
     zscore <- (statistic - mean(statistic, na.rm=TRUE)) / sd(statistic, 
@@ -142,4 +147,3 @@ test.empirical <- function(obj, statistic=NULL) {
     
     return(res)
 }
-    

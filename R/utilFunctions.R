@@ -51,3 +51,52 @@ checkForIntercept <- function(design) {
         return(as.logical(attr(terms(design), "intercept")))
     }
 }
+
+#' Reformat a list of models (return values of a fit.* function) to a list
+#' of model parameters containing the corresponding parameters, for easier 
+#' access and control
+#' @param models the models to reformet, should be a list of results from a 
+#' fit.* function
+#' @return a list of formatted extacted properties 
+reformatModels <- function(models) {
+    res = list(ll = extractProp(models, "ll"),
+               converged = extractProp(models, "converged"),
+               
+               d.coef = extractProp(models, "d.coef"),
+               d.df = extractProp(models, "d.df"),
+               d.se = extractProp(models, "d.se"),
+               
+               r.coef = extractProp(models, "r.coef"),
+               r.df = extractProp(models, "r.df"),
+               r.se = extractProp(models, "r.se"),
+               
+               r.ctrl.coef = extractProp(models, "r.ctrl.coef"),
+               r.ctrl.df = extractProp(models, "r.ctrl.df"),
+               r.ctrl.se = extractProp(models, "r.ctrl.se")
+               )
+    
+    return(res)
+}
+
+#' extract the given property from the list of models
+#' @param models the models to extract the propety from
+#' @param prop the name of the property
+#' @return the formatted extracted property (NULL, vector or matrix)
+extractProp <- function(models, prop) {
+    value <- models[[1]][[prop]]
+    if(is.null(value)) {
+        res <- NULL
+    } else if (length(value) == 1) {
+        res <- vapply(models, function(x) x[[prop]], value)
+        names(res) <- names(models)
+    } else {
+        res <- do.call(rbind, lapply(models, function(x) {
+            if(is.null(x[[prop]])) {
+                return(rep(NA, length(value)))
+            } else {
+                return(x[[prop]])
+            }}))
+        rownames(res) <- names(models)
+    }
+    return(res)
+}
