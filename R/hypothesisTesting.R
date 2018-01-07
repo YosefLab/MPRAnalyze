@@ -76,10 +76,8 @@ test.coefficient <- function(obj, factor, contrast) {
     coef.id <- 1 + which(coef.id)
     
     # valids <- !is.null(obj@modelFits$r.se)
-    valids <- apply(obj@modelFits$r.se, function(x) !all(is.na(x)))
-    
+    valids <- apply(obj@modelFits$r.se, 1, function(x) !all(is.na(x)))
     logFC <- se <- statistic <- pval <- fdr <- rep(NA, NROW(obj@dnaCounts))
-    
     logFC[valids] <- obj@modelFits$r.coef[valids,coef.id]
     se[valids] <- obj@modelFits$r.se[valids,coef.id]
     statistic <- (logFC / se) ^ 2
