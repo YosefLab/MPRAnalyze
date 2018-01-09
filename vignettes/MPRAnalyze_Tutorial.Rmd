@@ -167,6 +167,8 @@ mpraobj <- estimateDepthFactors(mpraobj, "rep")
 mpraobj <- setModel(mpraobj, "ln.nb")
 mpraobj <- analyze.quantitative(obj=mpraobj, 
                                 dnaDesign=~barcode, rnaDesign=~1, mode="empirical")
+res <- test.empirical(mpraobj)
+print(head(res))
 ```
 
 ```{r }
@@ -174,9 +176,9 @@ plot(mpraobj@dnaCounts["case_1",], getDNAFits(mpraobj, enhancers=c("case_1"), fu
 abline(a = 0, b = 1, col="red")
 plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
 abline(a = 0, b = 1, col="red")
-plotBoxplots(mpraobj, "case_1", batch = "rep")
-plotBoxplots(mpraobj, "case_2", batch = "rep")
-plotBoxplots(mpraobj, "ctrl_1", batch = "rep")
+#plotBoxplots(mpraobj, "case_1", batch = "rep")
+#plotBoxplots(mpraobj, "case_2", batch = "rep")
+#plotBoxplots(mpraobj, "ctrl_1", batch = "rep")
 ```
 ## Test the effect of an condition
 A hypothesis test is conducted to test whether expression varies significantly (= is non-constant) as a function of the given conditions(s)

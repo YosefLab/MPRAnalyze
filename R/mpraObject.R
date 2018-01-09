@@ -78,7 +78,9 @@ setClass("MpraObject", validity = validateMpraObject,
              designs = "Designs",
              modelFits = "list",
              modelFits.red = "list", 
-             modelPreFits.dna.ctrl = "listORNULL", 
+             modelPreFits.dna.ctrl = "listORNULL",
+             
+             results = "listORNULL",
              
              BPPARAM = "BiocParallelParam"
          ))

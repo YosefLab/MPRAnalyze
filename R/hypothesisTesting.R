@@ -32,13 +32,14 @@ test.lrt <- function(obj) {
                       df.rna.red=df.rna.red)
     ## if condition is single term, extract the corresponding coefficient as logFC
     condition.name <- colnames(obj@designs@rnaFull)[!(colnames(obj@designs@rnaFull) %in% 
-                                 colnames(obj@designs@rnaRed))]
+                                                          colnames(obj@designs@rnaRed))]
     if(length(condition.name) == 1) {
         ## single coefficient is the log Fold Change
         res$logFC <- extractModelParameters.RNA(obj)[,condition.name]
     }
     
-    return(res)
+    obj@results <- res
+    return(obj)
 }
 
 #' Calculate the significance of a factor in the regression model
@@ -85,8 +86,9 @@ test.coefficient <- function(obj, factor, contrast) {
     pval <- pchisq(q = statistic, df = 1, lower.tail = FALSE)
     fdr <- p.adjust(pval, 'BH')
     
-    return(data.frame(logFC=logFC, statistic=statistic, pval=pval, fdr=fdr, 
-                      row.names = rownames(obj@dnaCounts)))
+    obj@results <- data.frame(logFC=logFC, statistic=statistic, pval=pval, fdr=fdr, 
+                              row.names = rownames(obj@dnaCounts))
+    return(obj)
 }
 
 #' test for significant activity (quantitative analysis) using various empirical
@@ -145,5 +147,6 @@ test.empirical <- function(obj, statistic=NULL) {
         res$fdr <- p.adjust(res$epval, "BH")
     }
     
-    return(res)
+    obj@results <- res
+    return(obj)
 }
