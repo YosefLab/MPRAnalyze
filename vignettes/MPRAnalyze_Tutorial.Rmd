@@ -59,6 +59,7 @@ The analysis consists of the comparison of the scalar expression rate of each en
 Enhancers can for example be ranked or compared to a reference (such as wild type) enhancer.
 
 ```{r without_scrambles_without_conditions, results='markdown'}
+library(MPRAnalyze)
 # I think the simulation doesnt allow one condition yet
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
 sim <- simulateMPRA(n.case = 10, n.ctrl = 5, n.reps = 2, 
@@ -163,7 +164,7 @@ if(length(ctrls)  == 0) {
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
                       colAnnot=sim$colAnnot, controls=ctrls)
 mpraobj <- estimateDepthFactors(mpraobj, "rep")
-mpraobj <- setModel(mpraobj, "gamma.pois")
+mpraobj <- setModel(mpraobj, "ln.nb")
 mpraobj <- analyze.quantitative(obj=mpraobj, 
                                 dnaDesign=~barcode, rnaDesign=~1, mode="empirical")
 ```

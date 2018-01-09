@@ -188,7 +188,7 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
     joint.des.mat <- cbind(rdesign, rctrldesign)
     
     coef.mat <- t(fit$r.coef[enhancers,-1,drop=FALSE])
-    if(rnascale) {
+    if(!is.null(obj@rnaCtrlScale) & rnascale) {
         coef.mat <- rbind(coef.mat, 
                           replicate(NCOL(coef.mat), obj@modelPreFits.dna.ctrl$r.coef[1,]))
     }
@@ -240,7 +240,7 @@ extractModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
     return(as.data.frame(coef.mat))
 }
 
-#' extract the DNA model parameters
+#' extract the RNA model parameters
 #' @param obj the MpraObject to extract the parameters from
 #' @param features the features to extract the parameters from (be default, 
 #' parameters will be returned for all features)
