@@ -135,13 +135,15 @@ getDNAFits <- function(obj, enhancers=NULL, depth=FALSE, full=TRUE){
         fit <- obj@modelFits.red
     }
     
-    coef.mat <- t(fit$d.coef[enhancers,,drop=FALSE])
+    coef.mat <- t(do.call(rbind, lapply(enhancers, function(x) {
+        fit[[x]]$d.coef
+    })))
     coef.mat[is.na(coef.mat)] <- 0
     
     if(obj@model == "gamma.pois") {
-        dfit <- exp(coef.mat[1,] + obj@designs@dna %*% coef.mat[-1,])
+        dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
     } else if(obj@model == "ln.nb") {
-        dfit <- exp(obj@designs@dna %*% coef.mat[-1])
+        dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
     }
     
     if(depth == TRUE){
