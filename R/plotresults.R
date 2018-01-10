@@ -140,7 +140,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
                                   round(log(obj@results[id,]$fdr)/log(10),2)) )
         }
     }
-    if(length(unique(gplot.data.boxplot$batch) <= length(cbbPalette))) {
+    if(length(unique(gplot.data.boxplot$batch)) <= length(cbbPalette)) {
         gplot.boxplot <- gplot.boxplot + scale_fill_manual(values = cbbPalette) + 
             scale_colour_manual(values = cbbPalette)
     }
