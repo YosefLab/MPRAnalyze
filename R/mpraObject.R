@@ -343,8 +343,6 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
 
 #' Resample observations of enhancer from fit distribution
 #' 
-#' @rdname resampleObs
-#' 
 #' @param obj MpraObject to extract from
 #' @param enhancer enhancer to extract 
 #' @param full whether to extract from full model
@@ -352,8 +350,6 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
 #' @return resampled observations
 #' 
 #' @export
-
-#' @rdname getDistrParam
 resampleObs <- function(obj, enhancer=NULL, full=TRUE){
     dpar <- getDistrParam.DNA(obj, enhancer=enhancer, full=full)
     rpar <- getDistrParam.RNA(obj, enhancer=enhancer, full=full)
