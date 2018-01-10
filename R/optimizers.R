@@ -391,7 +391,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
 #' Fit the DNA model conditioned on an RNA model
 #' 
 #' This is used to optimize an enhancer-based model for each enhancer while
-#' assuming that the RNA model is identica to the control model. This model
+#' assuming that the RNA model is identical to the control model. This model
 #' can be used as a reduced model in LRT settings.
 #' 
 #' @inheritParams fit.dnarna

@@ -135,13 +135,12 @@ getDNAFits <- function(obj, enhancers=NULL, depth=FALSE, full=TRUE){
         fit <- obj@modelFits.red
     }
     
-    coef.mat <- t(do.call(rbind, lapply(enhancers, function(x) {
-        fit[[x]]$d.coef
-    })))
+    coef.mat <- t(fit$d.coef[enhancers,,drop=FALSE])
     coef.mat[is.na(coef.mat)] <- 0
     
     if(obj@model == "gamma.pois") {
-        dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
+        # alpha / rate
+        dfit <- exp(coef.mat[1,] + obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
     } else if(obj@model == "ln.nb") {
         dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
     }
@@ -194,7 +193,7 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
     coef.mat <- t(fit$r.coef[enhancers,-1,drop=FALSE])
     if(!is.null(obj@rnaCtrlScale) & rnascale) {
         coef.mat <- rbind(coef.mat, 
-                          replicate(NCOL(coef.mat), obj@modelPreFits.dna.ctrl$r.coef[1,]))
+                          replicate(NCOL(coef.mat), obj@rnaCtrlScale))
     }
     rfit <- exp(joint.des.mat %*% coef.mat)
         

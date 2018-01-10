@@ -95,7 +95,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
                 x=cond, y=ratio, color = enhancer, shape=batch), size=3) +
             scale_shape_discrete(solid = FALSE) +
             labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
-                              round(log(obj@results[id,]$fdr.pval)/log(10),2)) )
+                              round(log(obj@results[id,]$fdr)/log(10),2)) )
     } else {
         gplot.boxplot <- ggplot() + geom_boxplot(
             data=gplot.data.boxplot, aes(
@@ -105,7 +105,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE){
                 x=enhancer, y=ratio, color = enhancer, shape=batch), size=3) +
             scale_shape_discrete(solid = FALSE) +
             labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
-                              round(log(obj@results[id,]$fdr.pval)/log(10),2)) )
+                              round(log(obj@results[id,]$fdr)/log(10),2)) )
     }
     if(length(unique(gplot.data.boxplot$batch <= length(cbbPalette)))) {
         gplot.boxplot <- gplot.boxplot + scale_fill_manual(values = cbbPalette) + 
