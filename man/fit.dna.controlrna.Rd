@@ -24,6 +24,6 @@ fit.dna.controlrna(model, dcounts, rcounts, r.coef, ddepth, rdepth, ddesign.mat,
 }
 \description{
 This is used to optimize an enhancer-based model for each enhancer while
-assuming that the RNA model is identica to the control model. This model
+assuming that the RNA model is identical to the control model. This model
 can be used as a reduced model in LRT settings.
 }

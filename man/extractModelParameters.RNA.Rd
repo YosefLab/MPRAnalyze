@@ -2,7 +2,7 @@
 % Please edit documentation in R/mpraObject.R
 \name{extractModelParameters.RNA}
 \alias{extractModelParameters.RNA}
-\title{extract the DNA model parameters}
+\title{extract the RNA model parameters}
 \usage{
 extractModelParameters.RNA(obj, features = NULL, full = TRUE)
 }
@@ -22,5 +22,5 @@ it depends on the distributional model used (`alpha` for `gamma.pois`,
 `psi`for `ln.nb`)
 }
 \description{
-extract the DNA model parameters
+extract the RNA model parameters
 }

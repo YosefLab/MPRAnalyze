@@ -275,3 +275,102 @@ extractModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
     rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
     return(as.data.frame(coef.mat))
 }
+
+#' Get model distribution parameters from an MpraObject
+#' 
+#' @rdname getDistrParam
+#' @aliases getDistrParam.DNA
+#' getDistrParam.RNA
+#' 
+#' @param obj MpraObject to extract from
+#' @param enhancer enhancer to extract 
+#' @param full whether to extract from full model
+#' 
+#' @return fit parameters (numeric, samples x parameters)
+#' 
+#' @export
+
+#' @rdname getDistrParam
+getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
+    
+    if(full == TRUE){
+        fit <- obj@modelFits
+    } else {
+        fit <- obj@modelFits.red
+    }
+    
+    coef.mat <- t(fit$d.coef[enhancer,,drop=FALSE])
+    coef.mat[is.na(coef.mat)] <- 0
+    
+    if(obj@model == "gamma.pois") {
+        par.shape <- as.vector(exp(coef.mat[1,]))
+        par.rate <- as.vector(exp(-obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
+        par <- data.frame(shape = par.shape, rate = par.rate)
+    } else if(obj@model == "ln.nb") {
+        par.sdlog <-as.vector( exp(coef.mat[1,]))
+        par.meanlog <- as.vector(exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
+        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
+    }
+    
+    rownames(par) <- rownames(obj@colAnnot)
+    return(par)
+}
+
+#' @rdname getDistrParam
+getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
+    
+    if(full == TRUE){
+        fit <- obj@modelFits
+    } else {
+        fit <- obj@modelFits.red
+    }
+    rfit <- as.vector(getRNAFits(obj, enhancers=enhancer, depth=FALSE, 
+                                 full=full, rnascale=TRUE))
+    
+    if(obj@model == "gamma.pois") {
+        par.size <- as.vector(exp(fit$r.coef[enhancer,1]))
+        par.mu <- rfit
+        par <- data.frame(size = par.size, mu = par.mu)
+    } else if(obj@model == "ln.nb") {
+        par.size <- as.vector(exp(fit$r.coef[enhancer,1]))
+        par.mu <- rfit
+        par <- data.frame(size = par.size, mu = par.mu)
+    }
+    
+    rownames(par) <- rownames(obj@colAnnot)
+    return(par)
+}
+
+#' Resample observations of enhancer from fit distribution
+#' 
+#' @rdname resampleObs
+#' 
+#' @param obj MpraObject to extract from
+#' @param enhancer enhancer to extract 
+#' @param full whether to extract from full model
+#' 
+#' @return resampled observations
+#' 
+#' @export
+
+#' @rdname getDistrParam
+resampleObs <- function(obj, enhancer=NULL, full=TRUE){
+    dpar <- getDistrParam.DNA(obj, enhancer=enhancer, full=full)
+    rpar <- getDistrParam.RNA(obj, enhancer=enhancer, full=full)
+    if(obj@model=="gamma.pois") {
+        dsample <- apply(dpar, 1, function(x) {
+            rgamma(n = 1, shape = x["shape"], rate = x["rate"])
+        })
+        rsample <- apply(rpar, 1, function(x) {
+            rnbinom(n = 1, size = x["size"], mu = x["mu"])
+        })
+    } else if(obj@model=="ln.nb") {
+        dsample <- apply(dpar, 1, function(x) {
+            rlnorm(n = 1, meanlog = x["meanlog"], sdlog = x["sdlog"])
+        })
+        rsample <- apply(rpar, 1, function(x) {
+            rnbinom(n = 1, size = x["size"], mu = x["mu"])
+        })
+    } 
+    return(data.frame(dna=dsample, rna=rsample))
+}

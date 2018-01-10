@@ -4,7 +4,8 @@
 \alias{plotBoxplots}
 \title{Output observed ratios as boxplots and add fits}
 \usage{
-plotBoxplots(obj, id, condition = NULL, batch = NULL, full = TRUE)
+plotBoxplots(obj, id, condition = NULL, batch = NULL, full = TRUE,
+  show.outliers = FALSE)
 }
 \arguments{
 \item{obj}{(MpraObject)
@@ -25,6 +26,9 @@ that was corrected for during fitting.}
 
 \item{full}{(bool)
 Whether to plot full or reduced model fits.}
+
+\item{show.outliers}{(bool)
+Whether to show outliers in boxplot. This slows if many samples were observed.}
 }
 \value{
 (gplot) Boxplot graphic.

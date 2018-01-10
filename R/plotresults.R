@@ -42,6 +42,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
         cond=obj@colAnnot[,condition],
         batch=obj@colAnnot[,batch],
         enhancer=id,
+        type="obs",
         stringsAsFactors=FALSE
     )
     # control enhancer observations
@@ -53,36 +54,34 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
                 cond=obj@colAnnot[,condition],
                 batch=obj@colAnnot[,batch],
                 enhancer="controls",
+                type="obs",
                 stringsAsFactors=FALSE
             )
         }))
         gplot.data.boxplot <- rbind(gplot.data.boxplot, gplot.data.obs.ctrl)
     }
     
-    ## extract model fits
-    dfit <- as.vector(getDNAFits(obj, enhancers=id, 
-                                 depth=FALSE, full=full))
-    rfit <- as.vector(getRNAFits(obj, enhancers=id, 
-                                 depth=FALSE, full=full, rnascale=TRUE))
+    ## generate sample from fitted distribution
+    # extract model fits for each observation
+    obs.resampled <- resampleObs(obj, enhancer=id, full=full)
     gplot.data.fit <- data.frame(
-        ratio=log(rfit)-log(dfit),
+        ratio=log(obs.resampled$rna)-log(obs.resampled$dna),
         cond=obj@colAnnot[,condition],
         batch=obj@colAnnot[,batch],
         enhancer=id,
+        type="fit",
         stringsAsFactors=FALSE
     )
     gplot.data.fit <- gplot.data.fit[!duplicated(gplot.data.fit),]
     if(!is.null(obj@controls)){
         gplot.data.fit.ctrl <- do.call(rbind, lapply(obj@controls, function(i) {
-            dfit <- as.vector(getDNAFits(obj, enhancers=i, 
-                                         depth=FALSE, full=full))
-            rfit <- as.vector(getRNAFits(obj, enhancers=i, 
-                                         depth=FALSE, full=full, rnascale=TRUE))
+            obs.resampled <- resampleObs(obj, enhancer=i, full=full)
             gplot.data.fit.ctrl.i <- data.frame(
-                ratio=log(rfit)-log(dfit),
+                ratio=log(obs.resampled$rna)-log(obs.resampled$dna),
                 cond=obj@colAnnot[,condition],
                 batch=obj@colAnnot[,batch],
                 enhancer="controls",
+                type="fit",
                 stringsAsFactors=FALSE
             )
             return(gplot.data.fit.ctrl.i)
@@ -90,6 +89,7 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
         gplot.data.fit.ctrl <- gplot.data.fit.ctrl[!duplicated(gplot.data.fit.ctrl),]
         gplot.data.fit <- rbind(gplot.data.fit, gplot.data.fit.ctrl)
     }
+    gplot.data.boxplot <- rbind(gplot.data.boxplot, gplot.data.fit)
     
     ## create ggplot
     # colour-blind palette
@@ -99,20 +99,16 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
         if(!is.null(batch)) {
             gplot.boxplot <- ggplot() + geom_boxplot(
                 data=gplot.data.boxplot, aes(
-                    x=cond, y=ratio, fill=enhancer, alpha=batch),
+                    x=cond, y=ratio, fill=enhancer, alpha=batch, linetype=type),
                 outlier.shape = outlier.shape ) +
-                geom_point(data = gplot.data.fit, aes(
-                    x=cond, y=ratio, color = enhancer, shape=batch), size=3) +
                 scale_shape_discrete(solid = FALSE) +
                 labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
                                   round(log(obj@results[id,]$fdr)/log(10),2)) )
         } else {
             gplot.boxplot <- ggplot() + geom_boxplot(
                 data=gplot.data.boxplot, aes(
-                    x=cond, y=ratio, fill=enhancer),
+                    x=cond, y=ratio, fill=enhancer, linetype=type),
                 outlier.shape = outlier.shape ) +
-                geom_point(data = gplot.data.fit, aes(
-                    x=cond, y=ratio, color = enhancer), size=3) +
                 scale_shape_discrete(solid = FALSE) +
                 labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
                                   round(log(obj@results[id,]$fdr)/log(10),2)) )
@@ -121,20 +117,16 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
         if(!is.null(batch)) {
             gplot.boxplot <- ggplot() + geom_boxplot(
                 data=gplot.data.boxplot, aes(
-                    x=enhancer, y=ratio, fill=enhancer, alpha=batch),
+                    x=enhancer, y=ratio, fill=enhancer, alpha=batch, linetype=type),
                 outlier.shape = outlier.shape ) +
-                geom_point(data = gplot.data.fit, aes(
-                    x=enhancer, y=ratio, color = enhancer, shape=batch), size=3) +
                 scale_shape_discrete(solid = FALSE) +
                 labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
                                   round(log(obj@results[id,]$fdr)/log(10),2)) )
         } else {
             gplot.boxplot <- ggplot() + geom_boxplot(
                 data=gplot.data.boxplot, aes(
-                    x=enhancer, y=ratio, fill=enhancer),
+                    x=enhancer, y=ratio, fill=enhancer, linetype=type),
                 outlier.shape = outlier.shape ) +
-                geom_point(data = gplot.data.fit, aes(
-                    x=enhancer, y=ratio, color = enhancer), size=3) +
                 scale_shape_discrete(solid = FALSE) +
                 labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
                                   round(log(obj@results[id,]$fdr)/log(10),2)) )
