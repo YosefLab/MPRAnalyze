@@ -163,13 +163,9 @@ ll.rna.ln.ln <- function(theta, theta.d,
                                  NCOL(log.d.est))
     
     ## compute likelihood
-    # This is the convolution of two gaussians:
-    # The dna distribution and a gaussian for the additional rna noise
-    # with mean at the rna model and its own std. The resulting
-    # convolution has the sum of std of both gaussians as its std.
     ll <- sum(dlnorm(x = rcounts,
                      meanlog = log.r.est,
-                     sdlog = exp(theta.d[-1,]+theta[1]),
+                     sdlog = exp(theta[1]),
                      log = TRUE))
     
     return(-ll)
