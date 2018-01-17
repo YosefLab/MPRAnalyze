@@ -11,6 +11,9 @@ get.ll.functions <- function(model) {
     } else if(model == "ln.nb"){
         llfnDNA <- ll.dna.ln.nb
         llfnRNA <- ll.rna.ln.nb
+    } else if(model == "ln.ln"){
+        llfnDNA <- ll.dna.ln.ln
+        llfnRNA <- ll.rna.ln.ln
     } else {
         stop("model ", model, " not supported")
     }
@@ -25,6 +28,7 @@ get.ll.functions <- function(model) {
 #' @aliases 
 #' ll.dna.gamma.pois
 #' ll.dna.ln.nb
+#' ll.dna.ln.ln
 #'
 #' @param theta the vector of rna model parameters to evaluate likelihood for
 #' (numeric, rna parameters)
@@ -69,6 +73,23 @@ ll.dna.ln.nb <- function(theta,
     return(-ll)
 }
 
+#' @rdname ll.dna
+ll.dna.ln.ln <- function(theta,
+                         dcounts, log.ddepth,
+                         ddesign.mat) {
+    
+    log.d.est <- matrix(rep(ddesign.mat %*% theta[-1] + log.ddepth, 
+                            NCOL(dcounts)), ncol=NCOL(dcounts))
+    
+    ## compute likelihood
+    ll <- sum(dlnorm(x = dcounts,
+                     meanlog = log.d.est,
+                     sdlog = exp(theta[1]),
+                     log = TRUE))
+    
+    return(-ll)
+}
+
 #' likelihood of rna observations
 #' 
 #' @name ll.rna
@@ -77,6 +98,7 @@ ll.dna.ln.nb <- function(theta,
 #' @aliases 
 #' ll.rna.gamma.pois
 #' ll.rna.ln.nb
+#' ll.rna.ln.ln
 #'
 #' @param theta the vector of rna model parameters to evaluate likelihood for
 #' (numeric, rna parameters)
@@ -127,6 +149,24 @@ ll.rna.ln.nb <- function(theta, theta.d,
                       size = exp(exp(theta[1])),
                       mu = exp(log.r.est),
                       log = TRUE))
+    
+    return(-ll)
+}
+
+#' @rdname ll.rna
+ll.rna.ln.ln <- function(theta, theta.d, 
+                         rcounts, log.rdepth,
+                         ddesign.mat, rdesign.mat) {
+    
+    log.d.est <- ddesign.mat %*% theta.d[-1,]
+    log.r.est <- log.d.est + rep(((rdesign.mat %*% theta[-1]) + log.rdepth), 
+                                 NCOL(log.d.est))
+    
+    ## compute likelihood
+    ll <- sum(dlnorm(x = rcounts,
+                     meanlog = log.r.est,
+                     sdlog = exp(theta[1]),
+                     log = TRUE))
     
     return(-ll)
 }

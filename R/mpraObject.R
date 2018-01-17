@@ -143,6 +143,8 @@ getDNAFits <- function(obj, enhancers=NULL, depth=FALSE, full=TRUE){
         dfit <- exp(coef.mat[1,] + obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
     } else if(obj@model == "ln.nb") {
         dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
+    } else if(obj@model == "ln.ln") {
+        dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
     }
     
     if(depth == TRUE){
@@ -307,7 +309,11 @@ getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
         par.rate <- as.vector(exp(-obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
         par <- data.frame(shape = par.shape, rate = par.rate)
     } else if(obj@model == "ln.nb") {
-        par.sdlog <-as.vector( exp(coef.mat[1,]))
+        par.sdlog <- as.vector( exp(coef.mat[1,]))
+        par.meanlog <- as.vector(exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
+        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
+    } else if(obj@model == "ln.ln") {
+        par.sdlog <- as.vector( exp(coef.mat[1,]))
         par.meanlog <- as.vector(exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
         par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     }
@@ -335,6 +341,10 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
         par.size <- as.vector(exp(fit$r.coef[enhancer,1]))
         par.mu <- rfit
         par <- data.frame(size = par.size, mu = par.mu)
+    } else if(obj@model == "ln.ln") {
+        par.sdlog <- as.vector(exp(fit$r.coef[enhancer,1]))
+        par.meanlog <- log(rfit)
+        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     }
     
     rownames(par) <- rownames(obj@colAnnot)
@@ -366,6 +376,13 @@ resampleObs <- function(obj, enhancer=NULL, full=TRUE){
         })
         rsample <- apply(rpar, 1, function(x) {
             rnbinom(n = 1, size = x["size"], mu = x["mu"])
+        })
+    } else if(obj@model=="ln.ln") {
+        dsample <- apply(dpar, 1, function(x) {
+            rlnorm(n = 1, meanlog = x["meanlog"], sdlog = x["sdlog"])
+        })
+        rsample <- apply(rpar, 1, function(x) {
+            rlnorm(n = 1,meanlog = x["meanlog"], sdlog = x["sdlog"])
         })
     } 
     return(data.frame(dna=dsample, rna=rsample))

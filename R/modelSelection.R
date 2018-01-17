@@ -26,7 +26,7 @@ plotModelPerformance <- function(obj) {
 #' @return the MPRAnalyze with the model set for the given value
 #' @export
 setModel <- function(obj, model) {
-    if(model %in% c("ln.nb", "gamma.pois")) {
+    if(model %in% c("ln.nb", "gamma.pois", "ln.ln")) {
         obj@model <- model
     } else {
         stop("model '", model, "' not supported.")
