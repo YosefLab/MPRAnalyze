@@ -342,7 +342,8 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
         par.mu <- rfit
         par <- data.frame(size = par.size, mu = par.mu)
     } else if(obj@model == "ln.ln") {
-        par.sdlog <- as.vector(exp(fit$r.coef[enhancer,1]))
+        # using the convolution of two gaussians
+        par.sdlog <- as.vector(exp(fit$d.coef[enhancer,1] + fit$r.coef[enhancer,1]))
         par.meanlog <- log(rfit)
         par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     }

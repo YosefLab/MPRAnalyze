@@ -85,6 +85,7 @@ The test does not take a "base line variation" into account which could be caput
 Such a base line variation could be overall transcriptional activity.
 
 ```{r without_scrambles_with_conditions, results='markdown'}
+library(MPRAnalyze)
 # ln.nb: does not work
 # gamma.pois: yes
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
@@ -95,7 +96,7 @@ sim <- simulateMPRA(n.case = 20, n.ctrl = 0, n.reps = 3,
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
                       colAnnot=sim$colAnnot, controls=NULL)
 mpraobj <- estimateDepthFactors(mpraobj)
-mpraobj <- setModel(obj = mpraobj, model = "gamma.pois")
+mpraobj <- setModel(obj = mpraobj, model = "ln.ln")
 mpraobj <- analyze.comparative.lrt(obj = mpraobj,
                                    condition = "cond", mode = "nocontrols", 
                                    dnaDesign = ~barcode+cond, rnaDesign = ~cond)
@@ -164,7 +165,7 @@ if(length(ctrls)  == 0) {
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
                       colAnnot=sim$colAnnot, controls=ctrls)
 mpraobj <- estimateDepthFactors(mpraobj, "rep")
-mpraobj <- setModel(mpraobj, "gamma.pois")
+mpraobj <- setModel(mpraobj, "ln.ln")
 mpraobj <- analyze.quantitative(obj=mpraobj, 
                                 dnaDesign=~barcode, rnaDesign=~1, mode="empirical")
 mpraobj <- test.empirical(mpraobj)
@@ -205,7 +206,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- estimateDepthFactors(mpraobj, "rep")
 # mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
-mpraobj <- setModel(mpraobj, "gamma.pois")
+mpraobj <- setModel(mpraobj, "ln.ln")
 mpraobj <- analyze.comparative.lrt(mpraobj, mode="scaled",
                                    dnaDesign=~barcode+cond, rnaDesign=~cond, condition="cond")
 mpraobj <- test.lrt(mpraobj)
@@ -244,7 +245,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
                       colAnnot=sim$colAnnot, controls=ctrls, 
                       BPPARAM = MulticoreParam(3))
 mpraobj <- estimateDepthFactors(mpraobj, "rep")
-mpraobj <- setModel(mpraobj, "gamma.pois")
+mpraobj <- setModel(mpraobj, "ln.ln")
 mpraobj <- analyze.comparative.lrt(obj = mpraobj, condition = "cond", 
                                    mode = "full", dnaDesign = ~barcode+cond, 
                                    rnaDesign = ~cond)
@@ -256,7 +257,7 @@ print(mpraobj@results)
 plot(sim$rowAnnot$cond2_effect, log(mpraobj@results$pval))
 plot(mpraobj@dnaCounts["case_2",], getDNAFits(mpraobj, enhancers=c("case_2"), full=TRUE))
 abline(a = 0, b = 1, col="red")
-plot(mpraobj@rnaCounts["case_2",], getRNAFits(mpraobj, enhancers=c("case_2"), full=TRUE))
+plot(mpraobj@rnaCounts["case_3",], getRNAFits(mpraobj, enhancers=c("case_3"), full=TRUE))
 abline(a = 0, b = 1, col="red")
 #plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
 #plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
