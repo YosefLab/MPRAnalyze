@@ -96,7 +96,7 @@ sim <- simulateMPRA(n.case = 20, n.ctrl = 0, n.reps = 3,
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
                       colAnnot=sim$colAnnot, controls=NULL)
 mpraobj <- estimateDepthFactors(mpraobj)
-mpraobj <- setModel(obj = mpraobj, model = "ln.ln")
+mpraobj <- setModel(obj = mpraobj, model = "gamma.pois")
 mpraobj <- analyze.comparative.lrt(obj = mpraobj,
                                    condition = "cond", mode = "nocontrols", 
                                    dnaDesign = ~barcode+cond, rnaDesign = ~cond)
@@ -113,6 +113,9 @@ abline(a = 0, b = 1, col="red")
 plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
 plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
 plotBoxplots(mpraobj, "case_3", condition = "cond", batch = "rep")
+pdf("~/Desktop/MPRAnalyzeExample_Cond_NoCtrl.pdf")
+plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
+dev.off()
 ```
 
 ```{r ttest, results='markdown'}
@@ -165,7 +168,7 @@ if(length(ctrls)  == 0) {
 mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
                       colAnnot=sim$colAnnot, controls=ctrls)
 mpraobj <- estimateDepthFactors(mpraobj, "rep")
-mpraobj <- setModel(mpraobj, "ln.ln")
+mpraobj <- setModel(mpraobj, "gamma.pois")
 mpraobj <- analyze.quantitative(obj=mpraobj, 
                                 dnaDesign=~barcode, rnaDesign=~1, mode="empirical")
 mpraobj <- test.empirical(mpraobj)
@@ -180,6 +183,9 @@ abline(a = 0, b = 1, col="red")
 #plotBoxplots(mpraobj, "case_1", batch = "rep")
 #plotBoxplots(mpraobj, "case_2", batch = "rep")
 #plotBoxplots(mpraobj, "ctrl_1", batch = "rep")
+pdf("~/Desktop/MPRAnalyzeExample_NoCond_Ctrl.pdf")
+plotBoxplots(mpraobj, "case_1", batch = "rep")
+dev.off()
 ```
 ## Test the effect of an condition
 A hypothesis test is conducted to test whether expression varies significantly (= is non-constant) as a function of the given conditions(s)
@@ -206,7 +212,7 @@ mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
 #mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
 mpraobj <- estimateDepthFactors(mpraobj, "rep")
 # mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
-mpraobj <- setModel(mpraobj, "ln.ln")
+mpraobj <- setModel(mpraobj, "gamma.pois")
 mpraobj <- analyze.comparative.lrt(mpraobj, mode="scaled",
                                    dnaDesign=~barcode+cond, rnaDesign=~cond, condition="cond")
 mpraobj <- test.lrt(mpraobj)
@@ -219,8 +225,11 @@ plot(mpraobj@dnaCounts["case_1",], getDNAFits(mpraobj, enhancers=c("case_1"), fu
 abline(a = 0, b = 1, col="red")
 plot(mpraobj@rnaCounts["case_1",], getRNAFits(mpraobj, enhancers=c("case_1"), full=TRUE))
 abline(a = 0, b = 1, col="red")
-#plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
+plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
 #plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
+pdf("~/Desktop/MPRAnalyzeExample_Cond_Ctrl.pdf")
+plotBoxplots(mpraobj, "case_1", batch = "rep")
+dev.off()
 ```
 
 ### Full

@@ -34,6 +34,13 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
         outlier.shape = NA
     } 
     
+    ## check whether test results available
+    if(!is.null(obj@results)) {
+        fdr <- round(log(obj@results[id,]$fdr)/log(10),2)
+    } else {
+        fdr <- NA
+    }
+    
     ## extract observations and format into data-frame of rna:dna ratios
     # case enhancer observations
     gplot.data.boxplot <- data.frame(
@@ -102,16 +109,14 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
                     x=cond, y=ratio, fill=enhancer, alpha=batch, linetype=type),
                 outlier.shape = outlier.shape ) +
                 scale_shape_discrete(solid = FALSE) +
-                labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
-                                  round(log(obj@results[id,]$fdr)/log(10),2)) )
+                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr ))
         } else {
             gplot.boxplot <- ggplot() + geom_boxplot(
                 data=gplot.data.boxplot, aes(
                     x=cond, y=ratio, fill=enhancer, linetype=type),
                 outlier.shape = outlier.shape ) +
                 scale_shape_discrete(solid = FALSE) +
-                labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
-                                  round(log(obj@results[id,]$fdr)/log(10),2)) )
+                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr ))
         }
     } else {
         if(!is.null(batch)) {
@@ -120,16 +125,14 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
                     x=enhancer, y=ratio, fill=enhancer, alpha=batch, linetype=type),
                 outlier.shape = outlier.shape ) +
                 scale_shape_discrete(solid = FALSE) +
-                labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
-                                  round(log(obj@results[id,]$fdr)/log(10),2)) )
+                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr ))
         } else {
             gplot.boxplot <- ggplot() + geom_boxplot(
                 data=gplot.data.boxplot, aes(
                     x=enhancer, y=ratio, fill=enhancer, linetype=type),
                 outlier.shape = outlier.shape ) +
                 scale_shape_discrete(solid = FALSE) +
-                labs(title=paste0(id, " log10 fdr-corrected p-value: ", 
-                                  round(log(obj@results[id,]$fdr)/log(10),2)) )
+                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr ))
         }
     }
     if(length(unique(gplot.data.boxplot$batch)) <= length(cbbPalette)) {
