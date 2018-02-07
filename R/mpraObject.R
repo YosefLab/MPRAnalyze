@@ -125,9 +125,9 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
 #' @return DNA fits (numeric, enhancers x samples)
 #' 
 #' @export
-getDNAFits <- function(obj, enhancers=NULL, depth=FALSE, full=TRUE){
+getDNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE){
     if(is.null(enhancers)) {
-        enhancers <- names(obj@modelFits)
+        enhancers <- names(obj@modelFits$ll)
     }
     if(full == TRUE){
         fit <- obj@modelFits
@@ -141,15 +141,12 @@ getDNAFits <- function(obj, enhancers=NULL, depth=FALSE, full=TRUE){
     if(obj@model == "gamma.pois") {
         # alpha / rate
         dfit <- exp(coef.mat[1,] + obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
-    } else if(obj@model == "ln.nb") {
-        dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
-    } else if(obj@model == "ln.ln") {
+    } else if(obj@model == "ln.nb" | obj@model == "ln.ln") {
         dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
     }
     
     if(depth == TRUE){
-        dfit <- dfit * matrix(obj@dnaDepth, 
-                              nrow=NROW(dfit), ncol=NCOL(dfit), byrow=TRUE)
+        dfit <- dfit * replicate(NCOL(dfit), obj@dnaDepth)
     }
     
     colnames(dfit) <- enhancers
@@ -170,7 +167,7 @@ getDNAFits <- function(obj, enhancers=NULL, depth=FALSE, full=TRUE){
 #' @export
 getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE){
     if(is.null(enhancers)) {
-        enhancers <- names(obj@modelFits)
+        enhancers <- names(obj@modelFits$ll)
     }
     if(full == TRUE){
         fit <- obj@modelFits
@@ -200,8 +197,7 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
     rfit <- exp(joint.des.mat %*% coef.mat)
         
     if(depth == TRUE){
-        rfit <- rfit * matrix(obj@rnaDepth, nrow = NROW(rfit), 
-                              ncol = NCOL(rfit), byrow = TRUE)
+        rfit <- rfit * replicate(NCOL(rfit), obj@rnaDepth)
     }
     
     rfit <- t(rfit) * dfit

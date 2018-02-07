@@ -176,3 +176,103 @@ plotVolcano <- function(obj){
     
     return(gplot.volcano)
 }
+
+#' create a scatter plot of the model alpha (trascription rate) vs. the naive
+#' estimator (RNA / DNA).
+#' @param obj the MpraObject
+#' @param condition if NULL (default) create a single plot of the model baseline
+#' (intercept) vs the total data. Else, condition must be a valid factor in the 
+#' object column annotations that was included in the design. In that case, a 
+#' plot is generated for each level of the factor
+#' @export
+plotAlphaRatio <- function(obj, condition = NULL, logScale=TRUE) {
+    if(is.null(condition)) {
+        ratio <- rowSums(obj@rnaCounts) / rowSums(obj@dnaCounts)
+        alpha <- getAlpha(obj)
+        res <- ggplot(data = data.frame(ratio = ratio, alpha = alpha)) + 
+            geom_point(mapping = aes(x = ratio, y = alpha)) + 
+            geom_abline(intercept=0, slope=1) + 
+            xlab("RNA / DNA") + ylab("log(alpha)")
+    } else {
+        first <- TRUE
+        res <- lapply(levels(as.factor(obj@colAnnot[,condition])), function(l) {
+            if(first) {
+                alpha <- getAlpha(obj)
+                first <- FALSE
+            } else {
+                alpha <- getAlpha(obj, condition, l)
+            }
+            idx <- obj@colAnnot[,condition] == l
+            ratio <- rowSums(obj@rnaCounts[,idx]) / rowSums(obj@dnaCounts[,idx])
+            
+            ggplot(data = data.frame(ratio = log(ratio), alpha = log(alpha))) + 
+                geom_point(mapping = aes(x = ratio, y = alpha)) + 
+                geom_abline(intercept=0, slope=1) + 
+                xlab("log(RNA / DNA)") + ylab("log(alpha)") + ggtitle(paste(condition, l))
+        })
+    }
+    return(res)
+}
+
+plotObsExpDistributions <- function(obj, enhancer, RNA=TRUE) {
+    if(length(enhancer) > 1) {
+        stop("plase supply a single enhancer (index or name)")
+    }
+    if(RNA) {
+        df <- data.frame(obs=obj@rnaCounts[enhancer,], 
+                         expctd=getRNAFits(obj, enhancer))
+    } else {
+        df <- data.frame(obs=obj@dnaCounts[enhancer,], 
+                         expctd=getDNAFits(obj, enhancer))
+    }
+    print(summary(df))
+    ggplot(df) + 
+        geom_histogram(aes(x = obs, color="blue")) + 
+        geom_density(aes(x=expctd, fill="red"), alpha=0.1)
+}
+
+plotPvalCDF <- function(p, categories, adjusted=FALSE) {
+    if(adjusted) {
+        p <- p.adjust(p, "BH")
+    }
+    df <- data.frame(p=p, cat=categories)
+    ggplot(df, aes(p, group=cat, color=cat)) + stat_ecdf(geom="step") + 
+        xlab("P-value") + ylab("CDF")
+    
+}
+
+plotObsExpDistributions <- function(obj, enhancer, rna=TRUE, KS = TRUE) {
+    if(length(enhancer) > 1) {
+        stop("plase supply a single enhancer (index or name)")
+    }
+    if(rna) {
+        df <- data.frame(obs = obj@rnaCounts[enhancer,], 
+                         exd = as.numeric(getRNAFits(obj, enhancer)))
+    } else {
+        df <- data.frame(obs = obj@dnaCounts[enhancer,], 
+                         exd = as.numeric(getDNAFits(obj, enhancer)))
+    }
+    
+    df <- df[df$obs > 0,]
+    print(ks.test(df$obs, df$exd)$statistic)
+    ggplot(df) + 
+        geom_histogram(aes(obs, ..density.., fill="Observed")) + 
+        geom_density(aes(exd, color="Expected"), size=2) + 
+        scale_fill_manual(name=element_blank(), values = c("Observed"='grey33')) + 
+        scale_colour_manual(name=element_blank(), values = c('Expected'='black')) + 
+        theme(text=element_text(size=20), legend.position = "none") +
+        # theme(text=element_text(size=20), legend.position = c(0.8, 0.8)) +
+        xlab("counts")
+    
+    
+    # df <- data.frame(counts=c(df$exd,df$obs), 
+    #                  source=as.factor(c(rep(1,NROW(df)), rep(2,NROW(df)))))
+    # levels(df$source) <- c("Expected", "Observed")
+    # ggplot(df) + 
+    #     geom_density(aes(counts, group=source, col=source, fill=source), 
+    #                  size=1, alpha=0.25) +
+    #     theme(text=element_text(size=20),
+    #           legend.direction = "horizontal", legend.position = "bottom",
+    #           legend.title = element_blank()) +
+    #     scale_fill_manual(values = "")
+}
