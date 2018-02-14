@@ -372,14 +372,14 @@ resampleObs <- function(obj, enhancer=NULL, full=TRUE){
         })
         rsample <- apply(rpar, 1, function(x) {
             rnbinom(n = 1, size = x["size"], mu = x["mu"])
-        })
+        }) 
     } else if(obj@model=="ln.ln") {
         dsample <- apply(dpar, 1, function(x) {
             rlnorm(n = 1, meanlog = x["meanlog"], sdlog = x["sdlog"])
         })
         rsample <- apply(rpar, 1, function(x) {
             rlnorm(n = 1,meanlog = x["meanlog"], sdlog = x["sdlog"])
-        })
+        }) 
     } 
     return(data.frame(dna=dsample, rna=rsample))
 }

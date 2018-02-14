@@ -111,7 +111,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
                  method = "BFGS", control = list(maxit=1000)))
     
     ## split parameters to the two parts of the model
-    fit$par <- pmax(pmin(fit$par, 23), -23)
+    #fit$par <- pmax(pmin(fit$par, 23), -23)
     d.par <- fit$par[seq(1, 1+NCOL(ddmat.valid))]
     r.par <- fit$par[c(1, seq(1+NCOL(ddmat.valid)+1,
                          1+NCOL(ddmat.valid)+NCOL(rdmat.valid)))]
@@ -224,7 +224,7 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
                       hessian = compute.hessian,
                       method = "BFGS", control=list(maxit=1000)))
         
-        dfit$par <- pmax(pmin(dfit$par, 23), -23)
+        #dfit$par <- pmax(pmin(dfit$par, 23), -23)
         d.par <- dfit$par[seq(1, length(d.par))]
         
         ## estimate rna model conditioned on dna model
@@ -243,7 +243,7 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
                       hessian = compute.hessian, 
                       method = "BFGS", control=list(maxit=1000)))
         
-        rfit$par <- pmax(pmin(rfit$par, 23), -23)
+        #rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par[seq_len(length(r.par))]
         if(!is.null(r.ctrl.par)) {
             r.ctrl.par <- rfit$par[seq(length(r.par)+1, 
@@ -335,7 +335,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                          rdesign.mat = rdesign.mat[valid.c.d[i,],valid.rf,drop=FALSE], 
                          hessian = FALSE, 
                          method = "BFGS", control=list(maxit=1000)))
-            fit$par <- pmax(pmin(fit$par, 23), -23)
+            #fit$par <- pmax(pmin(fit$par, 23), -23)
             return(fit)
         }, BPPARAM = BPPARAM)
         
@@ -359,7 +359,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                       rdesign.mat = rdesign.mat[valid.rf,,drop=FALSE], 
                       hessian = FALSE, 
                       method = "BFGS", control=list(maxit=1000)))
-        rfit$par <- pmax(pmin(rfit$par, 23), -23)
+        #rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par
         names(r.par) <- NULL
         
@@ -431,7 +431,7 @@ fit.dna.controlrna <- function(model, dcounts, rcounts, r.coef,
                  hessian = FALSE, 
                  method = "BFGS", control=list(maxit=1000)))
     
-    fit$par <- pmax(pmin(fit$par, 23), -23)
+    #fit$par <- pmax(pmin(fit$par, 23), -23)
     d.coef <- c(fit$par[1], rep(NA, NCOL(ddesign.mat)))
     d.coef[1 + which(valid.df)] <- fit$par[-1]
     d.df <- length(fit$par)

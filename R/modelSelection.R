@@ -26,10 +26,18 @@ plotModelPerformance <- function(obj) {
 #' @return the MPRAnalyze with the model set for the given value
 #' @export
 setModel <- function(obj, model) {
+    PSEUDOCOUNT <- 10^(-5)
     if(model %in% c("ln.nb", "gamma.pois", "ln.ln")) {
         obj@model <- model
     } else {
         stop("model '", model, "' not supported.")
+    }
+    if(model == "ln.nb") {
+        obj@dnaCounts[obj@dnaCounts==0] <- PSEUDOCOUNT
+    }
+    if(model == "ln.ln") {
+        obj@dnaCounts[obj@dnaCounts==0] <- PSEUDOCOUNT
+        obj@rnaCounts[obj@rnaCounts==0] <- PSEUDOCOUNT
     }
     return(obj)
 }
