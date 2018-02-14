@@ -306,11 +306,11 @@ getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
         par <- data.frame(shape = par.shape, rate = par.rate)
     } else if(obj@model == "ln.nb") {
         par.sdlog <- as.vector( exp(coef.mat[1,]))
-        par.meanlog <- as.vector(exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
+        par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
         par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     } else if(obj@model == "ln.ln") {
         par.sdlog <- as.vector( exp(coef.mat[1,]))
-        par.meanlog <- as.vector(exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
+        par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
         par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     }
     
