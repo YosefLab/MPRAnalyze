@@ -7,11 +7,15 @@
 #' partitioning of the data matrix columns into libraries, see lib.factor
 #'
 #' @param obj the MpraObject
+#' @param which.lib which library to compute the depth factors for. Options are 
+#' "both" (default), "dna" or "rna". If the DNA and RNA counts have different 
+#' library factors, this function should be called twice: once with "dna" and
+#' once with "rna"
 #' @param lib.factor the factor associating each sample to a library. Can be a
 #' factor or the name of a column in the object's colAnnot. If not provided, the
 #' data is assumed to have been generated from a single library, and constant
 #' library depth is set.
-#' @param depthEstimator a character indicating which depth estimation to use.
+#' @param depth.estimator a character indicating which depth estimation to use.
 #' Currently supported values are "uq" for upper quantile (default) and "rle"
 #' for RLE (uses geometric mean, and is therefore not recommended if libraries
 #' have 0 counts)
@@ -19,44 +23,58 @@
 #' @return the MpraObject with estimated values for sequencing depth factors
 #' 
 #' @export
-estimateDepthFactors <- function(obj, lib.factor=NULL, depthEstimator='uq') {
-    ## library size already set
-    if(length(obj@dnaDepth) > 0) {
-        return(obj)
+estimateDepthFactors <- function(obj, which.lib="both", lib.factor=NULL, 
+                                 depth.estimator="uq") {
+    
+    if(!(which.lib %in% c("dna", "rna", "both"))) {
+        stop("which.lib must be 'dna', 'rna' or 'both' (default)")
     }
+    if (which.lib %in% c("dna", "both")) {
+        obj@dnaDepth <- estimateFactors(counts=obj@dnaCounts, 
+                                        annotations=obj@dnaAnnot, 
+                                        lib.factor=lib.factor, 
+                                        depth.estimator=depth.estimator)
+    }
+    if (which.lib %in% c("rna", "both")) {
+        obj@rnaDepth <- estimateFactors(counts=obj@rnaCounts, 
+                                        annotations=obj@rnaAnnot, 
+                                        lib.factor=lib.factor, 
+                                        depth.estimator=depth.estimator)
+    }
+    return(obj)
+}
 
+#' estimate the library depth factors
+#' @param counts the counts
+#' @param annotations the annotations (data.frame)
+#' @param lib.factor the name of the factor\s describing the libraries
+#' @param depth.estimator a character indicating which depth estimation to use.
+#' Currently supported values are "uq" for upper quantile (default) and "rle"
+#' for RLE (uses geometric mean, and is therefore not recommended if libraries
+#' have 0 counts)
+#' @return computed library depth corection factors
+estimateFactors <- function(counts, annotations, lib.factor=NULL, depth.estimator='uq') {
     if(is.null(lib.factor)) {
-        ##library factor not provided, assume single library (=neutral depth)
-        obj@lib.factor <- as.factor(rep(1, NCOL(obj@dnaCounts)))
-        obj@dnaDepth <- rep(1, NCOL(obj@dnaCounts))
-        obj@rnaDepth <- rep(1, NCOL(obj@rnaCounts))
-        return(obj)
+        return(rep(1, NCOL(counts)))
     }
     
     if(is.character(lib.factor)){
-        if(!all(lib.factor %in% colnames(obj@colAnnot))) {
-            stop("character input for lib.factor must be names of columns in object's colAnnot")
+        if(!all(lib.factor %in% colnames(annotations))) {
+            stop("character input for lib.factor must be valid annotations")
         }
         if(length(lib.factor) == 1) {
-            lib.factor <- obj@colAnnot[,lib.factor]
+            lib.factor <- annotations[,lib.factor]
         } else {
-            lib.factor <- do.call(paste0, obj@colAnnot[,lib.factor])
+            lib.factor <- do.call(paste0, annotations[,lib.factor])
         }
     }
-
-    est <- DEPTH_EST_FUNCTIONS[[depthEstimator]]
+    est <- DEPTH_EST_FUNCTIONS[[depth.estimator]]
     if(is.null(est)) {
-        stop(depthEstimator, " depth estimation is not supported")
+        stop(depth.estimator, " depth estimation is not supported")
     }
     
-    obj@lib.factor <- as.factor(lib.factor)
-    obj@dnaDepth <- compute.depth(data=obj@dnaCounts,
-                                  lib.factor=lib.factor,
-                                  func=est)
-    obj@rnaDepth <- compute.depth(data=obj@rnaCounts,
-                                  lib.factor=lib.factor,
-                                  func=est)
-    return(obj)
+    # obj@lib.factor <- as.factor(lib.factor)
+    return(compute.depth(data=counts, lib.factor=lib.factor, func=est))
 }
 
 #' compute depth factor

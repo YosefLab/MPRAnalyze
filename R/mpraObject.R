@@ -12,7 +12,9 @@ setClass("Designs", slots = c(
     
     ## only used in differential LRT mode
     rnaRed = "Design",
-    rnaCtrlRed = "Design"
+    rnaCtrlRed = "Design",
+    
+    dna2rna = "Design"
 ))
 
 #' validate an MpraObject
@@ -23,11 +25,14 @@ setClass("Designs", slots = c(
 #' explaining how it's invalid
 validateMpraObject <- function(object) {
     errors = character()
-    if (any(dim(object@dnaCounts) != dim(object@rnaCounts))) {
-        errors <- c(errors,
-                    "DNA, RNA matrix must be of same dimensions")
+    if (NCOL(object@dnaCounts) != NROW(object@dnaAnnot)) {
+        errors <- c(errors, "DNA observations and annotations don't match")
     }
-    if (is.null(rownames(object@dnaCounts)) |
+    if (NCOL(object@rnaCounts) != NROW(object@rnaAnnot)) {
+        errors <- c(errors, "RNA observations and annotations don't match")
+    }
+    if (is.null(rownames(object@dnaCounts)) | 
+        is.null(rownames(object@rnaCounts)) |
         any(rownames(object@dnaCounts) != rownames(object@rnaCounts))) {
         errors <- c(errors,
                     "RNA, DNA feature names either missing or don't match")
@@ -43,7 +48,8 @@ validateMpraObject <- function(object) {
 #' The main container class for MPRAnalyze
 #' @slot dnaCounts matrix of DNA counts
 #' @slot rnaCounts matrix of RNA counts
-#' @slot colAnnot column annotations (info on condition, batch, barcode, etc)
+#' @slot dnaAnnot DNA column annotations (info on condition, batch, barcode, etc)
+#' @slot rnaAnnot RNA column annotations (info on condition, batch, barcode, etc)
 #' @slot controls indices of negative controls
 #' @slot controls.forfit indices of negative controls used for fitting in `full` 
 #' mode
@@ -64,7 +70,8 @@ setClass("MpraObject", validity = validateMpraObject,
              ## provided by user
              dnaCounts = "matrix",
              rnaCounts = "matrix",
-             colAnnot = "data.frame",
+             dnaAnnot = "data.frame",
+             rnaAnnot = "data.frame",
              controls = "integerORNULL", 
              controls.forfit = "integerORNULL", 
              
@@ -92,14 +99,16 @@ setClass("MpraObject", validity = validateMpraObject,
 #'
 #' @param dnaCounts the DNA counts matrix
 #' @param rnaCounts the RNA counts matrix
-#' @param colAnnot column annotations
+#' @param dnaAnnot column annotations for the DNA matrix
+#' @param rnaAnnot column annotations for the RNA matrix
+#' @param colAnnot (deprecated) column annotations - should only be used if DNA, RNA annotations are the same.
 #' @param controls a vector specifying which enhancers are negative controls
 #' (scrambles)
 #' @param BPPARAM the biocParalell backend to use for parallelization throughout
 #' the analysis
 #'
 #' @export
-MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_,
+MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, colAnnot=NULL, controls=NA_integer_,
                        BPPARAM=NULL) {
     if(is.null(BPPARAM)) {
         BPPARAM <- SerialParam()
@@ -108,9 +117,13 @@ MpraObject <- function(dnaCounts, rnaCounts, colAnnot=NULL, controls=NA_integer_
     if(is.logical(controls)) {
         controls <- which(controls)
     }
+    if((is.null(dnaAnnot) | is.null(rnaAnnot)) & !is.null(colAnnot)) {
+        rnaAnnot <- dnaAnnot <- colAnnot
+    }
     
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
-               colAnnot=colAnnot, controls=controls, BPPARAM=BPPARAM)
+               dnaAnnot=dnaAnnot, rnaAnnot=rnaAnnot, controls=controls, 
+               BPPARAM=BPPARAM)
     return(obj)
 }
 

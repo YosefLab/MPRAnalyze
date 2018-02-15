@@ -56,11 +56,13 @@ analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL,
     }
     obj@mode <- paste0("comparative.lrt.", mode)
     
-    obj@designs@dna <- getDesignMat(obj=obj, design=dnaDesign)
-    obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
+    obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=obj@dnaAnnot)
+    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
+    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot)
+    obj@designs@rnaRed <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot, 
+                                       condition=condition)
     
-    return(analyze.lrt(obj=obj, condition=condition, 
-                       dnaDesign=dnaDesign, rnaDesign=rnaDesign))
+    return(analyze.lrt(obj=obj))
 }
 
 #' Fit the model to enable coefficient-based testing (using the test.coef).
@@ -94,8 +96,9 @@ analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign,
         obj <- autoChooseModel(obj)
     }
     
-    obj@designs@dna <- getDesignMat(obj=obj, design=dnaDesign)
-    obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
+    obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=obj@dnaAnnot)
+    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
+    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot)
     obj@mode <- "comparative.coef"
     
     if(use.controls & !is.null(obj@controls)) {
@@ -107,13 +110,13 @@ analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign,
             ddepth=obj@dnaDepth,
             rdepth=obj@rnaDepth,
             ddesign.mat=obj@designs@dna,
-            rdesign.mat=obj@designs@rnaFull,
+            rdesign.mat=obj@designs@rnaFull, 
+            d2rdesign.mat=obj@designs@dna2rna,
             BPPARAM = obj@BPPARAM))
         
         obj@designs@rnaCtrlFull <- obj@designs@rnaFull
         obj@designs@rnaCtrlRed <- obj@designs@rnaFull
         obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1,]
-        obj@controls.forfit <- NULL
         fitfun <- fit.dnarna.noctrlobs
         obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1,]
         if(!is.null(obj@modelPreFits.dna.ctrl)) {
@@ -125,7 +128,6 @@ analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign,
         obj@designs@rnaCtrlFull <- NULL
         obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- NULL
-        obj@controls.forfit <- NULL
         theta.d.ctrl.prefit <- NULL
     }
     ## fit model
@@ -133,13 +135,13 @@ analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign,
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         return(fit.dnarna.noctrlobs(model=obj@model,
                       dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=rbind(obj@rnaCounts[rn,], 
-                                    obj@rnaCounts[obj@controls.forfit,]),
+                      rcounts=obj@rnaCounts[rn,,drop=FALSE],
                       ddepth=obj@dnaDepth,
                       rdepth=obj@rnaDepth,
                       rctrlscale=obj@rnaCtrlScale,
                       ddesign.mat=obj@designs@dna,
                       rdesign.mat=obj@designs@rnaFull,
+                      d2rdesign.mat=obj@designs@dna2rna,
                       rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
                       theta.d.ctrl.prefit=theta.d.ctrl.prefit,
                       compute.hessian=TRUE))
@@ -191,10 +193,11 @@ analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
     
     obj@mode <- paste0("quantitative.", mode)
     
-    obj@designs@dna <- getDesignMat(obj=obj, design=dnaDesign)
-    obj@designs@rnaFull <- getDesignMat(obj=obj, design=rnaDesign)
+    obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=obj@dnaAnnot)
+    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
+    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot)
 
-    return(QUANT_ANALYSIS[[obj@mode]](obj, dnaDesign, rnaDesign))
+    return(QUANT_ANALYSIS[[obj@mode]](obj))
 }
 
 #' Fit the model for quantitative analysis
@@ -202,7 +205,7 @@ analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
 #' @param dnaDesign the design of the DNA model
 #' @param rnaDesign the design of the RNA model
 #' @return the MpraObject with fitted models
-analyze.quantitative.empirical <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
+analyze.quantitative.empirical <- function(obj){
     ## fit model
     obj@designs@rnaRed <- NULL
     obj@designs@rnaCtrlFull <- NULL
@@ -221,6 +224,7 @@ analyze.quantitative.empirical <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
                       rctrlscale=NULL,
                       ddesign.mat=obj@designs@dna,
                       rdesign.mat=obj@designs@rnaFull,
+                      d2rdesign.mat=obj@designs@dna2rna,
                       rdesign.ctrl.mat=NULL,
                       theta.d.ctrl.prefit=NULL,
                       compute.hessian=FALSE))
@@ -242,15 +246,13 @@ analyze.quantitative.empirical <- function(obj, dnaDesign=NULL, rnaDesign=NULL){
 #' @param rnaDesign the design of the RNA model. See details
 #' 
 #' @return the MPRAnalyze object, populated with fitted models
-analyze.lrt <- function(obj, condition=NULL, 
-                        dnaDesign=NULL, rnaDesign= ~condition) {
+analyze.lrt <- function(obj) {
     ## get distributional model
     if(is.null(obj@model)) {
         obj@model <- autoChooseModel(obj)
     }
     
     if(obj@mode == "comparative.lrt.nocontrols") {
-        obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition)
         obj@designs@rnaCtrlFull <- NULL
         obj@designs@rnaCtrlRed <- NULL
         obj@modelPreFits.dna.ctrl <- NULL
@@ -267,9 +269,9 @@ analyze.lrt <- function(obj, condition=NULL,
             rdepth=obj@rnaDepth,
             ddesign.mat=obj@designs@dna,
             rdesign.mat=obj@designs@rnaFull,
+            d2rdesign.mat=obj@designs@dna2rna,
             BPPARAM = obj@BPPARAM))
         if(obj@mode == "comparative.lrt.scaled") {
-            obj@designs@rnaRed <- getDesignMat(obj, rnaDesign, condition)
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@designs@rnaCtrlRed <- obj@designs@rnaFull
             obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1,]
@@ -304,6 +306,7 @@ analyze.lrt <- function(obj, condition=NULL,
                       rctrlscale=obj@rnaCtrlScale,
                       ddesign.mat=obj@designs@dna,
                       rdesign.mat=obj@designs@rnaFull,
+                      d2rdesign.mat=obj@designs@dna2rna,
                       rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
                       theta.d.ctrl.prefit=theta.d.ctrl.prefit,
                       compute.hessian=FALSE))
@@ -324,6 +327,7 @@ analyze.lrt <- function(obj, condition=NULL,
                       rctrlscale=obj@rnaCtrlScale,
                       ddesign.mat=obj@designs@dna,
                       rdesign.mat=obj@designs@rnaRed,
+                      d2rdesign.mat=obj@designs@dna2rna,
                       rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
                       theta.d.ctrl.prefit=theta.d.ctrl.prefit,
                       compute.hessian=FALSE))
@@ -349,6 +353,7 @@ analyze.quantitative.lrt <- function(obj, dnaDesign=NULL, rnaDesign=NULL) {
                                     rctrlscale=NULL,
                                     ddesign.mat=obj@designs@dna,
                                     rdesign.mat=obj@designs@rnaFull,
+                                    d2rdesign.mat=obj@designs@dna2rna,
                                     rdesign.ctrl.mat=NULL,
                                     theta.d.ctrl.prefit=NULL,
                                     compute.hessian=FALSE))
@@ -367,6 +372,7 @@ analyze.quantitative.lrt <- function(obj, dnaDesign=NULL, rnaDesign=NULL) {
         rdepth=obj@rnaDepth,
         ddesign.mat=obj@designs@dna,
         rdesign.mat=obj@designs@rnaFull,
+        d2rdesign.mat=obj@designs@dna2rna,
         BPPARAM = obj@BPPARAM))
     
     ctrl.rna <- obj@modelPreFits.dna.ctrl$r.coef[1,]
@@ -384,7 +390,8 @@ analyze.quantitative.lrt <- function(obj, dnaDesign=NULL, rnaDesign=NULL) {
                                   ddepth=obj@dnaDepth,
                                   rdepth=obj@rnaDepth,
                                   ddesign.mat=obj@designs@dna,
-                                  rdesign.mat=obj@designs@rnaFull))
+                                  rdesign.mat=obj@designs@rnaFull,
+                                  d2rdesign.mat=obj@designs@dna2rna))
         }, error = function(err) {message("error fitting: ", rn)})
     }, BPPARAM = obj@BPPARAM)
     names(models) <- rownames(obj@dnaCounts)
