@@ -3,13 +3,14 @@
 #' @import stats
 #' @import methods
 #' 
+#' @param model noise model out of {"gamma.pois", "ln.nb", "ln.ln"}
 #' @param n.case number of case enhancers
 #' @param n.ctrl number of control/scrambled enhancers
 #' @param n.cond number of conditions
 #' @param n.bc number of barcodes observed per condition
 #' @param n.reps number of repeats to generate
 #' @param mu.dna mean dna level
-#' @param log.sd.dna sd to draw DNA from
+#' @param sd.dna sd to draw DNA from
 #' @param sd.dna.cond stddev to draw dna fold change 
 #' by condition from (centred at 1)
 #' @param sd.dna.bc stddev to draw dna fold change 
@@ -28,68 +29,197 @@
 #' }
 #' 
 #' @export
-simulateMPRA <- function(n.case=100, n.ctrl=20,
-                         n.cond=2, n.bc=25, n.reps=2,
-                         mu.dna=100, log.sd.dna=0.2, sd.dna.cond=2, sd.dna.bc=0.1,
-                         mu.rna=1, sd.rna=0.2, sd.rna.cond=1) {
+simulateMPRA <- function(
+    model="gamma.pois", n.case=100, n.ctrl=20,
+    n.cond=2, n.bc=25, n.reps=2, frac.de=0.5,
+    mu.dna=100, mu.sd.dna=0.2, sd.dna=0.2, sd.dna.cond=2, sd.dna.bc=0.1,
+    mu.rna=1, mu.sd.rna=0.2, sd.rna=NULL, sd.rna.cond=1, sd.rna.cond_case=1) {
     
+    if(!model %in% c("gamma.pois", "ln.nb", "ln.ln")) {
+        stop("model not recognized")
+    }
+    if(model=="gamma.pois" & !is.null(sd.rna)){
+        warning("sd.rna is ignored in gamma.pois model")
+    }
+    if(n.cond==1 & (sd.rna.cond!=0 | sd.dna.cond!=0)){
+        warning("non-zero sd.dna.cond or sd.rna.cond supplied",
+                " with only one condition, setting these to 0")
+        sd.dna.cond <- 0
+        sd.rna.cond <- 0
+    }
     n.samples <- n.cond*n.bc*n.reps
-    n.enhancers <- n.case+n.ctrl
     # sample allocation to condition
     idx.cond <- rep(sapply(seq(1, n.cond), function(x) rep(x, n.bc) ), n.reps)
     idx.rep <- sapply(seq(1, n.reps), function(x) rep(x, n.bc*n.cond) )
+    idx.bc <- rep(seq_len(n.bc), n.cond*n.reps)
     
     ## draw dna counts
-    fc.bc <- rep(rep(rnorm(n = n.bc, mean = 1, sd = sd.dna.bc), n.cond), n.reps)
-    fc.bc[fc.bc] <- 0.2 # Threshold
-    dcounts.case <- do.call(rbind, lapply(
-        rlnorm(n=n.case, meanlog=log(mu.dna), sdlog=log.sd.dna), 
-        function(mu) {
-            round(rlnorm(n=n.samples, meanlog = log(mu), sdlog = sd.dna.cond)*fc.bc)
-        }))
-    rownames(dcounts.case) <- paste0("case_", seq_len(n.case))
+    par.dna.mu.case <- rlnorm(n=n.case, meanlog=log(mu.dna), sdlog=mu.sd.dna)
+    par.dna.bc.case <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+        rnorm(n = n.bc, mean = 0, sd = sd.dna.bc)[idx.bc]
+    }))
+    par.dna.cond.case <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+        rnorm(n = n.cond, mean = 0, sd = sd.dna.bc)[idx.cond]
+    }))
+    dcounts.case.true <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+        par.dna.mu.case[i]*par.dna.bc.case[i,]*par.dna.cond.case[i,]
+    }))
+    dcounts.case.obs <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+        if(model %in% c("ln.nb", "ln.nb")) {
+            round(rlnorm(n=n.samples, meanlog=
+                             log(dcounts.case.true[i,] /
+                                     sqrt(1+sd.dna^2/dcounts.case.true[i,]^2)),
+                         sdlog=sqrt(ln(1+sd.dna^2/dcounts.case.true[i,]^2))))
+        } else if(model %in% c("gamma.pois")) {
+            round(rgamma(n=n.samples, shape=(dcounts.case.true[i,])^2/sd.dna.cond^2, 
+                         scale=sd.dna.cond^2/dcounts.case.true[i,]))
+        }
+    }))
+    rownames(dcounts.case.true) <- paste0("case_", seq_len(n.case))
+    rownames(dcounts.case.obs) <- paste0("case_", seq_len(n.case))
     if(n.ctrl > 0){
-        dcounts.ctrl <- do.call(rbind, lapply(
-            sample(x=mu.dna, size=n.ctrl), function(mu) {
-                round(rlnorm(n=n.samples, meanlog = log(mu), sdlog = sd.dna.cond)*fc.bc)
-            }))
-        rownames(dcounts.ctrl) <- paste0("ctrl_", seq_len(n.ctrl))
+        par.dna.mu.ctrl <- rlnorm(n=n.ctrl, meanlog=log(mu.dna), sdlog=mu.sd.dna)
+        par.dna.bc.ctrl <- do.call(rbind, lapply(seq_len(n.ctrl), function(i) {
+            rnorm(n = n.bc, mean = 0, sd = sd.dna.bc)[idx.bc]
+        }))
+        par.dna.cond.ctrl <- do.call(rbind, lapply(seq_len(n.ctrl), function(i) {
+            rnorm(n = n.cond, mean = 0, sd = sd.dna.bc)[idx.cond]
+        }))
+        dcounts.ctrl.true <- do.call(rbind, lapply(seq_len(n.ctrl), function(i) {
+            par.dna.mu.ctrl[i]*par.dna.bc.ctrl[i,]*par.dna.cond.ctrl[i,]
+        }))
+        dcounts.ctrl.obs <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+            if(model %in% c("ln.nb", "ln.nb")) {
+                round(rlnorm(n=n.samples, meanlog=
+                             log(dcounts.ctrl.true[i,] /
+                                     sqrt(1+sd.dna^2/dcounts.ctrl.true[i,]^2)),
+                             sdlog=sqrt(ln(1+sd.dna^2/dcounts.ctrl.true[i,]^2))))
+            } else if(model %in% c("gamma.pois")) {
+                round(rgamma(n=n.samples, shape = (dcounts.ctrl.true[i,])^2sd.dna.cond^2, 
+                             scale = sd.dna.cond^2/dcounts.ctrl.true[i,]))
+            }
+        }))
+        rownames(dcounts.ctrl.obs) <- paste0("ctrl_", seq_len(n.ctrl))
+        rownames(dcounts.ctrl.true) <- paste0("ctrl_", seq_len(n.ctrl))
     } else {
-        dcounts.ctrl <- NULL
+        par.dna.mu.ctrl <- NULL
+        par.dna.cond.ctrl <- NULL
+        par.dna.bc.ctrl <- NULL
+        dcounts.ctrl.true <- NULL
+        dcounts.ctrl.obs <- NULL
     }
-    dcounts <- rbind(dcounts.case, dcounts.ctrl)
-    colnames(dcounts) <- paste0("S", seq_len(n.samples))
-    dcounts[dcounts <= 1] <- 1
+    par.dna.mu <- c(par.dna.mu.case, par.dna.mu.ctrl)
+    par.dna.cond <- c(par.dna.cond.case, par.dna.cond.ctrl)
+    par.dna.bc <- c(par.dna.bc.case, par.dna.bc.ctrl)
+    dcounts.true <- rbind(dcounts.case.true, dcounts.ctrl.true)
+    dcounts.obs <- rbind(dcounts.case.obs, dcounts.ctrl.obs)
+    colnames(dcounts.true) <- paste0("S", seq_len(n.samples))
+    colnames(dcounts.obs) <- paste0("S", seq_len(n.samples))
+    #dcounts.obs[dcounts.obs <= 1] <- 1
     
     ## draw rna counts
-    fc.rna <- rnorm(n=n.case, mean=mu.rna, sd=sd.rna)
-    fc.rna[fc.rna < 0.1] <- 0.1 # Threshold
-    fc.rna.cond <- matrix(1, nrow=n.case, ncol=n.cond)
-    fc.rna.cond[,-1] <- rnorm(n=n.case*(n.cond-1), 
-                              mean=mu.rna, sd=sd.rna)
-    fc.rna.cond[fc.rna.cond < 0.1] <- 0.1 # Threshold
-    rcounts <- do.call(rbind, lapply(seq_len(n.case), function(i) {
-        sapply(dcounts[i,]*fc.rna.cond[i,idx.cond], function(x) 
-            round(rpois(n=1, lambda = x*fc.rna[i])) )
-    }))
     if(n.ctrl > 0){
-        fc.rna.ctrl <- rnorm(n=1, mean=mu.rna, sd=sd.rna)
-        fc.rna.ctrl[fc.rna.ctrl < 0.1] <- 0.1 # Threshold
-        rcounts.ctrl <- do.call(rbind, lapply(n.case+seq_len(n.ctrl), function(i) {
-            sapply(dcounts[i,]*fc.rna.ctrl, function(x) 
-                round(rnbinom(n=1, mu=x, size=2 )) )
+        # only draw one underlying mean and one vector of condition effects
+        # as the model assumes that the controls follow the same
+        # rna generating process
+        par.rna.mu.ctrl <- mu.rna*exp(rnorm(n=1, mean=0, sd=mu.sd.rna))
+        par.rna.cond.ctrl <- exp(rnorm(n=n.cond, mean=0, sd=sd.rna.cond))[idx.cond]
+        rcounts.ctrl.true <- do.call(rbind, lapply(seq_len(n.ctrl), function(i) {
+            dcounts.ctrl.true[i,]*par.rna.mu.ctrl*par.rna.cond.ctrl
         }))
-        rcounts <- rbind(rcounts, rcounts.ctrl)
+        rcounts.ctrl.obs <- do.call(rbind, lapply(seq_len(n.ctrl), function(i) {
+            if(model %in% c("ln.ln")) {
+                round(rlnorm(n=n.samples, meanlog=
+                             log(rcounts.ctrl.true[i,] /
+                                     sqrt(1+sd.rna^2/rcounts.ctrl.true[i,]^2)),
+                             sdlog=sqrt(ln(1+sd.rna^2/rcounts.ctrl.true[i,]^2))))
+            } else if(model %in% c("ln.nb")) {
+                round(rnbinom(n=n.samples, mu = rcounts.ctrl.true[i,], 
+                              size=rcounts.ctrl.true[i,]^2/(sd.rna^2-rcounts.ctrl.true[i,]) ))
+            } else if(model %in% c("gamma.pois")) {
+                round(rnbinom(n=n.samples, mu = rcounts.ctrl.true[i,], 
+                              size=(dcounts.ctrl.true[i,])^2/sd.dna.cond^2))
+            }
+        }))
+        
+        par.rna.de.case <- rbinom(n=1, size=n.case, prob=frac.de)
+        par.rna.mu.case <- mu.rna*exp(rnorm(n=n.case, mean=0, sd=mu.sd.rna))
+        par.rna.mu.case[par.rna.de.case] <- par.rna.mu.ctrl
+        par.rna.cond.case <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+            if(par.rna.de.case[i] & n.cond > 1){
+                par.rna.cond.ctrl * 
+                    exp(rnorm(n=n.cond, mean=0, sd=sd.rna.cond_case))[idx.cond]
+            } else {
+                par.rna.cond.ctrl
+            }
+        }))
+        rcounts.case.true <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+            dcounts.case.true[i,]*par.rna.mu.case[i]*par.rna.cond.case[i,]
+        }))
+        rcounts.case.obs <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+            if(model %in% c("ln.ln")) {
+                round(rlnorm(n=n.samples, meanlog=
+                             log(rcounts.case.true[i,] /
+                                     sqrt(1+sd.rna^2/rcounts.case.true[i,]^2)),
+                             sdlog=sqrt(ln(1+sd.rna^2/rcounts.case.true[i,]^2))))
+            } else if(model %in% c("ln.nb")) {
+                round(rnbinom(n=n.samples, mu = rcounts.case.true[i,], 
+                              size=rcounts.case.true[i,]^2/(sd.rna^2-rcounts.case.true[i,]) ))
+            } else if(model %in% c("gamma.pois")) {
+                round(rnbinom(n=n.samples, mu = rcounts.case.true[i,], 
+                              size=(dcounts.case.true[i,])^2/sd.dna.cond^2))
+            }
+        }))
+    } else {
+        par.dna.mu.ctrl <- NULL
+        par.dna.cond.ctrl <- NULL
+        par.dna.bc.ctrl <- NULL
+        dcounts.ctrl.true <- NULL
+        dcounts.ctrl.obs <- NULL
+        
+        par.rna.mu.case <- mu.rna*exp(rnorm(n=n.case, mean=0, sd=mu.sd.rna))
+        par.rna.de.case <- rbinom(n=1, size=n.case, prob=frac.de)
+        par.rna.cond.case <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+            if(par.rna.de.case[i] & n.cond > 1){
+                exp(rnorm(n=n.cond, mean=0, sd=sd.rna.cond))[idx.cond]
+            } else {
+                rep(1, length(idx.cond))
+            }
+        }))
+        rcounts.case.true <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+            dcounts.case.true[i,]*par.rna.mu.case[i]*par.rna.cond.case[i,]
+        }))
+        rcounts.case.obs <- do.call(rbind, lapply(seq_len(n.case), function(i) {
+            if(model %in% c("ln.ln")) {
+                round(rlnorm(n=n.samples, meanlog=
+                             log(rcounts.case.true[i,] /
+                                     sqrt(1+sd.rna^2/rcounts.case.true[i,]^2)),
+                             sdlog=sqrt(ln(1+sd.rna^2/rcounts.case.true[i,]^2))))
+            } else if(model %in% c("ln.nb")) {
+                round(rnbinom(n=n.samples, mu = rcounts.case.true[i,], 
+                              size=rcounts.case.true[i,]^2/(sd.rna^2-rcounts.case.true[i,]) ))
+            } else if(model %in% c("gamma.pois")) {
+                round(rnbinom(n=n.samples, mu = rcounts.case.true[i,], 
+                              size=(dcounts.case.true[i,])^2/sd.dna.cond^2))
+            }
+        }))
     }
-    rownames(rcounts) <- rownames(dcounts)
-    colnames(rcounts) <- colnames(dcounts)
+    par.rna.mu <- c(par.rna.mu.case, par.rna.mu.ctrl)
+    par.rna.cond <- c(par.rna.cond.case, par.rna.cond.ctrl)
+    rcounts.true <- rbind(rcounts.case.true, rcounts.ctrl.true)
+    rcounts.obs <- rbind(rcounts.case.obs, rcounts.ctrl.obs)
+    
+    rownames(rcounts.true) <- rownames(dcounts.true)
+    colnames(rcounts.true) <- colnames(dcounts.true)
+    rownames(rcounts.obs) <- rownames(dcounts.obs)
+    colnames(rcounts.obs) <- colnames(dcounts.obs)
     
     ## create annotation
     colAnnot <- data.frame(
         sample=colnames(dcounts),
         cond=paste0("cond_", seq(1, n.cond))[idx.cond],
         rep=paste0("rep_", seq(1, n.reps))[idx.rep],
-        barcode=rep(paste0("BC", seq(1, n.bc)), n.cond*n.reps),
+        barcode=paste0("BC", seq(1, n.bc))[idx.bc],
         stringsAsFactors = FALSE
     )
     colAnnot$experiment <- colAnnot$cond # for depth factors
@@ -103,8 +233,16 @@ simulateMPRA <- function(n.case=100, n.ctrl=20,
         rowAnnot[rowAnnot$type == "case",]$cond2_effect <- fc.rna.cond[,2]
     }
     
-    return(list( dna=dcounts,
-                 rna=rcounts,
-                 colAnnot=colAnnot,
-                 rowAnnot=rowAnnot))
+    return(list(dcounts.obs=dcounts.obs,
+                dcounts.true=dcounts.true,
+                par.dna=list(par.dna.mu=par.dna.mu,
+                             par.dna.cond=par.dna.cond,
+                             par.dna.bs=par.dna.bc),
+                rcounts.obs=rcounts.obs,
+                rcounts.true=rcounts.true,
+                par.rna=list(par.rna.mu=par.rna.mu,
+                             par.rna.cond=par.rna.cond,
+                             par.rna.de.case=par.rna.de.case),
+                colAnnot=colAnnot,
+                rowAnnot=rowAnnot))
 }
