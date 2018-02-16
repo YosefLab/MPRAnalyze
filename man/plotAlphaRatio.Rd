@@ -5,7 +5,7 @@
 \title{create a scatter plot of the model alpha (trascription rate) vs. the naive
 estimator (RNA / DNA).}
 \usage{
-plotAlphaRatio(obj, condition = NULL)
+plotAlphaRatio(obj, condition = NULL, logScale = TRUE)
 }
 \arguments{
 \item{obj}{the MpraObject}

@@ -4,14 +4,20 @@
 \alias{simulateMPRA}
 \title{Simulate MPRA data}
 \usage{
-simulateMPRA(n.case = 100, n.ctrl = 20, n.cond = 2, n.bc = 25,
-  n.reps = 2, mu.dna = 100, log.sd.dna = 0.2, sd.dna.cond = 2,
-  sd.dna.bc = 0.1, mu.rna = 1, sd.rna = 0.2, sd.rna.cond = 1)
+simulateMPRA(model = "gamma.pois", n.case = 50, n.ctrl = 50,
+  frac.de = 0.5, n.cond = 2, n.bc = 25, n.reps = 2, mu.dna = 100,
+  mu.sd.dna = 0.3, sd.dna = 10, sd.dna.cond = 0.2, sd.dna.bc = 0.2,
+  mu.rna = 1, mu.sd.rna = 0.1, sd.rna = 0.2, sd.rna.cond = 0.1,
+  sd.rna.cond_case = 0.1)
 }
 \arguments{
+\item{model}{noise model out of {"gamma.pois", "ln.nb", "ln.ln"}}
+
 \item{n.case}{number of case enhancers}
 
 \item{n.ctrl}{number of control/scrambled enhancers}
+
+\item{frac.de}{fraction of differentially active case elements}
 
 \item{n.cond}{number of conditions}
 
@@ -19,28 +25,54 @@ simulateMPRA(n.case = 100, n.ctrl = 20, n.cond = 2, n.bc = 25,
 
 \item{n.reps}{number of repeats to generate}
 
-\item{mu.dna}{mean dna level}
+\item{mu.dna}{mean of distribution of offset dna level over genes}
 
-\item{log.sd.dna}{sd to draw DNA from}
+\item{mu.sd.dna}{sd of distribution of offset dna level over genes}
 
-\item{sd.dna.cond}{stddev to draw dna fold change 
-by condition from (centred at 1)}
+\item{sd.dna}{sd of DNA distribution of each gene, dispersion if 
+model is ln.nb}
 
-\item{sd.dna.bc}{stddev to draw dna fold change 
-by barcode from (centred at 1)}
+\item{sd.dna.cond}{sd of normal distribution from which log barcode fold
+change is drawn: exp(rnorm(1,mu=0,sd=sd.dna.cond))}
 
-\item{mu.rna}{mean to draw dna fold change from}
+\item{sd.dna.bc}{sd of normal distribution from which log condition fold
+change is drawn: exp(rnorm(1,mu=0,sd=sd.dna.cond))}
 
-\item{sd.rna}{stddev to draw rna slope from (centred at mu.rna)}
+\item{mu.rna}{mean of distribution of offset rna expression over genes}
 
-\item{sd.rna.cond}{stddev to draw rna slope fold change 
-by condition from (centred at 1)}
+\item{mu.sd.rna}{sd of distribution of offset rna expression over genes}
+
+\item{sd.rna}{sd of RNA distribution of each gene, ignored in gamma.pois
+as variance is set by DNA distribution}
+
+\item{sd.rna.cond}{sd of normal distribution from which log condition fold
+change is drawn: exp(rnorm(1,mu=0,sd=sd.rna.cond))}
+
+\item{sd.rna.cond_case}{sd of normal distribution from which log condition fold
+change of differentially active case sequence is drawn, note this is 
+multiplied with the control base-line fold change:
+exp(rnorm(1,mu=0,sd=sd.rna.cond_case))}
 }
 \value{
 (list)
 \itemize{
-\item dna dna count matrix
-\item rna rna count matrix
+\item dcounts.obs observed dna count matrix
+\item dcounts.true underlying (no noise) dna count matrix
+\item par.dna
+\itemize{
+\item par.dna.mu baseline dna level per element
+\item par.dna.cond condition fold-change of dna level
+\item par.dna.bc barcode fold-change of dna level
+}
+\item rcounts.obs observed rna count matrix
+\item rcounts.true underlying (no noise) rna count matrix
+\item par.rna
+\itemize{
+\item par.rna.mu baseline expression level per element
+\item par.rna.cond condition fold-change of expression
+\item par.rna.de.case whether or not an element is 
+differentially active
+}
 \item colData column annotation of samples (meta data)
 \item rowAnnot row annotation of enhancers (meta data)
 }
