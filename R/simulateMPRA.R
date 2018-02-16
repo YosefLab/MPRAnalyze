@@ -33,13 +33,16 @@ simulateMPRA <- function(
     model="gamma.pois", n.case=10, n.ctrl=10,
     n.cond=2, n.bc=4, n.reps=2, frac.de=0.5,
     mu.dna=100, mu.sd.dna=0.3, sd.dna=10, sd.dna.cond=0.2, sd.dna.bc=0.2,
-    mu.rna=1, mu.sd.rna=0.1, sd.rna=NULL, sd.rna.cond=0.1, sd.rna.cond_case=0.1) {
+    mu.rna=1, mu.sd.rna=0.1, sd.rna=0.2, sd.rna.cond=0.1, sd.rna.cond_case=0.1) {
     
     if(!model %in% c("gamma.pois", "ln.nb", "ln.ln")) {
         stop("model not recognized")
     }
     if(model=="gamma.pois" & !is.null(sd.rna)){
         warning("sd.rna is ignored in gamma.pois model")
+    }
+    if(model=="ln.nb"){
+        warning("sd.rna is interpreted as size parameter of negative binomial")
     }
     if(n.cond==1 & (sd.rna.cond!=0 | sd.dna.cond!=0)){
         warning("non-zero sd.dna.cond or sd.rna.cond supplied",
@@ -139,7 +142,7 @@ simulateMPRA <- function(
                        sdlog=sqrt(log(1+sd.rna^2/rcounts.ctrl.true[i,]^2)))
             } else if(model %in% c("ln.nb")) {
                 rnbinom(n=n.samples, mu = rcounts.ctrl.true[i,], 
-                        size=rcounts.ctrl.true[i,]^2/(sd.rna^2-rcounts.ctrl.true[i,]) )
+                        size=sd.rna )
             } else if(model %in% c("gamma.pois")) {
                 rnbinom(n=n.samples, mu = rcounts.ctrl.true[i,], 
                         size=(dcounts.ctrl.true[i,])^2/sd.dna.cond^2)
@@ -168,7 +171,7 @@ simulateMPRA <- function(
                        sdlog=sqrt(log(1+sd.rna^2/rcounts.case.true[i,]^2)))
             } else if(model %in% c("ln.nb")) {
                 rnbinom(n=n.samples, mu = rcounts.case.true[i,], 
-                        size=rcounts.case.true[i,]^2/(sd.rna^2-rcounts.case.true[i,]) )
+                        size=sd.rna )
             } else if(model %in% c("gamma.pois")) {
                 rnbinom(n=n.samples, mu = rcounts.case.true[i,], 
                         size=(dcounts.case.true[i,])^2/sd.dna.cond^2)
@@ -201,7 +204,7 @@ simulateMPRA <- function(
                        sdlog=sqrt(log(1+sd.rna^2/rcounts.case.true[i,]^2)))
             } else if(model %in% c("ln.nb")) {
                 rnbinom(n=n.samples, mu = rcounts.case.true[i,], 
-                        size=rcounts.case.true[i,]^2/(sd.rna^2-rcounts.case.true[i,]) )
+                        size=sd.rna )
             } else if(model %in% c("gamma.pois")) {
                 rnbinom(n=n.samples, mu = rcounts.case.true[i,], 
                         size=(dcounts.case.true[i,])^2/sd.dna.cond^2)
@@ -237,7 +240,7 @@ simulateMPRA <- function(
                 dcounts.true=dcounts.true,
                 par.dna=list(par.dna.mu=par.dna.mu,
                              par.dna.cond=par.dna.cond,
-                             par.dna.bs=par.dna.bc),
+                             par.dna.bc=par.dna.bc),
                 rcounts.obs=rcounts.obs,
                 rcounts.true=rcounts.true,
                 par.rna=list(par.rna.mu=par.rna.mu,
