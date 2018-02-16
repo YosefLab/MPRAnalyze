@@ -95,8 +95,8 @@ simulateMPRA <- function(
                                      sqrt(1+sd.dna^2/dcounts.ctrl.true[i,]^2)),
                              sdlog=sqrt(ln(1+sd.dna^2/dcounts.ctrl.true[i,]^2))))
             } else if(model %in% c("gamma.pois")) {
-                round(rgamma(n=n.samples, shape = (dcounts.ctrl.true[i,])^2sd.dna.cond^2, 
-                             scale = sd.dna.cond^2/dcounts.ctrl.true[i,]))
+                round(rgamma(n=n.samples, shape=(dcounts.ctrl.true[i,])^2/sd.dna.cond^2, 
+                             scale=sd.dna.cond^2/dcounts.ctrl.true[i,]))
             }
         }))
         rownames(dcounts.ctrl.obs) <- paste0("ctrl_", seq_len(n.ctrl))
