@@ -25,6 +25,15 @@ getDesignMat <- function(design, annotations, condition=NULL) {
     return(dmat)
 }
 
+#' Return TRUE iff the reduced design is nested within the full design
+#' @param full the full design (formula)
+#' @param reduced the reduced design (formula)
+#' @return TRUE iff the reduced design is nested in the full design
+isNestedDesign <- function(full, reduced) {
+    return(all(attr(terms(reduced), "term.labels") %in% 
+                   attr(terms(full), "term.labels")))
+}
+
 #' Return TRUE iff the given design has an intercept term
 #' @param design either a formula or a design matrix
 #' @return TRUE iff the design has an intercept term

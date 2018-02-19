@@ -5,7 +5,7 @@
 \title{Fit the DNA model conditioned on an RNA model}
 \usage{
 fit.dna.controlrna(model, dcounts, rcounts, r.coef, ddepth, rdepth, ddesign.mat,
-  rdesign.mat)
+  rdesign.mat, d2rdesign.mat)
 }
 \arguments{
 \item{model}{noise model}
@@ -14,13 +14,15 @@ fit.dna.controlrna(model, dcounts, rcounts, r.coef, ddepth, rdepth, ddesign.mat,
 
 \item{rcounts}{the RNA counts}
 
-\item{ddepth}{dna library size correction vector (numeric, samples)}
+\item{ddepth}{dna library size correction vector (numeric, dna samples)}
 
-\item{rdepth}{rna library size correction vector (numeric, samples)}
+\item{rdepth}{rna library size correction vector (numeric, rna samples)}
 
-\item{ddesign.mat}{the dna model design matrix (logical, samples x dna parameters)}
+\item{ddesign.mat}{the dna model design matrix (logical, rna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
+
+\item{d2rdesign.mat}{the transition matrix relating DNA estimates to RNA observations (logical, rna sample x dna parameters)}
 }
 \description{
 This is used to optimize an enhancer-based model for each enhancer while

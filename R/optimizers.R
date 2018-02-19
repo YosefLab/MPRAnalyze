@@ -362,7 +362,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                       llfnRNA = ll.funs$rna, 
                       rcounts = t(rcounts[,valid.c.r.agg,drop=FALSE]),
                       log.rdepth = log.rdepth[valid.c.r.agg],
-                      d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,valid.df,drop=FALSE], 
+                      d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,,drop=FALSE], 
                       rdesign.mat = rdesign.mat[valid.c.r.agg,valid.rf,drop=FALSE], 
                       hessian = FALSE, 
                       method = "BFGS", control=list(maxit=1000)))

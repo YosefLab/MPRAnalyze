@@ -10,11 +10,12 @@
 \alias{ll.rna.ln.ln}
 \title{likelihood of rna observations}
 \usage{
-ll.rna.gamma.pois(theta, theta.d, rcounts, log.rdepth, ddesign.mat, rdesign.mat)
+ll.rna.gamma.pois(theta, theta.d, rcounts, log.rdepth, d2rdesign.mat,
+  rdesign.mat)
 
-ll.rna.ln.nb(theta, theta.d, rcounts, log.rdepth, ddesign.mat, rdesign.mat)
+ll.rna.ln.nb(theta, theta.d, rcounts, log.rdepth, d2rdesign.mat, rdesign.mat)
 
-ll.rna.ln.ln(theta, theta.d, rcounts, log.rdepth, ddesign.mat, rdesign.mat)
+ll.rna.ln.ln(theta, theta.d, rcounts, log.rdepth, d2rdesign.mat, rdesign.mat)
 }
 \arguments{
 \item{theta}{the vector of rna model parameters to evaluate likelihood for
@@ -26,9 +27,10 @@ ll.rna.ln.ln(theta, theta.d, rcounts, log.rdepth, ddesign.mat, rdesign.mat)
 
 \item{log.rdepth}{rna library size correction vector, log scale (numeric, samples)}
 
-\item{ddesign.mat}{the dna model design matrix (logical, samples x dna parameters)}
+\item{d2rdesign.mat}{the trasitional matrix to distribute and match DNA 
+estimates to RNA observations (logical, rna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
 }
 \value{
 negative log likelihood of rna observations under the specified model

@@ -4,12 +4,14 @@
 \alias{extractProp}
 \title{extract the given property from the list of models}
 \usage{
-extractProp(models, prop)
+extractProp(models, prop, valids)
 }
 \arguments{
 \item{models}{the models to extract the propety from}
 
 \item{prop}{the name of the property}
+
+\item{valids}{indices of the valid models in the input list}
 }
 \value{
 the formatted extracted property (NULL, vector or matrix)

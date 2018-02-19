@@ -1,7 +1,7 @@
 
 setClassUnion('listORNULL', members=c('list', 'NULL'))
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
-setClassUnion('integerORNULL', members=c('integer', 'NULL'))
+# setClassUnion('integerORNULL', members=c('integer', 'NULL'))
 setClassUnion('Design', members = c('matrix', 'formula', 'NULL'))
 
 setClass("Designs", slots = c(

@@ -4,17 +4,23 @@
 \alias{estimateDepthFactors}
 \title{estimate library size correction factors}
 \usage{
-estimateDepthFactors(obj, lib.factor = NULL, depthEstimator = "uq")
+estimateDepthFactors(obj, which.lib = "both", lib.factor = NULL,
+  depth.estimator = "uq")
 }
 \arguments{
 \item{obj}{the MpraObject}
+
+\item{which.lib}{which library to compute the depth factors for. Options are 
+"both" (default), "dna" or "rna". If the DNA and RNA counts have different 
+library factors, this function should be called twice: once with "dna" and
+once with "rna"}
 
 \item{lib.factor}{the factor associating each sample to a library. Can be a
 factor or the name of a column in the object's colAnnot. If not provided, the
 data is assumed to have been generated from a single library, and constant
 library depth is set.}
 
-\item{depthEstimator}{a character indicating which depth estimation to use.
+\item{depth.estimator}{a character indicating which depth estimation to use.
 Currently supported values are "uq" for upper quantile (default) and "rle"
 for RLE (uses geometric mean, and is therefore not recommended if libraries
 have 0 counts)}

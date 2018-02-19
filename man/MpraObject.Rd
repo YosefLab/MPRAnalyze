@@ -4,15 +4,19 @@
 \alias{MpraObject}
 \title{Initialize a MpraObject object}
 \usage{
-MpraObject(dnaCounts, rnaCounts, colAnnot = NULL, controls = NA_integer_,
-  BPPARAM = NULL)
+MpraObject(dnaCounts, rnaCounts, dnaAnnot = NULL, rnaAnnot = NULL,
+  colAnnot = NULL, controls = NA_integer_, BPPARAM = NULL)
 }
 \arguments{
 \item{dnaCounts}{the DNA counts matrix}
 
 \item{rnaCounts}{the RNA counts matrix}
 
-\item{colAnnot}{column annotations}
+\item{dnaAnnot}{column annotations for the DNA matrix}
+
+\item{rnaAnnot}{column annotations for the RNA matrix}
+
+\item{colAnnot}{(deprecated) column annotations - should only be used if DNA, RNA annotations are the same.}
 
 \item{controls}{a vector specifying which enhancers are negative controls
 (scrambles)}

@@ -10,10 +10,10 @@
 with respect to case dna model and rna model with control enhancer observations}
 \usage{
 cost.dna.wctrl(theta, theta.r, llfnDNA, llfnRNA, dcounts, rcounts, log.ddepth,
-  log.rdepth, ddesign.mat, rdesign.mat)
+  log.rdepth, ddesign.mat, rdesign.mat, d2rdesign.mat)
 
 cost.rna.wctrl(theta, theta.d, theta.d.ctrl.prefit, llfnRNA, rcounts,
-  log.ddepth, log.rdepth, ddesign.mat, rdesign.mat, ddesign.ctrl.mat,
+  log.ddepth, log.rdepth, d2rdesign.mat, rdesign.mat, d2rdesign.ctrl.mat,
   rdesign.ctrl.mat)
 }
 \arguments{
@@ -27,17 +27,19 @@ cost.rna.wctrl(theta, theta.d, theta.d.ctrl.prefit, llfnRNA, rcounts,
 
 \item{llfnRNA}{cost function to compute rna likelihood terms on (function)}
 
-\item{dcounts}{the observed case DNA counts (integer, enhancers x samples)}
+\item{dcounts}{the observed case DNA counts (integer, enhancers x dna samples)}
 
-\item{rcounts}{the observed RNA counts (integer, enhancers x samples)}
+\item{rcounts}{the observed RNA counts (integer, enhancers x rna samples)}
 
-\item{log.ddepth}{dna library size correction vector, log scale (numeric, samples)}
+\item{log.ddepth}{dna library size correction vector, log scale (numeric, dna samples)}
 
-\item{log.rdepth}{rna library size correction vector, log scale (numeric, samples)}
+\item{log.rdepth}{rna library size correction vector, log scale (numeric, rna samples)}
 
-\item{ddesign.mat}{the dna model design matrix (logical, samples x dna parameters)}
+\item{ddesign.mat}{the dna model design matrix (logical, dna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
+
+\item{d2rdesign.mat}{the transitional design matrix, distributiong the DNA estimates to the RNA observations}
 
 \item{theta.d}{vector of dna model parameters to condition likelihood on
 (numeric, dna parameters)}
@@ -45,11 +47,11 @@ cost.rna.wctrl(theta, theta.d, theta.d.ctrl.prefit, llfnRNA, rcounts,
 \item{theta.d.ctrl.prefit}{prefit control DNA model parameters
 (numeric, control enhancers x dna model parameters)}
 
-\item{ddesign.ctrl.mat}{prefit control DNA model design
-(logical, samples x dna parameters)}
-
 \item{rdesign.ctrl.mat}{the control rna model design matrix 
 (logical, samples x rna parameters)}
+
+\item{ddesign.ctrl.mat}{prefit control DNA model design
+(logical, samples x dna parameters)}
 }
 \value{
 negative sum of log likelihood terms with non-zero derivative

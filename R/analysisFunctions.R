@@ -1,3 +1,115 @@
+#' Run a comparative analysis between conditions
+#' @param obj the MpraObject
+#' @param dnaDesign the design for the DNA model. Only terms that are matched
+#' with the RNA design should be included.
+#' @param rnaDesign the design for the RNA model.
+#' @param fit.se logical, if TRUE (default) the standard errors of the coefficients
+#' are extracted from the model. These are necessary for computing coefficient-based
+#' testing, but make the model fitting slower.
+#' @param redcuedDesign the design for the reduced RNA model, for a likelihood-ratio
+#' testing scheme. The Reduced design must be nested within the full design (i.e
+#' all terms in the reduced must be included in the full).
+#' @param correctControls if TRUE (default), use the negative controls to establish
+#' the null hypothesis, correcting for systemic bias in the data.
+#' @export
+#' @return the MpraObject with fitted models for the input enhancers
+analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE, 
+                                reducedDesign=NULL, correctControls=TRUE) {
+    ##TODO: if full becomes operational, add 'fullLRT' as a logical argument
+    
+    if(!fit.se & is.null(reducedDesign)) {
+        stop("Comparative analysis requires either a reduced design or fitting the SE")
+    }
+    if(!is.null(reducedDesign) & !isNestedDesign(full=rnaDesign, 
+                                                 reduced=reducedDesign)) {
+        stop("reduced design must be nested within the full RNA design")
+    }
+    if(length(obj@dnaDepth) != NCOL(obj@dnaCounts)) {
+        obj <- estimateDepthFactors(obj, "dna")
+    }
+    if(length(obj@rnaDepth) != NCOL(obj@rnaCounts)) {
+        obj <- estimateDepthFactors(obj, "rna")
+    }
+    if(length(obj@model) == 0) {
+        obj <- autoChooseModel(obj)
+    }
+    
+    obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=obj@dnaAnnot)
+    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
+    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot)
+    
+    ##TODO: if full model, call a different function.
+    
+    ## if controls are to be used and fullModel not: fit the control model
+    if(correctControls & !is.null(obj@controls)) {
+        message("Fitting controls-based background model...")
+        obj@modelPreFits.dna.ctrl <- reformatModels(fit.dnarna.onlyctrl.iter(
+            model=obj@model,
+            dcounts = obj@dnaCounts[obj@controls,],
+            rcounts = obj@rnaCounts[obj@controls,],
+            ddepth=obj@dnaDepth,
+            rdepth=obj@rnaDepth,
+            ddesign.mat=obj@designs@dna,
+            rdesign.mat=obj@designs@rnaFull, 
+            d2rdesign.mat=obj@designs@dna2rna,
+            BPPARAM = obj@BPPARAM))
+        
+        obj@designs@rnaCtrlFull <- obj@designs@rnaFull
+        obj@designs@rnaCtrlRed <- obj@designs@rnaFull
+        obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1,]
+        theta.d.ctrl.prefit <- t(obj@modelPreFits.dna.ctrl$d.coef)
+    } else {
+        theta.d.ctrl.prefit <- NULL
+    }
+    
+    ## Fit the full model (with SE extraction if fit.SE is on)
+    message("Fitting model...")
+    models <- bplapply(rownames(obj@dnaCounts), function(rn) {
+        return(fit.dnarna.noctrlobs(model=obj@model,
+                                    dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                                    rcounts=obj@rnaCounts[rn,,drop=FALSE],
+                                    ddepth=obj@dnaDepth,
+                                    rdepth=obj@rnaDepth,
+                                    rctrlscale=obj@rnaCtrlScale,
+                                    ddesign.mat=obj@designs@dna,
+                                    rdesign.mat=obj@designs@rnaFull,
+                                    d2rdesign.mat=obj@designs@dna2rna,
+                                    rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
+                                    theta.d.ctrl.prefit=theta.d.ctrl.prefit,
+                                    compute.hessian=fit.se))
+    }, BPPARAM = obj@BPPARAM)
+    names(models) <- rownames(obj@dnaCounts)
+    obj@modelFits <-reformatModels(models)
+    
+    if(!is.null(reducedDesign)) {
+        obj@designs@rnaRed <- getDesignMat(design=reducedDesign, 
+                                           annotations=obj@rnaAnnot)
+        
+        message("Fitting reduced model...")
+        models <- bplapply(rownames(obj@dnaCounts), function(rn) {
+            # tryCatch({
+                return(fit.dnarna.noctrlobs(model=obj@model,
+                              dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                              rcounts=obj@rnaCounts[rn,,drop=FALSE], 
+                              ddepth=obj@dnaDepth,
+                              rdepth=obj@rnaDepth,
+                              rctrlscale=obj@rnaCtrlScale,
+                              ddesign.mat=obj@designs@dna,
+                              rdesign.mat=obj@designs@rnaRed,
+                              d2rdesign.mat=obj@designs@dna2rna,
+                              rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
+                              theta.d.ctrl.prefit=theta.d.ctrl.prefit,
+                              compute.hessian=FALSE))
+            # }, error = function(err) {message("error fitting: ", rn)})
+        }, BPPARAM = obj@BPPARAM)
+        names(models) <- rownames(obj@dnaCounts)
+        obj@modelFits.red <- reformatModels(models)
+    }
+    
+    message("Analysis Done!")
+    return(obj)
+}
+
 #' Fit the model for a likelihood-ratio based testing of the significance of the
 #' effect of the given condition.
 #' 
@@ -118,7 +230,6 @@ analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign,
         obj@designs@rnaCtrlRed <- obj@designs@rnaFull
         obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1,]
         fitfun <- fit.dnarna.noctrlobs
-        obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1,]
         if(!is.null(obj@modelPreFits.dna.ctrl)) {
             theta.d.ctrl.prefit <- t(obj@modelPreFits.dna.ctrl$d.coef)
         } else {
