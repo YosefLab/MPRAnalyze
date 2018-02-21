@@ -12,38 +12,41 @@
 with respect to case dna model and rna model without control enhancer observations}
 \usage{
 cost.dnarna(theta, dcounts, rcounts, llfnDNA, llfnRNA, log.ddepth, log.rdepth,
-  rctrlscale = NULL, ddesign.mat, rdesign.mat, rdesign.ctrl.mat = NULL)
+  rctrlscale = NULL, ddesign.mat, rdesign.mat, d2rdesign.mat,
+  rdesign.ctrl.mat = NULL)
 
 cost.dna(theta, theta.r, llfnDNA, llfnRNA, dcounts, rcounts, log.ddepth,
-  log.rdepth, rctrlscale = NULL, ddesign.mat, rdesign.mat,
+  log.rdepth, rctrlscale = NULL, ddesign.mat, rdesign.mat, d2rdesign.mat,
   rdesign.ctrl.mat = NULL)
 
 cost.rna(theta, theta.d, llfnRNA, rcounts, log.rdepth, rctrlscale = NULL,
-  ddesign.mat, rdesign.mat, rdesign.ctrl.mat = NULL)
+  d2rdesign.mat, rdesign.mat, rdesign.ctrl.mat = NULL)
 }
 \arguments{
 \item{theta}{vector of model parameters to evaluate likelihood for
 (numeric, parameters)}
 
-\item{dcounts}{the observed case DNA counts (integer, enhancers x samples)}
+\item{dcounts}{the observed case DNA counts (integer, enhancers x dna samples)}
 
-\item{rcounts}{the observed RNA counts (integer, enhancers x samples)}
+\item{rcounts}{the observed RNA counts (integer, enhancers x rna samples)}
 
 \item{llfnDNA}{cost function to compute dna likelihood terms on (function)}
 
 \item{llfnRNA}{cost function to compute rna likelihood terms on (function)}
 
-\item{log.ddepth}{dna library size correction vector, log scale (numeric, samples)}
+\item{log.ddepth}{dna library size correction vector, log scale (numeric, dna samples)}
 
-\item{log.rdepth}{rna library size correction vector, log scale (numeric, samples)}
+\item{log.rdepth}{rna library size correction vector, log scale (numeric, rna samples)}
 
 \item{rctrlscale}{vector of scaling parameters for rna model that correct for 
 variation between conditions pre-fit on control enhancers 
 (numeric, ctrl rna parameters)}
 
-\item{ddesign.mat}{the dna model design matrix (logical, samples x dna parameters)}
+\item{ddesign.mat}{the dna model design matrix (logical, dna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
+
+\item{d2rdesign.mat}{the transitional design matrix, distributiong the DNA estimates to the RNA observations}
 
 \item{rdesign.ctrl.mat}{the control rna model design matrix 
 (logical, samples x rna parameters)}

@@ -4,16 +4,14 @@
 \alias{getDesignMat}
 \title{get a design matrix from the input design}
 \usage{
-getDesignMat(obj, design, testcondition = NULL)
+getDesignMat(design, annotations, condition = NULL)
 }
 \arguments{
-\item{obj}{the MpraObject}
+\item{design}{the formula object describing the design}
 
-\item{design}{the input design. A matrix is returned as is, a formula is
-expanded to a model matrix using the object colAnnot. If design is NULL, an
-intercept-only design matrix is created and returned}
+\item{annotations}{the column annotations corresponding to the design}
 
-\item{testcondition}{condition to substract from formula}
+\item{condition}{condition to substract from formula}
 }
 \value{
 a design matrix

@@ -11,15 +11,15 @@
 \title{Fit dna and rna model to a given enhancer}
 \usage{
 fit.dnarna.noctrlobs(model, dcounts, rcounts, ddepth, rdepth, rctrlscale,
-  ddesign.mat, rdesign.mat, rdesign.ctrl.mat, theta.d.ctrl.prefit,
-  compute.hessian)
-
-fit.dnarna.wctrlobs.iter(model, dcounts, rcounts, ddepth, rdepth,
-  rctrlscale = NULL, ddesign.mat, rdesign.mat, rdesign.ctrl.mat,
+  ddesign.mat, rdesign.mat, d2rdesign.mat, rdesign.ctrl.mat,
   theta.d.ctrl.prefit, compute.hessian)
 
+fit.dnarna.wctrlobs.iter(model, dcounts, rcounts, ddepth, rdepth,
+  rctrlscale = NULL, ddesign.mat, rdesign.mat, d2rdesign.mat,
+  rdesign.ctrl.mat, theta.d.ctrl.prefit, compute.hessian)
+
 fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth, ddesign.mat,
-  rdesign.mat, BPPARAM)
+  rdesign.mat, d2rdesign.mat, BPPARAM)
 }
 \arguments{
 \item{model}{noise model}
@@ -28,15 +28,17 @@ fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth, ddesign.mat,
 
 \item{rcounts}{the RNA counts}
 
-\item{ddepth}{dna library size correction vector (numeric, samples)}
+\item{ddepth}{dna library size correction vector (numeric, dna samples)}
 
-\item{rdepth}{rna library size correction vector (numeric, samples)}
+\item{rdepth}{rna library size correction vector (numeric, rna samples)}
 
 \item{rctrlscale}{control-based correction scalers}
 
-\item{ddesign.mat}{the dna model design matrix (logical, samples x dna parameters)}
+\item{ddesign.mat}{the dna model design matrix (logical, rna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
+
+\item{d2rdesign.mat}{the transition matrix relating DNA estimates to RNA observations (logical, rna sample x dna parameters)}
 
 \item{rdesign.ctrl.mat}{the control rna model design matrix 
 (logical, samples x rna parameters)}

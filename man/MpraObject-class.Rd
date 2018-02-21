@@ -14,7 +14,9 @@ The main container class for MPRAnalyze
 
 \item{\code{rnaCounts}}{matrix of RNA counts}
 
-\item{\code{colAnnot}}{column annotations (info on condition, batch, barcode, etc)}
+\item{\code{dnaAnnot}}{DNA column annotations (info on condition, batch, barcode, etc)}
+
+\item{\code{rnaAnnot}}{RNA column annotations (info on condition, batch, barcode, etc)}
 
 \item{\code{controls}}{indices of negative controls}
 

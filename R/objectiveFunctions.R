@@ -14,12 +14,13 @@
 #' (numeric, rna parameters)
 #' @param llfnDNA cost function to compute dna likelihood terms on (function)
 #' @param llfnRNA cost function to compute rna likelihood terms on (function)
-#' @param dcounts the observed case DNA counts (integer, enhancers x samples)
-#' @param rcounts the observed RNA counts (integer, enhancers x samples)
-#' @param log.ddepth dna library size correction vector, log scale (numeric, samples)
-#' @param log.rdepth rna library size correction vector, log scale (numeric, samples)
-#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
-#' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
+#' @param dcounts the observed case DNA counts (integer, enhancers x dna samples)
+#' @param rcounts the observed RNA counts (integer, enhancers x rna samples)
+#' @param log.ddepth dna library size correction vector, log scale (numeric, dna samples)
+#' @param log.rdepth rna library size correction vector, log scale (numeric, rna samples)
+#' @param ddesign.mat the dna model design matrix (logical, dna samples x dna parameters)
+#' @param rdesign.mat the rna model design matrix (logical, rna samples x rna parameters)
+#' @param d2rdesign.mat the transitional design matrix, distributiong the DNA estimates to the RNA observations 
 #' @param rdesign.ctrl.mat the control rna model design matrix 
 #' (logical, samples x rna parameters)
 NULL
@@ -54,7 +55,8 @@ NULL
 cost.dnarna <- function(theta, dcounts, rcounts,
                         llfnDNA, llfnRNA,
                         log.ddepth, log.rdepth, rctrlscale=NULL,
-                        ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
+                        ddesign.mat, rdesign.mat, d2rdesign.mat,
+                        rdesign.ctrl.mat=NULL) {
     ## extract parameter vectors by model part
     # first parameter of DNA model is the variance(-link) parameter
     theta.d <- theta[seq(1, 1+NCOL(ddesign.mat), by=1)]
@@ -72,7 +74,7 @@ cost.dnarna <- function(theta, dcounts, rcounts,
                     theta.d = matrix(theta.d),
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
-                    ddesign.mat = ddesign.mat,
+                    d2rdesign.mat = d2rdesign.mat,
                     rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat)) 
     
     return(d.ll + r.ll)
@@ -83,7 +85,8 @@ cost.dna <- function(theta, theta.r,
                      llfnDNA, llfnRNA,
                      dcounts, rcounts,
                      log.ddepth, log.rdepth, rctrlscale=NULL,
-                     ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
+                     ddesign.mat, rdesign.mat, d2rdesign.mat, 
+                     rdesign.ctrl.mat=NULL) {
     ## compute likelihood
     d.ll <- llfnDNA(theta = theta,
                     dcounts = dcounts,
@@ -94,7 +97,7 @@ cost.dna <- function(theta, theta.r,
                     theta.d = matrix(theta),
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
-                    ddesign.mat = ddesign.mat,
+                    d2rdesign.mat = d2rdesign.mat,
                     rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
     return(d.ll + r.ll)
 }
@@ -102,14 +105,15 @@ cost.dna <- function(theta, theta.r,
 #' @rdname cost.model.noctrl
 cost.rna <- function(theta, theta.d, llfnRNA, rcounts,
                      log.rdepth, rctrlscale=NULL,
-                     ddesign.mat, rdesign.mat, rdesign.ctrl.mat=NULL) {
+                     d2rdesign.mat, rdesign.mat,
+                     rdesign.ctrl.mat=NULL) {
     
     ## compute likelihood
     r.ll <- llfnRNA(theta = c(theta, rctrlscale),
                     theta.d = theta.d,
                     rcounts = rcounts,
                     log.rdepth = log.rdepth,
-                    ddesign.mat = ddesign.mat,
+                    d2rdesign.mat = d2rdesign.mat,
                     rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat))
     return(r.ll)
 }
@@ -140,7 +144,7 @@ NULL
 #' @rdname cost.model.wctrl
 cost.dna.wctrl <- function(theta, theta.r, llfnDNA, llfnRNA,
                            dcounts, rcounts, log.ddepth, log.rdepth,
-                           ddesign.mat, rdesign.mat) {
+                           ddesign.mat, rdesign.mat, d2rdesign.mat) {
     
     ## likelihood of case dna observations
     d.ll <- llfnDNA(theta = theta,
@@ -153,7 +157,7 @@ cost.dna.wctrl <- function(theta, theta.r, llfnDNA, llfnRNA,
                     theta.d = matrix(theta),
                     rcounts = rcounts[1,,drop=FALSE],
                     log.rdepth = log.rdepth,
-                    ddesign.mat = ddesign.mat,
+                    d2rdesign.mat = d2rdesign.mat,
                     rdesign.mat = rdesign.mat)
     
     return(d.ll + r.ll)
@@ -164,8 +168,8 @@ cost.rna.wctrl <- function(theta, theta.d, theta.d.ctrl.prefit,
                            llfnRNA, 
                            rcounts,
                            log.ddepth, log.rdepth, 
-                           ddesign.mat, rdesign.mat, 
-                           ddesign.ctrl.mat, rdesign.ctrl.mat) {
+                           d2rdesign.mat, rdesign.mat,
+                           d2rdesign.ctrl.mat, rdesign.ctrl.mat) {
     ## extract parameter vectors by model part
     theta.r <- theta[seq(1, 1+NCOL(rdesign.mat), by=1)]
     if(!is.null(rdesign.ctrl.mat)) {
@@ -183,7 +187,7 @@ cost.rna.wctrl <- function(theta, theta.d, theta.d.ctrl.prefit,
         theta.d = matrix(theta.d),
         rcounts = rcounts[1,,drop=FALSE],
         log.rdepth = log.rdepth,
-        ddesign.mat = ddesign.mat,
+        d2rdesign.mat = d2rdesign.mat,
         rdesign.mat = rdesign.mat)
     
     # likelihood of control rna observations
@@ -192,7 +196,7 @@ cost.rna.wctrl <- function(theta, theta.d, theta.d.ctrl.prefit,
         theta.d = theta.d.ctrl.prefit,
         rcounts = rcounts[-1,,drop=FALSE],
         log.rdepth = log.rdepth,
-        ddesign.mat = ddesign.ctrl.mat,
+        d2rdesign.mat = d2rdesign.ctrl.mat,
         rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat) )
     
     return(r.ll.case + r.ll.ctrl)

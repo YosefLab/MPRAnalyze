@@ -4,8 +4,7 @@
 \alias{analyze.lrt}
 \title{run LRT-based analysis}
 \usage{
-analyze.lrt(obj, condition = NULL, dnaDesign = NULL,
-  rnaDesign = ~condition)
+analyze.lrt(obj)
 }
 \arguments{
 \item{obj}{the MPRAnalyze object}

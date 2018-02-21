@@ -8,37 +8,30 @@
 #' part of the GLM that defines the mean parameter.
 #'
 #' @import methods
-#'
-#' @param obj the MpraObject
-#' @param design the input design. A matrix is returned as is, a formula is
-#' expanded to a model matrix using the object colAnnot. If design is NULL, an
-#' intercept-only design matrix is created and returned
-#' @param testcondition condition to substract from formula
+#' 
+#' @param design the formula object describing the design
+#' @param annotations the column annotations corresponding to the design
+#' @param condition condition to substract from formula
 #'
 #' @return a design matrix
-getDesignMat <- function(obj, design, testcondition=NULL) {
-    # deprecate matrix entry?
-    if (is.matrix(design)) {
-        dmat <- design
-    } else if (is.null(design)) {
-        dmat <- matrix(rep(1,NCOL(obj@dnaCounts)), ncol = 1,
-                       dimnames = list(colnames(obj@dnaCounts), "(intercept)"))
-    } else if (is(design, "formula")) {
-        if(!is.null(testcondition)){
-            ## substract this condition from formula
-            terms <- attr(terms.formula(design), "term.labels")
-            termsnew <- terms[terms != testcondition]
-            if(length(termsnew) >= 1) {
-                design <- as.formula(paste0("~", paste(termsnew, collapse="+")))
-            } else {
-                design <- ~1
-            }
-        }
-        dmat <- model.matrix(design, obj@colAnnot)
-    } else {
-        stop("invalid design")
+getDesignMat <- function(design, annotations, condition=NULL) {
+    if (is.null(design)) {
+        design <- ~ 1
+    } else if(!is.null(condition)){
+        ## substract this condition from formula
+        design <- update.formula(design, formula(paste0("~.-", condition)))
     }
+    dmat <- model.matrix(design, annotations)
     return(dmat)
+}
+
+#' Return TRUE iff the reduced design is nested within the full design
+#' @param full the full design (formula)
+#' @param reduced the reduced design (formula)
+#' @return TRUE iff the reduced design is nested in the full design
+isNestedDesign <- function(full, reduced) {
+    return(all(attr(terms(reduced), "term.labels") %in% 
+                   attr(terms(full), "term.labels")))
 }
 
 #' Return TRUE iff the given design has an intercept term

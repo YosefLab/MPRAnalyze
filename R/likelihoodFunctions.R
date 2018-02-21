@@ -105,8 +105,9 @@ ll.dna.ln.ln <- function(theta,
 #' @param theta.d dna model parameters to condition likelihood on
 #' @param rcounts the observed RNA counts (integer, samples x enhancers)
 #' @param log.rdepth rna library size correction vector, log scale (numeric, samples)
-#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
-#' @param rdesign.mat the rna model design matrix (logical, samples x rna parameters)
+#' @param d2rdesign.mat the trasitional matrix to distribute and match DNA 
+#' estimates to RNA observations (logical, rna samples x dna parameters)
+#' @param rdesign.mat the rna model design matrix (logical, rna samples x rna parameters)
 #'
 #' @return negative log likelihood of rna observations under the specified model
 NULL
@@ -114,12 +115,12 @@ NULL
 #' @rdname ll.rna
 ll.rna.gamma.pois <- function(theta, theta.d, 
                               rcounts, log.rdepth,
-                              ddesign.mat, rdesign.mat) {
+                              d2rdesign.mat, rdesign.mat) {
     
-    alpha.mat <- matrix(rep(theta.d[1,], each=NROW(ddesign.mat)), 
-                        nrow=NROW(ddesign.mat))
+    alpha.mat <- matrix(rep(theta.d[1,], each=NROW(d2rdesign.mat)), 
+                        nrow=NROW(d2rdesign.mat))
 
-    log.d.est <- (ddesign.mat %*% theta.d[-1,,drop=FALSE]) + alpha.mat
+    log.d.est <- (d2rdesign.mat %*% theta.d[-1,,drop=FALSE]) + alpha.mat
 
     log.r.est <- log.d.est + rep((rdesign.mat %*% theta[-1]) + log.rdepth, 
                                  NCOL(log.d.est))
@@ -138,9 +139,9 @@ ll.rna.gamma.pois <- function(theta, theta.d,
 #' @rdname ll.rna
 ll.rna.ln.nb <- function(theta, theta.d, 
                          rcounts, log.rdepth,
-                         ddesign.mat, rdesign.mat) {
+                         d2rdesign.mat, rdesign.mat) {
     
-    log.d.est <- ddesign.mat %*% theta.d[-1,]
+    log.d.est <- d2rdesign.mat %*% theta.d[-1,]
     log.r.est <- log.d.est + rep(((rdesign.mat %*% theta[-1]) + log.rdepth), 
                                  NCOL(log.d.est))
     
@@ -156,9 +157,9 @@ ll.rna.ln.nb <- function(theta, theta.d,
 #' @rdname ll.rna
 ll.rna.ln.ln <- function(theta, theta.d, 
                          rcounts, log.rdepth,
-                         ddesign.mat, rdesign.mat) {
+                         d2rdesign.mat, rdesign.mat) {
     
-    log.d.est <- ddesign.mat %*% theta.d[-1,]
+    log.d.est <- d2rdesign.mat %*% theta.d[-1,]
     log.r.est <- log.d.est + rep(((rdesign.mat %*% theta[-1]) + log.rdepth), 
                                  NCOL(log.d.est))
     

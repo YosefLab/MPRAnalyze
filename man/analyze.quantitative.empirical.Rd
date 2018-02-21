@@ -4,7 +4,7 @@
 \alias{analyze.quantitative.empirical}
 \title{Fit the model for quantitative analysis}
 \usage{
-analyze.quantitative.empirical(obj, dnaDesign = NULL, rnaDesign = NULL)
+analyze.quantitative.empirical(obj)
 }
 \arguments{
 \item{obj}{the MpraObject}
