@@ -23,7 +23,7 @@
 #' @return the MpraObject with estimated values for sequencing depth factors
 #' 
 #' @export
-estimateDepthFactors <- function(obj, which.lib="both", lib.factor=NULL, 
+estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both", 
                                  depth.estimator="uq") {
     
     if(!(which.lib %in% c("dna", "rna", "both"))) {

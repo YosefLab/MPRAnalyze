@@ -1,7 +1,7 @@
 
 setClassUnion('listORNULL', members=c('list', 'NULL'))
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
-# setClassUnion('integerORNULL', members=c('integer', 'NULL'))
+setClassUnion('integerORNULL', members=c('integer', 'NULL'))
 setClassUnion('Design', members = c('matrix', 'formula', 'NULL'))
 
 setClass("Designs", slots = c(
@@ -108,7 +108,8 @@ setClass("MpraObject", validity = validateMpraObject,
 #' the analysis
 #'
 #' @export
-MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, colAnnot=NULL, controls=NA_integer_,
+MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
+                       colAnnot=NULL, controls=NA_integer_,
                        BPPARAM=NULL) {
     if(is.null(BPPARAM)) {
         BPPARAM <- SerialParam()
