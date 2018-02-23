@@ -20,15 +20,16 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
     if(!fit.se & is.null(reducedDesign)) {
         stop("Comparative analysis requires either a reduced design or fitting the SE")
     }
-    if(!is.null(reducedDesign) & !isNestedDesign(full=rnaDesign, 
-                                                 reduced=reducedDesign)) {
-        stop("reduced design must be nested within the full RNA design")
+    if(!is.null(reducedDesign)) {
+        if (!isNestedDesign(full=rnaDesign, reduced=reducedDesign)) {
+            stop("reduced design must be nested within the full RNA design")
+        }
     }
     if(length(obj@dnaDepth) != NCOL(obj@dnaCounts)) {
-        obj <- estimateDepthFactors(obj, "dna")
+        obj <- estimateDepthFactors(obj, which.lib = "dna")
     }
     if(length(obj@rnaDepth) != NCOL(obj@rnaCounts)) {
-        obj <- estimateDepthFactors(obj, "rna")
+        obj <- estimateDepthFactors(obj, which.lib = "rna")
     }
     if(length(obj@model) == 0) {
         obj <- autoChooseModel(obj)
@@ -41,7 +42,7 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
     ##TODO: if full model, call a different function.
     
     ## if controls are to be used and fullModel not: fit the control model
-    if(correctControls & !is.null(obj@controls)) {
+    if(correctControls & !is.na(obj@controls)) {
         message("Fitting controls-based background model...")
         obj@modelPreFits.dna.ctrl <- reformatModels(fit.dnarna.onlyctrl.iter(
             model=obj@model,
