@@ -294,7 +294,7 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
 fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                                      ddepth, rdepth,
                                      ddesign.mat, rdesign.mat, d2rdesign.mat,
-                                     BPPARAM) {
+                                     BPPARAM, print.progress) {
     
     ## get cost function
     ll.funs <- get.ll.functions(model)
@@ -376,6 +376,9 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         iter <- iter + 1
         if(iter == MAXITER & llnew > llold-llold*RELTOL) {
             converged <- FALSE
+        }
+        if(print.progress) {
+            message("iter:", iter, "\tlog-likelihood:", llnew)
         }
     }
     

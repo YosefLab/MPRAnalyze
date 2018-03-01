@@ -17,6 +17,7 @@ Imports:
     BiocParallel,
     ggplot2,
     methods,
+    progress,
     stats
 biocViews: Software,
     StatisticalMethod,

@@ -47,7 +47,7 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both",
 #' estimate the library depth factors
 #' @param counts the counts
 #' @param annotations the annotations (data.frame)
-#' @param lib.factor the name of the factor\s describing the libraries
+#' @param lib.factor the name of the factors describing the libraries
 #' @param depth.estimator a character indicating which depth estimation to use.
 #' Currently supported values are "uq" for upper quantile (default) and "rle"
 #' for RLE (uses geometric mean, and is therefore not recommended if libraries

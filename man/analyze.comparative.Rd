@@ -5,7 +5,7 @@
 \title{Run a comparative analysis between conditions}
 \usage{
 analyze.comparative(obj, dnaDesign, rnaDesign, fit.se = TRUE,
-  reducedDesign = NULL, correctControls = TRUE)
+  reducedDesign = NULL, correctControls = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{obj}{the MpraObject}
@@ -20,7 +20,7 @@ are extracted from the model. These are necessary for computing coefficient-base
 testing, but make the model fitting slower.}
 
 \item{correctControls}{if TRUE (default), use the negative controls to establish
-the null hypothesis, correcting for systemic bias in the data.}
+the null hypothesis, correcting for systemic bias in the data}
 
 \item{redcuedDesign}{the design for the reduced RNA model, for a likelihood-ratio
 testing scheme. The Reduced design must be nested within the full design (i.e

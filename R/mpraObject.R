@@ -117,6 +117,8 @@ MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL,
     
     if(is.logical(controls)) {
         controls <- which(controls)
+    } else if (is.character(controls)) {
+        controls <- which(rownames(dnaCounts) %in% controls)
     }
     if((is.null(dnaAnnot) | is.null(rnaAnnot)) & !is.null(colAnnot)) {
         rnaAnnot <- dnaAnnot <- colAnnot

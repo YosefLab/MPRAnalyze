@@ -12,7 +12,7 @@ estimateFactors(counts, annotations, lib.factor = NULL,
 
 \item{annotations}{the annotations (data.frame)}
 
-\item{lib.factor}{the name of the factor\s describing the libraries}
+\item{lib.factor}{the name of the factors describing the libraries}
 
 \item{depth.estimator}{a character indicating which depth estimation to use.
 Currently supported values are "uq" for upper quantile (default) and "rle"
