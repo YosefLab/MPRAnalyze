@@ -105,6 +105,7 @@ extractProp <- function(models, prop, valids) {
 #' @param full if true, return alpha of the full model (default), otherwise of
 #' the reduced model (only applies if an LRT-based analysis was used)
 #' 
+#' @export
 #' @details return the estimate for transcription rate as fitted by the package.
 #' If the design is intercepted, then by default the baseline (intercept) rate is
 #' returned. Otherwise, term and value must be provided, such that term is a 
@@ -122,7 +123,9 @@ getAlpha <- function(obj, term=NULL, value=NULL, full=TRUE) {
     }
     if(checkForIntercept(des) & is.null(term) & is.null(value)) {
         ##return the intercept
-        return(exp(coefs[,2]))
+        coef <- exp(coefs[,2])
+        names(coef) <- rownames(coefs)
+        return(coef)
     } 
     if(is.null(term) | is.null(value)) {
         stop("both term and value must be provided")
@@ -141,15 +144,3 @@ getAlpha <- function(obj, term=NULL, value=NULL, full=TRUE) {
     names(coef) <- rownames(coefs)
     return(coef)
 }
-
-# safeOptim <- function(...) {
-#     status <- tryCatch({
-#         suppressWarnings(
-#             res <- optim(...)
-#             )
-#     }, error = {
-#         message("fitting error")
-#         res <- NULL
-#     })
-#     return(res)
-# }
