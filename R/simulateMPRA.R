@@ -66,7 +66,7 @@ simulateMPRA <- function(
         warning("sd.rna is ignored in gamma.pois model")
     }
     if(model=="ln.nb"){
-        warning("sd.rna is interpreted as size parameter of negative binomial")
+        message("sd.rna is interpreted as size parameter of negative binomial")
     }
     if(n.cond==1 & (sd.rna.cond!=0 | sd.dna.cond!=0)){
         warning("non-zero sd.dna.cond or sd.rna.cond supplied",
