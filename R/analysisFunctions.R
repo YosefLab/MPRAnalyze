@@ -73,18 +73,19 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         pb$tick()
         tryCatch({
-        return(fit.dnarna.noctrlobs(model=obj@model,
-                            dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                            rcounts=obj@rnaCounts[rn,,drop=FALSE],
-                            ddepth=obj@dnaDepth,
-                            rdepth=obj@rnaDepth,
-                            rctrlscale=obj@rnaCtrlScale,
-                            ddesign.mat=obj@designs@dna,
-                            rdesign.mat=obj@designs@rnaFull,
-                            d2rdesign.mat=obj@designs@dna2rna,
-                            rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
-                            theta.d.ctrl.prefit=theta.d.ctrl.prefit,
-                            compute.hessian=fit.se))
+            return(fit.dnarna.noctrlobs(
+                model=obj@model,
+                dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                rcounts=obj@rnaCounts[rn,,drop=FALSE],
+                ddepth=obj@dnaDepth,
+                rdepth=obj@rnaDepth,
+                rctrlscale=obj@rnaCtrlScale,
+                ddesign.mat=obj@designs@dna,
+                rdesign.mat=obj@designs@rnaFull,
+                d2rdesign.mat=obj@designs@dna2rna,
+                rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
+                theta.d.ctrl.prefit=theta.d.ctrl.prefit,
+                compute.hessian=fit.se))
         }, error = function(err) {message("error fitting: ", rn)})
     }, BPPARAM = obj@BPPARAM)
     names(models) <- rownames(obj@dnaCounts)
@@ -100,18 +101,19 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
         models <- bplapply(rownames(obj@dnaCounts), function(rn) {
             pb$tick()
             tryCatch({
-            return(fit.dnarna.noctrlobs(model=obj@model,
-                          dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                          rcounts=obj@rnaCounts[rn,,drop=FALSE], 
-                          ddepth=obj@dnaDepth,
-                          rdepth=obj@rnaDepth,
-                          rctrlscale=obj@rnaCtrlScale,
-                          ddesign.mat=obj@designs@dna,
-                          rdesign.mat=obj@designs@rnaRed,
-                          d2rdesign.mat=obj@designs@dna2rna,
-                          rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
-                          theta.d.ctrl.prefit=theta.d.ctrl.prefit,
-                          compute.hessian=FALSE))
+                return(fit.dnarna.noctrlobs(
+                    model=obj@model,
+                    dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                    rcounts=obj@rnaCounts[rn,,drop=FALSE], 
+                    ddepth=obj@dnaDepth,
+                    rdepth=obj@rnaDepth,
+                    rctrlscale=obj@rnaCtrlScale,
+                    ddesign.mat=obj@designs@dna,
+                    rdesign.mat=obj@designs@rnaRed,
+                    d2rdesign.mat=obj@designs@dna2rna,
+                    rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
+                    theta.d.ctrl.prefit=theta.d.ctrl.prefit,
+                    compute.hessian=FALSE))
             }, error = function(err) {message("error fitting: ", rn)})
         }, BPPARAM = obj@BPPARAM)
         names(models) <- rownames(obj@dnaCounts)
@@ -156,7 +158,7 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
 #' 
 #' @return the MPRAnalyze object, populated with fitted models
 analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL, 
-                                  dnaDesign=NULL, rnaDesign= ~condition){
+                                    dnaDesign=NULL, rnaDesign= ~condition){
     if(length(obj@dnaDepth) == 0){
         stop("library depth factors must be estimated or provided before analysis")
     }
@@ -256,18 +258,19 @@ analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign,
     ## fit model
     message("Fitting model...")
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
-        return(fit.dnarna.noctrlobs(model=obj@model,
-                      dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=obj@rnaCounts[rn,,drop=FALSE],
-                      ddepth=obj@dnaDepth,
-                      rdepth=obj@rnaDepth,
-                      rctrlscale=obj@rnaCtrlScale,
-                      ddesign.mat=obj@designs@dna,
-                      rdesign.mat=obj@designs@rnaFull,
-                      d2rdesign.mat=obj@designs@dna2rna,
-                      rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
-                      theta.d.ctrl.prefit=theta.d.ctrl.prefit,
-                      compute.hessian=TRUE))
+        return(fit.dnarna.noctrlobs(
+            model=obj@model,
+            dcounts=obj@dnaCounts[rn,,drop=FALSE],
+            rcounts=obj@rnaCounts[rn,,drop=FALSE],
+            ddepth=obj@dnaDepth,
+            rdepth=obj@rnaDepth,
+            rctrlscale=obj@rnaCtrlScale,
+            ddesign.mat=obj@designs@dna,
+            rdesign.mat=obj@designs@rnaFull,
+            d2rdesign.mat=obj@designs@dna2rna,
+            rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
+            theta.d.ctrl.prefit=theta.d.ctrl.prefit,
+            compute.hessian=TRUE))
     }, BPPARAM = obj@BPPARAM)
     names(models) <- rownames(obj@dnaCounts)
     obj@modelFits <-reformatModels(models)
@@ -319,7 +322,7 @@ analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
     obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=obj@dnaAnnot)
     obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
     obj@designs@rnaFull <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot)
-
+    
     return(QUANT_ANALYSIS[[obj@mode]](obj))
 }
 
@@ -339,18 +342,19 @@ analyze.quantitative.empirical <- function(obj){
     message("Fitting model...")
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         # tryCatch({
-        return(fit.dnarna.noctrlobs(model=obj@model,
-                      dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=obj@rnaCounts[rn,,drop=FALSE],
-                      ddepth=obj@dnaDepth,
-                      rdepth=obj@rnaDepth,
-                      rctrlscale=NULL,
-                      ddesign.mat=obj@designs@dna,
-                      rdesign.mat=obj@designs@rnaFull,
-                      d2rdesign.mat=obj@designs@dna2rna,
-                      rdesign.ctrl.mat=NULL,
-                      theta.d.ctrl.prefit=NULL,
-                      compute.hessian=FALSE))
+        return(fit.dnarna.noctrlobs(
+            model=obj@model,
+            dcounts=obj@dnaCounts[rn,,drop=FALSE],
+            rcounts=obj@rnaCounts[rn,,drop=FALSE],
+            ddepth=obj@dnaDepth,
+            rdepth=obj@rnaDepth,
+            rctrlscale=NULL,
+            ddesign.mat=obj@designs@dna,
+            rdesign.mat=obj@designs@rnaFull,
+            d2rdesign.mat=obj@designs@dna2rna,
+            rdesign.ctrl.mat=NULL,
+            theta.d.ctrl.prefit=NULL,
+            compute.hessian=FALSE))
         # }, error = function(err) {message("error fitting: ", rn)})
     }, BPPARAM = obj@BPPARAM)
     names(models) <- rownames(obj@dnaCounts)
@@ -384,16 +388,16 @@ analyze.lrt <- function(obj) {
     } else {
         message("Fitting controls-based background model...")
         obj@modelPreFits.dna.ctrl <- reformatModels(
-                                     fit.dnarna.onlyctrl.iter(
-            model=obj@model,
-            dcounts = obj@dnaCounts[obj@controls,],
-            rcounts = obj@rnaCounts[obj@controls,],
-            ddepth=obj@dnaDepth,
-            rdepth=obj@rnaDepth,
-            ddesign.mat=obj@designs@dna,
-            rdesign.mat=obj@designs@rnaFull,
-            d2rdesign.mat=obj@designs@dna2rna,
-            BPPARAM = obj@BPPARAM))
+            fit.dnarna.onlyctrl.iter(
+                model=obj@model,
+                dcounts = obj@dnaCounts[obj@controls,],
+                rcounts = obj@rnaCounts[obj@controls,],
+                ddepth=obj@dnaDepth,
+                rdepth=obj@rnaDepth,
+                ddesign.mat=obj@designs@dna,
+                rdesign.mat=obj@designs@rnaFull,
+                d2rdesign.mat=obj@designs@dna2rna,
+                BPPARAM = obj@BPPARAM))
         if(obj@mode == "comparative.lrt.scaled") {
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@designs@rnaCtrlRed <- obj@designs@rnaFull
@@ -420,19 +424,19 @@ analyze.lrt <- function(obj) {
     message("Fitting model...")
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         tryCatch({
-        return(fitfun(model=obj@model,
-                      dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=rbind(obj@rnaCounts[rn,], 
-                                    obj@rnaCounts[obj@controls.forfit,]),
-                      ddepth=obj@dnaDepth,
-                      rdepth=obj@rnaDepth,
-                      rctrlscale=obj@rnaCtrlScale,
-                      ddesign.mat=obj@designs@dna,
-                      rdesign.mat=obj@designs@rnaFull,
-                      d2rdesign.mat=obj@designs@dna2rna,
-                      rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
-                      theta.d.ctrl.prefit=theta.d.ctrl.prefit,
-                      compute.hessian=FALSE))
+            return(fitfun(model=obj@model,
+                          dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                          rcounts=rbind(obj@rnaCounts[rn,], 
+                                        obj@rnaCounts[obj@controls.forfit,]),
+                          ddepth=obj@dnaDepth,
+                          rdepth=obj@rnaDepth,
+                          rctrlscale=obj@rnaCtrlScale,
+                          ddesign.mat=obj@designs@dna,
+                          rdesign.mat=obj@designs@rnaFull,
+                          d2rdesign.mat=obj@designs@dna2rna,
+                          rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
+                          theta.d.ctrl.prefit=theta.d.ctrl.prefit,
+                          compute.hessian=FALSE))
         }, error = function(err) {message("error fitting: ", rn)})
     }, BPPARAM = obj@BPPARAM)
     names(models) <- rownames(obj@dnaCounts)
@@ -441,19 +445,20 @@ analyze.lrt <- function(obj) {
     message("Fitting reduced model...")
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         tryCatch({
-        return(fitfun(model=obj@model,
-                      dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                      rcounts=rbind(obj@rnaCounts[rn,], 
-                                    obj@rnaCounts[obj@controls.forfit,]),
-                      ddepth=obj@dnaDepth,
-                      rdepth=obj@rnaDepth,
-                      rctrlscale=obj@rnaCtrlScale,
-                      ddesign.mat=obj@designs@dna,
-                      rdesign.mat=obj@designs@rnaRed,
-                      d2rdesign.mat=obj@designs@dna2rna,
-                      rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
-                      theta.d.ctrl.prefit=theta.d.ctrl.prefit,
-                      compute.hessian=FALSE))
+            return(fitfun(
+                model=obj@model,
+                dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                rcounts=rbind(obj@rnaCounts[rn,], 
+                              obj@rnaCounts[obj@controls.forfit,]),
+                ddepth=obj@dnaDepth,
+                rdepth=obj@rnaDepth,
+                rctrlscale=obj@rnaCtrlScale,
+                ddesign.mat=obj@designs@dna,
+                rdesign.mat=obj@designs@rnaRed,
+                d2rdesign.mat=obj@designs@dna2rna,
+                rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
+                theta.d.ctrl.prefit=theta.d.ctrl.prefit,
+                compute.hessian=FALSE))
         }, error = function(err) {message("error fitting: ", rn)})
     }, BPPARAM = obj@BPPARAM)
     names(models) <- rownames(obj@dnaCounts)
@@ -468,18 +473,18 @@ analyze.quantitative.lrt <- function(obj, dnaDesign=NULL, rnaDesign=NULL) {
     message("Fitting full model...")    
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         tryCatch({
-        return(fit.dnarna.noctrlobs(model=obj@model,
-                                    dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                                    rcounts=obj@rnaCounts[rn,,drop=FALSE],
-                                    ddepth=obj@dnaDepth,
-                                    rdepth=obj@rnaDepth,
-                                    rctrlscale=NULL,
-                                    ddesign.mat=obj@designs@dna,
-                                    rdesign.mat=obj@designs@rnaFull,
-                                    d2rdesign.mat=obj@designs@dna2rna,
-                                    rdesign.ctrl.mat=NULL,
-                                    theta.d.ctrl.prefit=NULL,
-                                    compute.hessian=FALSE))
+            return(fit.dnarna.noctrlobs(model=obj@model,
+                                        dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                                        rcounts=obj@rnaCounts[rn,,drop=FALSE],
+                                        ddepth=obj@dnaDepth,
+                                        rdepth=obj@rnaDepth,
+                                        rctrlscale=NULL,
+                                        ddesign.mat=obj@designs@dna,
+                                        rdesign.mat=obj@designs@rnaFull,
+                                        d2rdesign.mat=obj@designs@dna2rna,
+                                        rdesign.ctrl.mat=NULL,
+                                        theta.d.ctrl.prefit=NULL,
+                                        compute.hessian=FALSE))
         }, error = function(err) {message("error fitting: ", rn)})
     })
     names(models) <- rownames(obj@dnaCounts)
@@ -506,15 +511,16 @@ analyze.quantitative.lrt <- function(obj, dnaDesign=NULL, rnaDesign=NULL) {
     message("Fitting reduced model...")
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         tryCatch({
-        return(fit.dna.controlrna(model = obj@model,
-                                  dcounts = obj@dnaCounts[rn,,drop=FALSE],
-                                  rcounts = obj@rnaCounts[rn,,drop=FALSE],
-                                  r.coef = ctrl.rna,
-                                  ddepth=obj@dnaDepth,
-                                  rdepth=obj@rnaDepth,
-                                  ddesign.mat=obj@designs@dna,
-                                  rdesign.mat=obj@designs@rnaFull,
-                                  d2rdesign.mat=obj@designs@dna2rna))
+            return(fit.dna.controlrna(
+                model = obj@model,
+                dcounts = obj@dnaCounts[rn,,drop=FALSE],
+                rcounts = obj@rnaCounts[rn,,drop=FALSE],
+                r.coef = ctrl.rna,
+                ddepth=obj@dnaDepth,
+                rdepth=obj@rnaDepth,
+                ddesign.mat=obj@designs@dna,
+                rdesign.mat=obj@designs@rnaFull,
+                d2rdesign.mat=obj@designs@dna2rna))
         }, error = function(err) {message("error fitting: ", rn)})
     }, BPPARAM = obj@BPPARAM)
     names(models) <- rownames(obj@dnaCounts)

@@ -234,6 +234,8 @@ plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
 # ln.nb works
 # gamma.pois works
 library(MPRAnalyze)
+detach("package:MPRAnalyze", unload=TRUE)
+library(MPRAnalyze)
 library(BiocParallel)
 #devtools::load_all()
 
@@ -246,14 +248,14 @@ ctrls <- which(sim$rowAnnot$type == "ctrl")
 if(length(ctrls)  == 0) {
     ctrls <- NULL
 }
-mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
-                      colAnnot=sim$colAnnot, controls=ctrls, 
-                      BPPARAM = MulticoreParam(3))
-mpraobj <- estimateDepthFactors(mpraobj, "rep")
+mpraobj <- MpraObject(dnaCounts=sim$dcounts.obs, rnaCounts=sim$rcounts.obs,
+                      dnaAnnot=sim$colAnnot, rnaAnnot=sim$colAnnot,
+                      controls=ctrls, BPPARAM = SerialParam())
+mpraobj <- estimateDepthFactors(mpraobj,  lib.factor="sample", which.lib="both")
 mpraobj <- setModel(mpraobj, "ln.ln")
-mpraobj <- analyze.comparative.lrt(obj = mpraobj, condition = "cond", 
-                                   mode = "full", dnaDesign = ~barcode+cond, 
-                                   rnaDesign = ~cond)
+mpraobj <- analyze.comparative.lrt(
+    obj = mpraobj, condition="cond",  mode="full", 
+    dnaDesign=~barcode+cond, rnaDesign=~cond)
 mpraobj <- test.lrt(mpraobj)
 ```
 
@@ -265,6 +267,8 @@ plot(mpraobj@rnaCounts["case_3",], getRNAFits(mpraobj, enhancers=c("case_3"), fu
 abline(a = 0, b = 1, col="red")
 plotBoxplots(mpraobj, "case_1", condition = "cond", batch = "rep")
 plotBoxplots(mpraobj, "case_2", condition = "cond", batch = "rep")
+plotBoxplots(mpraobj, "case_4", condition = "cond", batch = "rep")
+plotBoxplots(mpraobj, "case_6", condition = "cond", batch = "rep")
 ```
 
 # Plotting

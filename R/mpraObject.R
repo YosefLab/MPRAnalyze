@@ -166,7 +166,7 @@ getDNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE){
     }
     
     colnames(dfit) <- enhancers
-    rownames(dfit) <- rownames(obj@colAnnot)
+    rownames(dfit) <- rownames(obj@dnaAnnot)
     return(t(dfit))
 }
 
@@ -219,7 +219,7 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
     rfit <- t(rfit) * dfit
     
     rownames(rfit) <- enhancers
-    colnames(rfit) <- rownames(obj@colAnnot)
+    colnames(rfit) <- rownames(obj@rnaAnnot)
     return(rfit)
 }
 
@@ -330,7 +330,7 @@ getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
         par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     }
     
-    rownames(par) <- rownames(obj@colAnnot)
+    rownames(par) <- rownames(obj@dnaAnnot)
     return(par)
 }
 
@@ -359,7 +359,7 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
         par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     }
     
-    rownames(par) <- rownames(obj@colAnnot)
+    rownames(par) <- rownames(obj@rnaAnnot)
     return(par)
 }
 

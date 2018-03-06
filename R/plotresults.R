@@ -46,8 +46,8 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
     gplot.data.boxplot <- data.frame(
         ratio=(log(obj@rnaCounts[id,])-log(obj@rnaDepth))-
             (log(obj@dnaCounts[id,])-log(obj@dnaDepth)),
-        cond=obj@colAnnot[,condition],
-        batch=obj@colAnnot[,batch],
+        cond=obj@dnaAnnot[,condition],
+        batch=obj@dnaAnnot[,batch],
         enhancer=id,
         type="obs",
         stringsAsFactors=FALSE
@@ -58,8 +58,8 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
             data.frame(
                 ratio=(log(obj@rnaCounts[i,])-log(obj@rnaDepth))-
                     (log(obj@dnaCounts[i,])-log(obj@dnaDepth)),
-                cond=obj@colAnnot[,condition],
-                batch=obj@colAnnot[,batch],
+                cond=obj@dnaAnnot[,condition],
+                batch=obj@dnaAnnot[,batch],
                 enhancer="controls",
                 type="obs",
                 stringsAsFactors=FALSE
@@ -73,8 +73,8 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
     obs.resampled <- resampleObs(obj, enhancer=id, full=full)
     gplot.data.fit <- data.frame(
         ratio=log(obs.resampled$rna)-log(obs.resampled$dna),
-        cond=obj@colAnnot[,condition],
-        batch=obj@colAnnot[,batch],
+        cond=obj@dnaAnnot[,condition],
+        batch=obj@dnaAnnot[,batch],
         enhancer=id,
         type="fit",
         stringsAsFactors=FALSE
@@ -85,8 +85,8 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
             obs.resampled <- resampleObs(obj, enhancer=i, full=full)
             gplot.data.fit.ctrl.i <- data.frame(
                 ratio=log(obs.resampled$rna)-log(obs.resampled$dna),
-                cond=obj@colAnnot[,condition],
-                batch=obj@colAnnot[,batch],
+                cond=obj@dnaAnnot[,condition],
+                batch=obj@dnaAnnot[,batch],
                 enhancer="controls",
                 type="fit",
                 stringsAsFactors=FALSE
@@ -163,8 +163,8 @@ plotVolcano <- function(obj){
     rfit <- getRNAFits(obj, enhancers=id, depth=FALSE, full=full)
     gplot.data.fit <- data.frame(
         ratio=log(dfit)-log(rfit),
-        cond=obj@colAnnot[,condition],
-        batch=obj@colAnnot[,batch],
+        cond=obj@dnaAnnot[,condition],
+        batch=obj@dnaAnnot[,batch],
         enhancer="model_fit",
         stringsAsFactors=FALSE
     )
@@ -195,14 +195,14 @@ plotAlphaRatio <- function(obj, condition = NULL, logScale=TRUE) {
             xlab("RNA / DNA") + ylab("log(alpha)")
     } else {
         first <- TRUE
-        res <- lapply(levels(as.factor(obj@colAnnot[,condition])), function(l) {
+        res <- lapply(levels(as.factor(obj@dnaAnnot[,condition])), function(l) {
             if(first) {
                 alpha <- getAlpha(obj)
                 first <- FALSE
             } else {
                 alpha <- getAlpha(obj, condition, l)
             }
-            idx <- obj@colAnnot[,condition] == l
+            idx <- obj@dnaAnnot[,condition] == l
             ratio <- rowSums(obj@rnaCounts[,idx]) / rowSums(obj@dnaCounts[,idx])
             
             ggplot(data = data.frame(ratio = log(ratio), alpha = log(alpha))) + 

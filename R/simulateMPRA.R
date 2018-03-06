@@ -247,9 +247,11 @@ simulateMPRA <- function(
     
     ## create annotation
     colAnnot <- data.frame(
-        sample=colnames(dcounts.obs),
+        sample=paste0(paste0("cond_", seq(1, n.cond))[idx.cond],
+                      paste0("rep_", seq(1, n.reps))[idx.rep]),
         cond=paste0("cond_", seq(1, n.cond))[idx.cond],
         rep=paste0("rep_", seq(1, n.reps))[idx.rep],
+        observation=colnames(dcounts.obs),
         barcode=paste0("BC", seq(1, n.bc))[idx.bc],
         stringsAsFactors = FALSE
     )

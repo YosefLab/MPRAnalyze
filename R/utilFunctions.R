@@ -53,21 +53,22 @@ checkForIntercept <- function(design) {
 #' @return a list of formatted extacted properties 
 reformatModels <- function(models) {
     valid <- !sapply(models, is.null)
-    res = list(ll = extractProp(models, "ll", valid),
-               converged = extractProp(models, "converged", valid),
-               
-               d.coef = extractProp(models, "d.coef", valid),
-               d.df = extractProp(models, "d.df", valid),
-               d.se = extractProp(models, "d.se", valid),
-               
-               r.coef = extractProp(models, "r.coef", valid),
-               r.df = extractProp(models, "r.df", valid),
-               r.se = extractProp(models, "r.se", valid),
-               
-               r.ctrl.coef = extractProp(models, "r.ctrl.coef", valid),
-               r.ctrl.df = extractProp(models, "r.ctrl.df", valid),
-               r.ctrl.se = extractProp(models, "r.ctrl.se", valid)
-               )
+    res <- list(
+        ll = extractProp(models, "ll", valid),
+        converged = extractProp(models, "converged", valid),
+        
+        d.coef = extractProp(models, "d.coef", valid),
+        d.df = extractProp(models, "d.df", valid),
+        d.se = extractProp(models, "d.se", valid),
+        
+        r.coef = extractProp(models, "r.coef", valid),
+        r.df = extractProp(models, "r.df", valid),
+        r.se = extractProp(models, "r.se", valid),
+        
+        r.ctrl.coef = extractProp(models, "r.ctrl.coef", valid),
+        r.ctrl.df = extractProp(models, "r.ctrl.df", valid),
+        r.ctrl.se = extractProp(models, "r.ctrl.se", valid)
+    )
     
     return(res)
 }

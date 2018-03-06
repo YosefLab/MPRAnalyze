@@ -99,27 +99,27 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     
     ## optimize
     suppressWarnings(
-    fit <- optim(par = guess,
-                 fn = cost.dnarna, 
-                 llfnDNA = ll.funs$dna, 
-                 llfnRNA = ll.funs$rna,
-                 dcounts = dcounts.valid, 
-                 rcounts = rcounts.valid,
-                 log.ddepth = log.ddepth.valid, 
-                 log.rdepth = log.rdepth.valid,
-                 rctrlscale = rctrlscale,
-                 ddesign.mat = ddmat.valid, 
-                 rdesign.mat = rdmat.valid,
-                 d2rdesign.mat = d2rmat.valid,
-                 rdesign.ctrl.mat = rdmat.ctrl.valid,
-                 hessian = compute.hessian,
-                 method = "BFGS", control = list(maxit=1000)))
+        fit <- optim(par = guess,
+                     fn = cost.dnarna, 
+                     llfnDNA = ll.funs$dna, 
+                     llfnRNA = ll.funs$rna,
+                     dcounts = dcounts.valid, 
+                     rcounts = rcounts.valid,
+                     log.ddepth = log.ddepth.valid, 
+                     log.rdepth = log.rdepth.valid,
+                     rctrlscale = rctrlscale,
+                     ddesign.mat = ddmat.valid, 
+                     rdesign.mat = rdmat.valid,
+                     d2rdesign.mat = d2rmat.valid,
+                     rdesign.ctrl.mat = rdmat.ctrl.valid,
+                     hessian = compute.hessian,
+                     method = "BFGS", control = list(maxit=1000)))
     
     ## split parameters to the two parts of the model
     #fit$par <- pmax(pmin(fit$par, 23), -23)
     d.par <- fit$par[seq(1, 1+NCOL(ddmat.valid))]
     r.par <- fit$par[c(1, seq(1+NCOL(ddmat.valid)+1,
-                         1+NCOL(ddmat.valid)+NCOL(rdmat.valid)))]
+                              1+NCOL(ddmat.valid)+NCOL(rdmat.valid)))]
     
     d.coef <- c(d.par[1], rep(NA, NCOL(ddesign.mat)))
     d.coef[1 + which(valid.df)] <- d.par[-1]
@@ -163,6 +163,7 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
                                      ddesign.mat, rdesign.mat, d2rdesign.mat,
                                      rdesign.ctrl.mat, theta.d.ctrl.prefit,
                                      compute.hessian) {
+    
     ## set cost function
     ll.funs <- get.ll.functions(model)
     ## filter invalid counts (NAs) from data and design
@@ -179,10 +180,10 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
                       function(x) !all(x==0))
     valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2, 
                       function(x) !all(x==0))
-
+    
     ddmat.valid <- ddesign.mat[valid.c.d,valid.df,drop=FALSE]
     rdmat.valid <- rdesign.mat[valid.c.r,valid.rf,drop=FALSE]
-    d2rdmat.valid <- rdesign.mat[valid.c.r,valid.df,drop=FALSE]
+    d2rdmat.valid <- d2rdesign.mat[valid.c.r,valid.df,drop=FALSE]
     
     if(!is.null(rdesign.ctrl.mat)) {
         valid.rf.ctrl <- apply(rdesign.ctrl.mat[valid.c.r,,drop=FALSE], 2, 
@@ -213,41 +214,45 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
         #print(paste0(iter, ": ", llnew, " ", llold))
         ## estimate dna model condition on rna model
         suppressWarnings(
-        dfit <- optim(par = d.par, 
-                      fn = cost.dna.wctrl,
-                      llfnDNA = ll.funs$dna, 
-                      llfnRNA = ll.funs$rna,
-                      theta.r = r.par,
-                      dcounts = dcounts.valid, 
-                      rcounts = rcounts.valid,
-                      log.ddepth = log.ddepth.valid, 
-                      log.rdepth = log.rdepth.valid,
-                      ddesign.mat = ddmat.valid, 
-                      rdesign.mat = rdmat.valid,
-                      d2rdesign.mat = d2rdmat.valid,
-                      hessian = compute.hessian,
-                      method = "BFGS", control=list(maxit=1000)))
+            dfit <- optim(
+                par = d.par, 
+                fn = cost.dna.wctrl,
+                llfnDNA = ll.funs$dna, 
+                llfnRNA = ll.funs$rna,
+                theta.r = r.par,
+                dcounts = dcounts.valid, 
+                rcounts = rcounts.valid,
+                log.ddepth = log.ddepth.valid, 
+                log.rdepth = log.rdepth.valid,
+                ddesign.mat = ddmat.valid, 
+                rdesign.mat = rdmat.valid,
+                d2rdesign.mat = d2rdmat.valid,
+                hessian = compute.hessian,
+                method = "BFGS", control=list(maxit=1000))
+        )
         
         #dfit$par <- pmax(pmin(dfit$par, 23), -23)
         d.par <- dfit$par[seq(1, length(d.par))]
         
         ## estimate rna model conditioned on dna model
         suppressWarnings(
-        rfit <- optim(par = c(r.par, r.ctrl.par), 
-                      fn = cost.rna.wctrl, 
-                      llfnRNA = ll.funs$rna,
-                      theta.d = d.par, 
-                      theta.d.ctrl.prefit = theta.d.ctrl.prefit,
-                      rcounts = rcounts.valid,
-                      log.rdepth = log.rdepth.valid, 
-                      ddesign.mat = ddmat.valid, 
-                      rdesign.mat = rdmat.valid,
-                      d2rdesign.mat = d2rdmat.valid,
-                      ddesign.ctrl.mat = ddesign.mat,
-                      d2rdesign.ctrl.mat = d2rdesign.mat,
-                      rdesign.ctrl.mat = rdmat.ctrl.valid,
-                      hessian = compute.hessian, 
-                      method = "BFGS", control=list(maxit=1000)))
+            rfit <- optim(
+                par = c(r.par, r.ctrl.par), 
+                fn = cost.rna.wctrl, 
+                llfnRNA = ll.funs$rna,
+                theta.d = d.par, 
+                theta.d.ctrl.prefit = theta.d.ctrl.prefit,
+                rcounts = rcounts.valid,
+                log.rdepth = log.rdepth.valid, 
+                #ddesign.mat = ddmat.valid, 
+                d2rdesign.mat = d2rdmat.valid,
+                rdesign.mat = rdmat.valid,
+                #ddesign.ctrl.mat = ddesign.mat,
+                d2rdesign.ctrl.mat = d2rdesign.mat,
+                rdesign.ctrl.mat = rdmat.ctrl.valid,
+                hessian = compute.hessian, 
+                method = "BFGS", control=list(maxit=1000))
+        )
         
         #rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par[seq_len(length(r.par))]
@@ -294,7 +299,7 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
 fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                                      ddepth, rdepth,
                                      ddesign.mat, rdesign.mat, d2rdesign.mat,
-                                     BPPARAM, print.progress) {
+                                     BPPARAM, print.progress=TRUE) {
     
     ## get cost function
     ll.funs <- get.ll.functions(model)
@@ -328,20 +333,21 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                               function(x) !all(x==0))
             d.par <- rep(0, sum(valid.df) + 1)
             suppressWarnings(
-            fit <- optim(par = d.par, 
-                         fn = cost.dna, 
-                         theta.r = r.par,
-                         llfnDNA = ll.funs$dna, 
-                         llfnRNA = ll.funs$rna,
-                         dcounts = t(dcounts[i,valid.c.d[i,],drop=FALSE]),
-                         rcounts = t(rcounts[i,valid.c.r.agg,drop=FALSE]),
-                         log.ddepth = log.ddepth[valid.c.d[i,]], 
-                         log.rdepth = log.rdepth[valid.c.r.agg],
-                         ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
-                         rdesign.mat = rdesign.mat[valid.c.r.agg,valid.rf,drop=FALSE], 
-                         d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,valid.df,drop=FALSE],
-                         hessian = FALSE, 
-                         method = "BFGS", control=list(maxit=1000)))
+                fit <- optim(
+                    par = d.par, 
+                    fn = cost.dna, 
+                    theta.r = r.par,
+                    llfnDNA = ll.funs$dna, 
+                    llfnRNA = ll.funs$rna,
+                    dcounts = t(dcounts[i,valid.c.d[i,],drop=FALSE]),
+                    rcounts = t(rcounts[i,valid.c.r.agg,drop=FALSE]),
+                    log.ddepth = log.ddepth[valid.c.d[i,]], 
+                    log.rdepth = log.rdepth[valid.c.r.agg],
+                    ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
+                    rdesign.mat = rdesign.mat[valid.c.r.agg,valid.rf,drop=FALSE], 
+                    d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,valid.df,drop=FALSE],
+                    hessian = FALSE, 
+                    method = "BFGS", control=list(maxit=1000)))
             #fit$par <- pmax(pmin(fit$par, 23), -23)
             return(fit)
         }, BPPARAM = BPPARAM)
@@ -356,16 +362,17 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         
         ## estimate rna model conditioned on dna model
         suppressWarnings(
-        rfit <- optim(par = r.par, 
-                      fn = cost.rna, 
-                      theta.d = t(d.par),
-                      llfnRNA = ll.funs$rna, 
-                      rcounts = t(rcounts[,valid.c.r.agg,drop=FALSE]),
-                      log.rdepth = log.rdepth[valid.c.r.agg],
-                      d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,,drop=FALSE], 
-                      rdesign.mat = rdesign.mat[valid.c.r.agg,valid.rf,drop=FALSE], 
-                      hessian = FALSE, 
-                      method = "BFGS", control=list(maxit=1000)))
+            rfit <- optim(
+                par = r.par, 
+                fn = cost.rna, 
+                theta.d = t(d.par),
+                llfnRNA = ll.funs$rna, 
+                rcounts = t(rcounts[,valid.c.r.agg,drop=FALSE]),
+                log.rdepth = log.rdepth[valid.c.r.agg],
+                d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,,drop=FALSE], 
+                rdesign.mat = rdesign.mat[valid.c.r.agg,valid.rf,drop=FALSE], 
+                hessian = FALSE, 
+                method = "BFGS", control=list(maxit=1000)))
         #rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par
         names(r.par) <- NULL
@@ -410,7 +417,7 @@ fit.dna.controlrna <- function(model, dcounts, rcounts, r.coef,
                                ddesign.mat, rdesign.mat, d2rdesign.mat) {
     ## Fit the DNA model conditioned on the provided RNA model
     ll.funs <- get.ll.functions(model)
-
+    
     log.ddepth <- log(ddepth)
     log.rdepth <- log(rdepth)
     
@@ -427,19 +434,20 @@ fit.dna.controlrna <- function(model, dcounts, rcounts, r.coef,
     par <- rep(0, 1 + NCOL(ddmat.valid))
     
     suppressWarnings(
-    fit <- optim(par = par, 
-                 fn = cost.dna,
-                 theta.r = theta.r,
-                 llfnDNA = ll.funs$dna, 
-                 llfnRNA = ll.funs$rna,
-                 dcounts = dcounts[valid.c],
-                 rcounts = rcounts[valid.c],
-                 log.ddepth = log.ddepth[valid.c], 
-                 log.rdepth = log.rdepth[valid.c],
-                 ddesign.mat = ddmat.valid,
-                 rdesign.mat = rdmat.valid,
-                 hessian = FALSE, 
-                 method = "BFGS", control=list(maxit=1000)))
+        fit <- optim(
+            par = par, 
+            fn = cost.dna,
+            theta.r = theta.r,
+            llfnDNA = ll.funs$dna, 
+            llfnRNA = ll.funs$rna,
+            dcounts = dcounts[valid.c],
+            rcounts = rcounts[valid.c],
+            log.ddepth = log.ddepth[valid.c], 
+            log.rdepth = log.rdepth[valid.c],
+            ddesign.mat = ddmat.valid,
+            rdesign.mat = rdmat.valid,
+            hessian = FALSE, 
+            method = "BFGS", control=list(maxit=1000)))
     
     #fit$par <- pmax(pmin(fit$par, 23), -23)
     d.coef <- c(fit$par[1], rep(NA, NCOL(ddesign.mat)))
