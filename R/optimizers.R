@@ -114,7 +114,8 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
             d2rdesign.mat = d2rmat.valid,
             rdesign.ctrl.mat = rdmat.ctrl.valid,
             hessian = compute.hessian,
-            method = "BFGS", control = list(maxit=1000))
+            method = "L-BFGS-B", control = list(maxit=1000), 
+            lower=-23, upper=23)
     )
     
     ## split parameters to the two parts of the model
@@ -230,7 +231,8 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
                 rdesign.mat = rdmat.valid,
                 d2rdesign.mat = d2rdmat.valid,
                 hessian = compute.hessian,
-                method = "BFGS", control=list(maxit=1000))
+                method = "L-BFGS-B", control = list(maxit=1000), 
+                lower=-23, upper=23)
         )
         
         dfit$par <- pmax(pmin(dfit$par, 23), -23)
@@ -349,7 +351,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                     rdesign.mat = rdesign.mat[valid.c.r.agg,valid.rf,drop=FALSE], 
                     d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,valid.df,drop=FALSE],
                     hessian = FALSE, 
-                    method = "BFGS", control=list(maxit=1000))
+                    method = "L-BFGS-B", control = list(maxit=1000), 
+                    lower=-23, upper=23)
             )
             fit$par <- pmax(pmin(fit$par, 23), -23)
             return(fit)
@@ -375,7 +378,8 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                 d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,,drop=FALSE], 
                 rdesign.mat = rdesign.mat[valid.c.r.agg,valid.rf,drop=FALSE], 
                 hessian = FALSE, 
-                method = "BFGS", control=list(maxit=1000))
+                method = "L-BFGS-B", control = list(maxit=1000), 
+                lower=-23, upper=23)
         )
         rfit$par <- pmax(pmin(rfit$par, 23), -23)
         r.par <- rfit$par
@@ -451,7 +455,8 @@ fit.dna.controlrna <- function(model, dcounts, rcounts, r.coef,
             ddesign.mat = ddmat.valid,
             rdesign.mat = rdmat.valid,
             hessian = FALSE, 
-            method = "BFGS", control=list(maxit=1000))
+            method = "L-BFGS-B", control = list(maxit=1000), 
+            lower=-23, upper=23)
     )
     
     fit$par <- pmax(pmin(fit$par, 23), -23)
