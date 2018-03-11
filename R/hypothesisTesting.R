@@ -55,13 +55,11 @@ test.lrt <- function(obj) {
 #' @return a data.frame of the results
 #' this include the test statistic, logFC, p-value and BH-corrected FDR.
 test.coefficient <- function(obj, factor, contrast) {
-    if(!(obj@mode == "comparative.coef")) {
-        stop("function `analyze.comparative.coef` must be run first")
-    } else if(!(factor %in% colnames(obj@colAnnot))) {
+    if(!(factor %in% colnames(obj@rnaAnnot))) {
         stop("given factor: ", factor, 
              " is not included in object annotations")
     } 
-    ref <- levels(as.factor(obj@colAnnot[,factor]))[1]
+    ref <- levels(as.factor(obj@rnaAnnot[,factor]))[1]
     if (ref == contrast) {
         stop("given contrast ", contrast, 
              " is the reference level of factor ", factor)
