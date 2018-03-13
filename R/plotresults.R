@@ -187,12 +187,12 @@ plotVolcano <- function(obj){
 #' @export
 plotAlphaRatio <- function(obj, condition = NULL, logScale=TRUE) {
     if(is.null(condition)) {
-        ratio <- rowSums(obj@rnaCounts) / rowSums(obj@dnaCounts)
+        ratio <- rowMeans(obj@rnaCounts) / rowMeans(obj@dnaCounts)
         alpha <- getAlpha(obj)
         res <- ggplot(data = data.frame(ratio = ratio, alpha = alpha)) + 
             geom_point(mapping = aes(x = ratio, y = alpha)) + 
             geom_abline(intercept=0, slope=1) + 
-            xlab("RNA / DNA") + ylab("log(alpha)")
+            xlab("RNA / DNA") + ylab("alpha")
     } else {
         first <- TRUE
         res <- lapply(levels(as.factor(obj@dnaAnnot[,condition])), function(l) {
@@ -202,13 +202,15 @@ plotAlphaRatio <- function(obj, condition = NULL, logScale=TRUE) {
             } else {
                 alpha <- getAlpha(obj, condition, l)
             }
-            idx <- obj@dnaAnnot[,condition] == l
-            ratio <- rowSums(obj@rnaCounts[,idx]) / rowSums(obj@dnaCounts[,idx])
+            idx.dna <- obj@dnaAnnot[,condition] == l
+            idx.rna <- obj@rnaAnnot[,condition] == l
+            ratio <- (rowMeans(obj@rnaCounts[,idx.rna,drop=FALSE]) / 
+                     rowMeans(obj@dnaCounts[,idx.dna,drop=FALSE]))
             
-            ggplot(data = data.frame(ratio = log(ratio), alpha = log(alpha))) + 
+            ggplot(data = data.frame(ratio = ratio, alpha = alpha)) + 
                 geom_point(mapping = aes(x = ratio, y = alpha)) + 
                 geom_abline(intercept=0, slope=1) + 
-                xlab("log(RNA / DNA)") + ylab("log(alpha)") + ggtitle(paste(condition, l))
+                xlab("RNA / DNA") + ylab("alpha") + ggtitle(paste(condition, l))
         })
     }
     return(res)
