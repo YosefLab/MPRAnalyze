@@ -407,7 +407,7 @@ analyze.lrt <- function(obj) {
         } else { ## comparative.lrt.full / quantitative.lrt ?
             obj@designs@rnaRed <- obj@designs@rnaFull
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull
-            obj@designs@rnaCtrlRed <- NULL
+            obj@designs@rnaCtrlRed <- obj@designs@rnaRed # only test condition coefficient!
             obj@rnaCtrlScale <- NULL
             obj@controls.forfit <- obj@controls
             fitfun <- fit.dnarna.wctrlobs.iter
