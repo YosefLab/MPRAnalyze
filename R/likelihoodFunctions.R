@@ -119,9 +119,7 @@ ll.rna.gamma.pois <- function(theta, theta.d,
     
     alpha.mat <- matrix(rep(theta.d[1,], each=NROW(d2rdesign.mat)), 
                         nrow=NROW(d2rdesign.mat))
-
     log.d.est <- (d2rdesign.mat %*% theta.d[-1,,drop=FALSE]) + alpha.mat
-
     log.r.est <- log.d.est + rep((rdesign.mat %*% theta[-1]) + log.rdepth, 
                                  NCOL(log.d.est))
     

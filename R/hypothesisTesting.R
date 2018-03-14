@@ -17,10 +17,10 @@ test.lrt <- function(obj) {
     ll.full <- obj@modelFits$ll
     ll.red <- obj@modelFits.red$ll
     df.dna <- obj@modelFits$d.df
-    df.rna.full <- obj@modelFits$r.df
-    df.rna.red <- obj@modelFits.red$r.df
-    df.full <- df.dna + df.rna.full + obj@modelFits$r.ctrl.df
-    df.red <- df.dna + df.rna.red + obj@modelFits.red$r.ctrl.df
+    df.rna.full <- obj@modelFits$r.df + obj@modelFits$r.ctrl.df + length(obj@rnaCtrlScale)
+    df.rna.red <- obj@modelFits.red$r.df + obj@modelFits.red$r.ctrl.df + length(obj@rnaCtrlScale)
+    df.full <- df.dna + df.rna.full 
+    df.red <- df.dna + df.rna.red 
     
     lrt <- 2*(ll.full - ll.red)
     df <- df.full-df.red

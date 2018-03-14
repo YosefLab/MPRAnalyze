@@ -130,7 +130,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     
     r.coef <- c(r.par[1], rep(NA, NCOL(rdesign.mat)))
     r.coef[1 + which(valid.rf)] <- r.par[-1]
-    r.df <- length(r.par) - 1
+    r.df <- length(r.par)
     
     ## standard error of the estimates
     se <- NULL
