@@ -38,6 +38,14 @@ validateMpraObject <- function(object) {
                     "RNA, DNA feature names either missing or don't match")
     }
     
+    # check that data is integer if count distribution is used
+    if(obj@model %in% c("ln.nb", "gamma.pois")){
+        if(!all(object@rnaCounts%%1 == 0)) {
+            stop("negative binomial count distribution of rna model in ", 
+                 obj@model, " requires integer RNA model matrix input")
+        }
+    }
+    
     if(length(errors) > 0) {
         return(errors)
     } else {

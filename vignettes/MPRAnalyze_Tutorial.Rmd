@@ -197,24 +197,25 @@ detach("package:MPRAnalyze", unload=TRUE)
 library(MPRAnalyze)
 library(BiocParallel)
 # Produce example data: lognormal distributed DNA and poisson distributed RNA
-sim <- simulateMPRA(n.case = 10, n.ctrl = 5, n.reps = 3, 
-                    sd.dna.cond = 0.1, sd.dna.bc = 0.05, 
-                    sd.rna = 1, sd.rna.cond = 0.5)
+sim <- simulateMPRA(
+    model="ln.ln", n.case=20, n.ctrl=5, frac.de=0.5, 
+    n.cond=2, n.bc=5, n.reps=2, 
+    mu.dna=100, mu.sd.dna=0.3, sd.dna=10, sd.dna.cond=0.2, sd.dna.bc=0.2,
+    mu.rna=1, mu.sd.rna=0.1, sd.rna=1, sd.rna.cond=0.1, sd.rna.cond_case=0.1)
 # Run MPRAnalyze
 ctrls <- which(sim$rowAnnot$type == "ctrl")
 if(length(ctrls)  == 0) {
     ctrls <- NULL
 }
-mpraobj <- MpraObject(dnaCounts=sim$dna, rnaCounts=sim$rna,
-                      colAnnot=sim$colAnnot, controls=ctrls, 
-                      BPPARAM = MulticoreParam(3))
-#mpraobj <- estimateDepthFactors(mpraobj, lib.factor = "experiment", depthEstimator = "rle")
-mpraobj <- estimateDepthFactors(mpraobj, "rep")
-# mpraobj <- setDepthFactors(mpraobj, rep(1, NCOL(sim$dna)), rep(1, NCOL(sim$dna)))
-mpraobj <- setModel(mpraobj, "ln.nb")
+mpraobj <- MpraObject(
+    dnaCounts=sim$dcounts.obs, rnaCounts=sim$rcounts.obs,
+    colAnnot=sim$colAnnot, controls=ctrls,
+    BPPARAM=SerialParam())
+mpraobj <- estimateDepthFactors(mpraobj, lib.factor="sample", which.lib="both")
+mpraobj <- setModel(obj = mpraobj, model = "gamma.pois")
 mpraobj <- analyze.comparative.lrt(
-    mpraobj, mode="scaled",
-    dnaDesign=~barcode+cond, rnaDesign=~cond, condition="cond")
+    obj = mpraobj, condition = "cond", mode = "scaled", 
+    dnaDesign = ~barcode+cond, rnaDesign = ~cond)
 mpraobj <- test.lrt(mpraobj)
 ```
 
