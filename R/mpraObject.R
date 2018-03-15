@@ -270,13 +270,14 @@ extractModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
 #' @export
 extractModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(obj@modelFits)){
-        stop("can't extract model parameters before fitting a model. An analysis function must be called first.")
+        stop("can't extract model parameters before fitting a model")
     }
     if(is.null(features)) {
         features <- 1:NROW(obj@dnaCounts)
     } else if (is.character(features)) {
         features <- which(rownames(obj@dnaCounts) %in% features)
     }
+    
     if(full) {
         coef.mat <- obj@modelFits$r.coef[features,,drop=FALSE] 
         colnames(coef.mat) <- c("disp", colnames(obj@designs@rnaFull))
@@ -284,8 +285,9 @@ extractModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
         coef.mat <- obj@modelFits.red$r.coef[features,,drop=FALSE] 
         colnames(coef.mat) <- c("disp", colnames(obj@designs@rnaRed))
     } else {
-        stop("Parameters can't be extracted from reduced model, since analysis did not include fitting a reduced model")
+        stop("Reduced model unavailable")
     }
+    
     rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
     return(as.data.frame(coef.mat))
 }
