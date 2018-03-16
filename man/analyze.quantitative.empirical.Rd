@@ -8,10 +8,6 @@ analyze.quantitative.empirical(obj)
 }
 \arguments{
 \item{obj}{the MpraObject}
-
-\item{dnaDesign}{the design of the DNA model}
-
-\item{rnaDesign}{the design of the RNA model}
 }
 \value{
 the MpraObject with fitted models

@@ -25,7 +25,8 @@
 #' @import ggplot2
 #' 
 #' @export
-plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.outliers=FALSE){
+plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, 
+                         show.outliers=FALSE){
     
     ## set outlier handling
     if(show.outliers) {
@@ -105,38 +106,42 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, show.ou
     if(!is.null(condition)) {
         if(!is.null(batch)) {
             gplot.boxplot <- ggplot() + geom_boxplot(
-                data=gplot.data.boxplot, aes(
-                    x=cond, y=ratio, fill=enhancer, alpha=batch, linetype=type),
-                outlier.shape = outlier.shape ) +
+                data=gplot.data.boxplot, aes_(
+                    x = ~cond, y = ~ratio, fill = ~enhancer, 
+                    alpha = ~batch, linetype = ~type),
+                outlier.shape = outlier.shape) +
                 scale_shape_discrete(solid = FALSE) +
-                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr ))
+                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr))
         } else {
             gplot.boxplot <- ggplot() + geom_boxplot(
-                data=gplot.data.boxplot, aes(
-                    x=cond, y=ratio, fill=enhancer, linetype=type),
-                outlier.shape = outlier.shape ) +
+                data=gplot.data.boxplot, aes_(
+                    x = ~cond, y = ~ratio, fill = ~enhancer, linetype = ~type),
+                outlier.shape = outlier.shape) +
                 scale_shape_discrete(solid = FALSE) +
-                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr ))
+                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr))
         }
     } else {
         if(!is.null(batch)) {
             gplot.boxplot <- ggplot() + geom_boxplot(
-                data=gplot.data.boxplot, aes(
-                    x=enhancer, y=ratio, fill=enhancer, alpha=batch, linetype=type),
-                outlier.shape = outlier.shape ) +
+                data=gplot.data.boxplot, aes_(
+                    x = ~enhancer, y = ~ratio, fill = ~enhancer, alpha = ~batch, 
+                    linetype = ~type),
+                outlier.shape = outlier.shape) +
                 scale_shape_discrete(solid = FALSE) +
-                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr ))
+                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr))
         } else {
             gplot.boxplot <- ggplot() + geom_boxplot(
-                data=gplot.data.boxplot, aes(
-                    x=enhancer, y=ratio, fill=enhancer, linetype=type),
-                outlier.shape = outlier.shape ) +
+                data=gplot.data.boxplot, aes_(
+                    x = ~enhancer, y = ~ratio, 
+                    fill = ~enhancer, linetype = ~type),
+                outlier.shape = outlier.shape) +
                 scale_shape_discrete(solid = FALSE) +
-                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr ))
+                labs(title=paste0(id, " log10 fdr-corrected p-value: ", fdr))
         }
     }
     if(length(unique(gplot.data.boxplot$batch)) <= length(cbbPalette)) {
-        gplot.boxplot <- gplot.boxplot + scale_fill_manual(values = cbbPalette) + 
+        gplot.boxplot <- gplot.boxplot + 
+            scale_fill_manual(values = cbbPalette) + 
             scale_colour_manual(values = cbbPalette)
     }
     
@@ -184,6 +189,7 @@ plotVolcano <- function(obj){
 #' (intercept) vs the total data. Else, condition must be a valid factor in the 
 #' object column annotations that was included in the design. In that case, a 
 #' plot is generated for each level of the factor
+#' @param logScale iff TRUE, figure is plotted in log scale
 #' @export
 plotAlphaRatio <- function(obj, condition = NULL, logScale=TRUE) {
     if(is.null(condition)) {
@@ -216,34 +222,28 @@ plotAlphaRatio <- function(obj, condition = NULL, logScale=TRUE) {
     return(res)
 }
 
-plotObsExpDistributions <- function(obj, enhancer, RNA=TRUE) {
-    if(length(enhancer) > 1) {
-        stop("plase supply a single enhancer (index or name)")
-    }
-    if(RNA) {
-        df <- data.frame(obs=obj@rnaCounts[enhancer,], 
-                         expctd=getRNAFits(obj, enhancer))
-    } else {
-        df <- data.frame(obs=obj@dnaCounts[enhancer,], 
-                         expctd=getDNAFits(obj, enhancer))
-    }
-    print(summary(df))
-    ggplot(df) + 
-        geom_histogram(aes(x = obs, color="blue")) + 
-        geom_density(aes(x=expctd, fill="red"), alpha=0.1)
-}
 
+#' plot the CDF of the pvalues
+#' @param p the p-values to plot
+#' @param categories a factor (same length as p) dividing the p-values into 
+#' categories to be plotted separately
+#' @param adjusted if TRUE, adjust the p-values using the BH FDR method.
 plotPvalCDF <- function(p, categories, adjusted=FALSE) {
     if(adjusted) {
         p <- p.adjust(p, "BH")
     }
     df <- data.frame(p=p, cat=categories)
-    ggplot(df, aes(p, group=cat, color=cat)) + stat_ecdf(geom="step") + 
+    ggplot(df, aes_(~p, group=~cat, color=~cat)) + stat_ecdf(geom="step") + 
         xlab("P-value") + ylab("CDF")
     
 }
 
-plotObsExpDistributions <- function(obj, enhancer, rna=TRUE, KS = TRUE) {
+#' Plot the observed and expected distributions of a given enhancer
+#' @param obj MpraObject after model fitting
+#' @param enhancer the id of the enhancer to plot (index or name)
+#' @param rna if TRUE, plot the RNA distribution. Otherwise plot the DNA.
+#' @import ggplot2
+plotObsExpDistributions <- function(obj, enhancer, rna=TRUE) {
     if(length(enhancer) > 1) {
         stop("plase supply a single enhancer (index or name)")
     }
@@ -256,25 +256,11 @@ plotObsExpDistributions <- function(obj, enhancer, rna=TRUE, KS = TRUE) {
     }
     
     df <- df[df$obs > 0,]
-    print(ks.test(df$obs, df$exd)$statistic)
     ggplot(df) + 
-        geom_histogram(aes(obs, ..density.., fill="Observed")) + 
-        geom_density(aes(exd, color="Expected"), size=2) + 
+        geom_histogram(aes_(x = ~obs, y = "..density..", fill="Observed")) + 
+        geom_density(aes_(x= ~exd, color="Expected"), size=2) + 
         scale_fill_manual(name=element_blank(), values = c("Observed"='grey33')) + 
         scale_colour_manual(name=element_blank(), values = c('Expected'='black')) + 
         theme(text=element_text(size=20), legend.position = "none") +
-        # theme(text=element_text(size=20), legend.position = c(0.8, 0.8)) +
         xlab("counts")
-    
-    
-    # df <- data.frame(counts=c(df$exd,df$obs), 
-    #                  source=as.factor(c(rep(1,NROW(df)), rep(2,NROW(df)))))
-    # levels(df$source) <- c("Expected", "Observed")
-    # ggplot(df) + 
-    #     geom_density(aes(counts, group=source, col=source, fill=source), 
-    #                  size=1, alpha=0.25) +
-    #     theme(text=element_text(size=20),
-    #           legend.direction = "horizontal", legend.position = "bottom",
-    #           legend.title = element_blank()) +
-    #     scale_fill_manual(values = "")
 }

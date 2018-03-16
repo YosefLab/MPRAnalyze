@@ -6,11 +6,12 @@
 #' @param fit.se logical, if TRUE (default) the standard errors of the coefficients
 #' are extracted from the model. These are necessary for computing coefficient-based
 #' testing, but make the model fitting slower.
-#' @param redcuedDesign the design for the reduced RNA model, for a likelihood-ratio
+#' @param reducedDesign the design for the reduced RNA model, for a likelihood-ratio
 #' testing scheme. The Reduced design must be nested within the full design (i.e
 #' all terms in the reduced must be included in the full).
 #' @param correctControls if TRUE (default), use the negative controls to establish
 #' the null hypothesis, correcting for systemic bias in the data
+#' @param verbose print progress reports (default: TRUE)
 #' @import progress
 #' @export
 #' @return the MpraObject with fitted models for the input enhancers
@@ -191,94 +192,6 @@ analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL,
     return(analyze.lrt(obj=obj))
 }
 
-#' Fit the model to enable coefficient-based testing (using the test.coef).
-#' This method should be used when multiple conditions in the data are to be
-#' tested using the same model.
-#' For example, various stimulations compared with unstimulated.
-#' 
-#' @note Currently, this mode only supports a single reference (intercept term).
-#' 
-#' @param obj the MpraObject
-#' @param dnaDesign the design of the DNA model
-#' @param rnaDesign the design of the RNA model
-#' @param use.controls if the experiment has negative controls, thes can be 
-#' included in the model and used to correct for unwanted variation. Default is 
-#' TRUE, and this is ignored if no controls exist in the experiment.
-#' 
-#' @return the MpraObject with the fitted model, that can be passed to test.coef 
-#' to test for significance of any coefficient in the model.
-#' 
-#' @export
-analyze.comparative.coef <- function(obj, dnaDesign, rnaDesign, 
-                                     use.controls=TRUE){
-    if(length(obj@dnaDepth) == 0) {
-        stop("library depth factors must be estimated or provided before analysis")
-    }
-    if(!checkForIntercept(rnaDesign)) {
-        stop("only designs with an intercept term are currently supported in this mode")
-    }
-    
-    if(length(obj@model) == 0) {
-        obj <- autoChooseModel(obj)
-    }
-    
-    obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=obj@dnaAnnot)
-    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
-    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot)
-    obj@mode <- "comparative.coef"
-    
-    if(use.controls & !is.null(obj@controls)) {
-        message("Fitting controls-based background model...")
-        obj@modelPreFits.dna.ctrl <- reformatModels(fit.dnarna.onlyctrl.iter(
-            model=obj@model,
-            dcounts = obj@dnaCounts[obj@controls,],
-            rcounts = obj@rnaCounts[obj@controls,],
-            ddepth=obj@dnaDepth,
-            rdepth=obj@rnaDepth,
-            ddesign.mat=obj@designs@dna,
-            rdesign.mat=obj@designs@rnaFull, 
-            d2rdesign.mat=obj@designs@dna2rna,
-            BPPARAM = obj@BPPARAM))
-        
-        obj@designs@rnaCtrlFull <- obj@designs@rnaFull
-        obj@designs@rnaCtrlRed <- obj@designs@rnaFull
-        obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1,]
-        fitfun <- fit.dnarna.noctrlobs
-        if(!is.null(obj@modelPreFits.dna.ctrl)) {
-            theta.d.ctrl.prefit <- t(obj@modelPreFits.dna.ctrl$d.coef)
-        } else {
-            theta.d.ctrl.prefit <- NULL
-        }
-    } else {
-        obj@designs@rnaCtrlFull <- NULL
-        obj@designs@rnaCtrlRed <- NULL
-        obj@modelPreFits.dna.ctrl <- NULL
-        theta.d.ctrl.prefit <- NULL
-    }
-    ## fit model
-    message("Fitting model...")
-    models <- bplapply(rownames(obj@dnaCounts), function(rn) {
-        return(fit.dnarna.noctrlobs(
-            model=obj@model,
-            dcounts=obj@dnaCounts[rn,,drop=FALSE],
-            rcounts=obj@rnaCounts[rn,,drop=FALSE],
-            ddepth=obj@dnaDepth,
-            rdepth=obj@rnaDepth,
-            rctrlscale=obj@rnaCtrlScale,
-            ddesign.mat=obj@designs@dna,
-            rdesign.mat=obj@designs@rnaFull,
-            d2rdesign.mat=obj@designs@dna2rna,
-            rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
-            theta.d.ctrl.prefit=theta.d.ctrl.prefit,
-            compute.hessian=TRUE))
-    }, BPPARAM = obj@BPPARAM)
-    names(models) <- rownames(obj@dnaCounts)
-    obj@modelFits <-reformatModels(models)
-    
-    message("Analysis done!")
-    return(obj)
-}
-
 #' Perform quantitative analysis on the MPRA data. This analysis aims to determine
 #' which sequences have a regulatory function, when no condition is being tested.
 #' 
@@ -328,8 +241,6 @@ analyze.quantitative <- function(obj, mode=NULL, dnaDesign=~1, rnaDesign=~1){
 
 #' Fit the model for quantitative analysis
 #' @param obj the MpraObject
-#' @param dnaDesign the design of the DNA model
-#' @param rnaDesign the design of the RNA model
 #' @return the MpraObject with fitted models
 analyze.quantitative.empirical <- function(obj){
     ## fit model
@@ -367,10 +278,6 @@ analyze.quantitative.empirical <- function(obj){
 
 #' run LRT-based analysis
 #' @param obj the MPRAnalyze object
-#' @param condition the condition to test. Must be a valid column name in the 
-#' annotation of the object. Ignored in "full" mode.
-#' @param dnaDesign the design of the DNA model. See details
-#' @param rnaDesign the design of the RNA model. See details
 #' 
 #' @return the MPRAnalyze object, populated with fitted models
 analyze.lrt <- function(obj) {

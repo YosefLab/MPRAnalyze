@@ -12,7 +12,6 @@
 #' @aliases 
 #' fit.dnarna.noctrlobs
 #' fit.dnarna.wctrlobs.iter
-#' fit.dnarna.onlyctrl.iter
 #' 
 #' @details dna model
 #' The dna model is encoded as a vector where the first parameter
@@ -50,8 +49,6 @@
 #' (numeric, control enhancers x dna parameters)
 #' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
 #' coefficients to facilitate coefficient-based hypothesis testing
-#' @param BPPARAM BiocParallel parallelisation parameters. Only used in 
-#' fit.dnarna.onlyctrl.iter
 #'
 #' @return a list with components:
 #' \itemize{
@@ -299,7 +296,13 @@ fit.dnarna.wctrlobs.iter <- function(model, dcounts, rcounts,
         ll = llnew))
 }
 
-#' @rdname fit.dnarna
+#' fit the control-based joint model. Seperate DNA model per enhancer, joint RNA
+#' model.
+#' 
+#' @inheritParams fit.dnarna
+#' @param print.progress print a progress report on the fitting (default:TRUE),
+#' recommended since the joint model fitting is computationally intensive
+#' @param BPPARAM the parallelization backend to use
 fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                                      ddepth, rdepth,
                                      ddesign.mat, rdesign.mat, d2rdesign.mat,
@@ -420,6 +423,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
 #' can be used as a reduced model in LRT settings.
 #' 
 #' @inheritParams fit.dnarna
+#' @param r.coef the RNA prefitted coefficients
 fit.dna.controlrna <- function(model, dcounts, rcounts, r.coef,
                                ddepth, rdepth,
                                ddesign.mat, rdesign.mat, d2rdesign.mat) {

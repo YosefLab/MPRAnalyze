@@ -47,11 +47,12 @@ cost.rna.wctrl(theta, theta.d, theta.d.ctrl.prefit, llfnRNA, rcounts,
 \item{theta.d.ctrl.prefit}{prefit control DNA model parameters
 (numeric, control enhancers x dna model parameters)}
 
+\item{d2rdesign.ctrl.mat}{model design to distribution DNA pre-fit estimates
+to the RNA observations.
+(logical, rna samples x dna parameters)}
+
 \item{rdesign.ctrl.mat}{the control rna model design matrix 
 (logical, samples x rna parameters)}
-
-\item{ddesign.ctrl.mat}{prefit control DNA model design
-(logical, samples x dna parameters)}
 }
 \value{
 negative sum of log likelihood terms with non-zero derivative

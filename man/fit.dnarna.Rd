@@ -4,10 +4,8 @@
 \alias{fit.dnarna}
 \alias{fit.dnarna.noctrlobs}
 \alias{fit.dnarna.wctrlobs.iter}
-\alias{fit.dnarna.onlyctrl.iter}
 \alias{fit.dnarna.noctrlobs}
 \alias{fit.dnarna.wctrlobs.iter}
-\alias{fit.dnarna.onlyctrl.iter}
 \title{Fit dna and rna model to a given enhancer}
 \usage{
 fit.dnarna.noctrlobs(model, dcounts, rcounts, ddepth, rdepth, rctrlscale,
@@ -17,9 +15,6 @@ fit.dnarna.noctrlobs(model, dcounts, rcounts, ddepth, rdepth, rctrlscale,
 fit.dnarna.wctrlobs.iter(model, dcounts, rcounts, ddepth, rdepth,
   rctrlscale = NULL, ddesign.mat, rdesign.mat, d2rdesign.mat,
   rdesign.ctrl.mat, theta.d.ctrl.prefit, compute.hessian)
-
-fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth, ddesign.mat,
-  rdesign.mat, d2rdesign.mat, BPPARAM, print.progress = TRUE)
 }
 \arguments{
 \item{model}{noise model}
@@ -48,9 +43,6 @@ fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth, ddesign.mat,
 
 \item{compute.hessian}{if TRUE (default), compute the Hessian matrix of the
 coefficients to facilitate coefficient-based hypothesis testing}
-
-\item{BPPARAM}{BiocParallel parallelisation parameters. Only used in 
-fit.dnarna.onlyctrl.iter}
 }
 \value{
 a list with components:

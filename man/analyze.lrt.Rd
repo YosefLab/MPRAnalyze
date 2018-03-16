@@ -8,13 +8,6 @@ analyze.lrt(obj)
 }
 \arguments{
 \item{obj}{the MPRAnalyze object}
-
-\item{condition}{the condition to test. Must be a valid column name in the 
-annotation of the object. Ignored in "full" mode.}
-
-\item{dnaDesign}{the design of the DNA model. See details}
-
-\item{rnaDesign}{the design of the RNA model. See details}
 }
 \value{
 the MPRAnalyze object, populated with fitted models

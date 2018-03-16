@@ -14,6 +14,8 @@ plotAlphaRatio(obj, condition = NULL, logScale = TRUE)
 (intercept) vs the total data. Else, condition must be a valid factor in the 
 object column annotations that was included in the design. In that case, a 
 plot is generated for each level of the factor}
+
+\item{logScale}{iff TRUE, figure is plotted in log scale}
 }
 \description{
 create a scatter plot of the model alpha (trascription rate) vs. the naive

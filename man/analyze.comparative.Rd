@@ -19,12 +19,14 @@ with the RNA design should be included.}
 are extracted from the model. These are necessary for computing coefficient-based
 testing, but make the model fitting slower.}
 
+\item{reducedDesign}{the design for the reduced RNA model, for a likelihood-ratio
+testing scheme. The Reduced design must be nested within the full design (i.e
+all terms in the reduced must be included in the full).}
+
 \item{correctControls}{if TRUE (default), use the negative controls to establish
 the null hypothesis, correcting for systemic bias in the data}
 
-\item{redcuedDesign}{the design for the reduced RNA model, for a likelihood-ratio
-testing scheme. The Reduced design must be nested within the full design (i.e
-all terms in the reduced must be included in the full).}
+\item{verbose}{print progress reports (default: TRUE)}
 }
 \value{
 the MpraObject with fitted models for the input enhancers

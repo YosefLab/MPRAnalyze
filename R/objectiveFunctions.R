@@ -136,8 +136,9 @@ cost.rna <- function(theta, theta.d, llfnRNA, rcounts,
 #' @inheritParams cost.model
 #' @param theta.d.ctrl.prefit prefit control DNA model parameters
 #' (numeric, control enhancers x dna model parameters)
-#' @param ddesign.ctrl.mat prefit control DNA model design
-#' (logical, samples x dna parameters)
+#' @param d2rdesign.ctrl.mat model design to distribution DNA pre-fit estimates
+#' to the RNA observations.
+#' (logical, rna samples x dna parameters)
 #' 
 #' @return negative sum of log likelihood terms with non-zero derivative
 #' with respect to case model 
