@@ -148,40 +148,6 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE,
     return(gplot.boxplot)
 }
 
-#' Scatter plot observed log-fold changes and p-values for condition test:
-#' volcano plot
-#' 
-#' @param obj (MpraObject)
-#' MpraObject from which enhancer is to be visualised.
-#' 
-#' @return (ggplot) scatter plot
-#' 
-#' @import ggplot2
-#' 
-#' @export
-plotVolcano <- function(obj){
-    
-    ## extract model fits
-    #TODO only extract coeffient
-    stop()
-    dfit <- getDNAFits(obj, enhancers=id, depth=FALSE, full=full)
-    rfit <- getRNAFits(obj, enhancers=id, depth=FALSE, full=full)
-    gplot.data.fit <- data.frame(
-        ratio=log(dfit)-log(rfit),
-        cond=obj@dnaAnnot[,condition],
-        batch=obj@dnaAnnot[,batch],
-        enhancer="model_fit",
-        stringsAsFactors=FALSE
-    )
-    
-    ## create ggplot
-    gplot.volcano <- ggplot() + geom_boxplot(
-        data=gplot.data, aes(x=lfc, y=padj) ) +
-        labs(title="volcano plot" )
-    
-    return(gplot.volcano)
-}
-
 #' create a scatter plot of the model alpha (trascription rate) vs. the naive
 #' estimator (RNA / DNA).
 #' @param obj the MpraObject
