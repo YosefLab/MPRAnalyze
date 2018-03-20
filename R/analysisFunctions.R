@@ -387,9 +387,6 @@ analyze.lrt <- function(obj) {
         fitfun <- fit.dnarna.noctrlobs
     } else {
         message("Fitting controls-based background model...")
-        print(dim(obj@designs@rnaFull))
-        print(dim(obj@designs@rnaRed))
-        
         obj@modelPreFits.dna.ctrl <- reformatModels(
             fit.dnarna.onlyctrl.iter(
                 model=obj@model,
