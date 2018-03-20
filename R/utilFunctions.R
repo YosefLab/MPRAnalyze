@@ -106,7 +106,6 @@ extractProp <- function(models, prop, valids) {
 #' @param full if true, return alpha of the full model (default), otherwise of
 #' the reduced model (only applies if an LRT-based analysis was used)
 #' 
-#' @export
 #' @details return the estimate for transcription rate as fitted by the package.
 #' If the design is intercepted, then by default the baseline (intercept) rate is
 #' returned. Otherwise, term and value must be provided, such that term is a 
@@ -144,4 +143,58 @@ getAlpha <- function(obj, term=NULL, value=NULL, full=TRUE) {
     }
     names(coef) <- rownames(coefs)
     return(coef)
+}
+
+#' return the fitted value for the transcription rate.
+#' @param obj the MpraObject to extract from, must be after model fitting
+#' @param by.factor return a matrix of values, corresponding to the estimated
+#' rates of transcription under different values of a factor included in the 
+#' design. Value must be of these options:
+#' NULL: (default) return only the intercept term, a single baseline rate for 
+#' each enhancer
+#' "all": will return the corresponding transcription rates for all values 
+#' included in the model
+#' factor name: must be a factor included in the RNA annotations and the rna 
+#' design. Will return the corresponding rates for all values of the given factor
+#' @param full if true, return rate of the full model (default), otherwise of
+#' the reduced model (only applies if an LRT-based analysis was used)
+#' @export
+#' @return the estimate for transcription rate as fitted by the model
+getEstTR <- function(obj, by.factor=NULL, full=TRUE) {
+    des <- obj@designs@rnaFull
+    if(!full) {
+        des <- obj@designs@rnaRed
+        if(is.null(des)) {
+            stop("reduced model not available")
+        }
+    }
+    
+    if(is.null(by.factor)) {
+        return(getAlpha(obj, full=full))
+    } else if (by.factor=="all") {
+        ## extract all parametres except for the dispersion
+        alpha.mat <- extractModelParameters.RNA(obj, full=full)[,-1]
+        if(checkForIntercept(des)) {
+            ## add the intercept to all other columns
+            alpha.mat[,-1] <- alpha.mat[,-1] + alpha.mat[,1]
+        }
+        return(exp(alpha.mat))
+    } else {
+        l <- levels(obj@rnaAnnot[,by.factor])
+        ## if intercepted: first level is different
+        if(checkForIntercept(des)) {
+            int.alpha <- getAlpha(obj)
+            l <- l[-1]
+        } else {
+            int.alpha <- NULL
+        }
+        
+        alpha.mat <- do.call(cbind, lapply(l, function(v) {
+            getAlpha(obj, term = by.factor, value = v, full = full)
+        }))
+        alpha.mat <- cbind(int.alpha, alpha.mat)
+        colnames(alpha.mat) <- levels(obj@rnaAnnot[,by.factor])
+        
+        return(alpha.mat)
+    }
 }
