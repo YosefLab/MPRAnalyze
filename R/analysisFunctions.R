@@ -387,6 +387,9 @@ analyze.lrt <- function(obj) {
         fitfun <- fit.dnarna.noctrlobs
     } else {
         message("Fitting controls-based background model...")
+        print(dim(obj@designs@rnaFull))
+        print(dim(obj@designs@rnaRed))
+        
         obj@modelPreFits.dna.ctrl <- reformatModels(
             fit.dnarna.onlyctrl.iter(
                 model=obj@model,
@@ -398,6 +401,7 @@ analyze.lrt <- function(obj) {
                 rdesign.mat=obj@designs@rnaFull,
                 d2rdesign.mat=obj@designs@dna2rna,
                 BPPARAM = obj@BPPARAM))
+        
         if(obj@mode == "comparative.lrt.scaled") {
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@designs@rnaCtrlRed <- obj@designs@rnaFull
@@ -405,9 +409,9 @@ analyze.lrt <- function(obj) {
             obj@controls.forfit <- NULL
             fitfun <- fit.dnarna.noctrlobs
         } else { ## comparative.lrt.full / quantitative.lrt ?
+            obj@designs@rnaCtrlRed <- obj@designs@rnaRed # only test condition coefficient!
             obj@designs@rnaRed <- obj@designs@rnaFull
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull
-            obj@designs@rnaCtrlRed <- obj@designs@rnaRed # only test condition coefficient!
             obj@rnaCtrlScale <- NULL
             obj@controls.forfit <- obj@controls
             fitfun <- fit.dnarna.wctrlobs.iter

@@ -322,17 +322,23 @@ getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
         par.shape <- as.vector(exp(coef.mat[1,]))
         par.rate <- as.vector(exp(-obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
         par.mu <- par.shape*par.rate
-        par <- data.frame(shape = par.shape, rate = par.rate, mu = par.mu)
+        par.intercept <- par.shape*as.vector(exp(coef.mat[2,]))
+        par <- data.frame(shape = par.shape, rate = par.rate,
+                          mu = par.mu, intercept=par.intercept)
     } else if(obj@model == "ln.nb") {
         par.sdlog <- as.vector( exp(coef.mat[1,]))
         par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
         par.mu <- exp(par.meanlog + 1/2*par.sdlog^2)
-        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog, mu = par.mu)
+        par.intercept <- exp(as.vector(coef.mat[2,]) + 1/2*par.sdlog^2)
+        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog, 
+                          mu = par.mu, intercept=par.intercept)
     } else if(obj@model == "ln.ln") {
         par.sdlog <- as.vector( exp(coef.mat[1,]))
         par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
         par.mu <- exp(par.meanlog + 1/2*par.sdlog^2)
-        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog, mu = par.mu)
+        par.intercept <- exp(as.vector(coef.mat[2,]) + 1/2*par.sdlog^2)
+        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog, 
+                          mu = par.mu, intercept=par.intercept)
     }
     
     rownames(par) <- rownames(obj@dnaAnnot)
