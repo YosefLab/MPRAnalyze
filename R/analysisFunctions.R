@@ -402,13 +402,20 @@ analyze.lrt <- function(obj) {
         if(obj@mode == "comparative.lrt.scaled") {
             obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@designs@rnaCtrlRed <- obj@designs@rnaFull
-            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1,]
+            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1,]  
             obj@controls.forfit <- NULL
             fitfun <- fit.dnarna.noctrlobs
-        } else { ## comparative.lrt.full / quantitative.lrt ?
+        } else if(obj@mode == "quantitative.lrt.scaled") {
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
+            obj@designs@rnaCtrlRed <- NULL
+            obj@designs@rnaRed <- obj@designs@rnaFull
+            obj@rnaCtrlScale <- obj@modelPreFits.dna.ctrl$r.coef[1]
+            obj@controls.forfit <- NULL
+            fitfun <- fit.dnarna.noctrlobs
+        } else { # comparative.lrt.full, quantitative.lrt.full
+            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@designs@rnaCtrlRed <- obj@designs@rnaRed # only test condition coefficient!
             obj@designs@rnaRed <- obj@designs@rnaFull
-            obj@designs@rnaCtrlFull <- obj@designs@rnaFull
             obj@rnaCtrlScale <- NULL
             obj@controls.forfit <- obj@controls
             fitfun <- fit.dnarna.wctrlobs.iter
@@ -468,6 +475,31 @@ analyze.lrt <- function(obj) {
     
     message("Analysis done!")
     return(obj)
+}
+
+#' @export
+analyze.quantitative.lrt.NEW <- function(obj, mode=NULL, dnaDesign=NULL){
+    if(length(obj@dnaDepth) == 0){
+        stop("library depth factors must be estimated or provided before analysis")
+    }
+    if(length(obj@model) == 0) {
+        obj <- autoChooseModel(obj)
+    }
+    
+    ## get LRT mode
+    if(is.null(mode)) {
+        mode <- "scaled"
+    } else if (!(mode %in% c("scaled", "full"))){
+        stop("mode ", mode, " is not supported")
+    }
+    obj@mode <- paste0("quantitative.lrt.", mode)
+    
+    obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=obj@dnaAnnot)
+    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
+    obj@designs@rnaFull <- getDesignMat(design=~1, annotations=obj@rnaAnnot)
+    obj@designs@rnaRed <- NULL
+    
+    return(analyze.lrt(obj=obj))
 }
 
 analyze.quantitative.lrt <- function(obj, dnaDesign=NULL, rnaDesign=NULL) {
