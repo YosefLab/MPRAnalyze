@@ -319,15 +319,18 @@ getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
     if(obj@model == "gamma.pois") {
         par.shape <- as.vector(exp(coef.mat[1,]))
         par.rate <- as.vector(exp(-obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
-        par <- data.frame(shape = par.shape, rate = par.rate)
+        par.mu <- par.shape*par.rate
+        par <- data.frame(shape = par.shape, rate = par.rate, mu = par.mu)
     } else if(obj@model == "ln.nb") {
         par.sdlog <- as.vector( exp(coef.mat[1,]))
         par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
-        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
+        par.mu <- exp(par.meanlog + 1/2*par.sdlog^2)
+        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog, mu = par.mu)
     } else if(obj@model == "ln.ln") {
         par.sdlog <- as.vector( exp(coef.mat[1,]))
         par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
-        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
+        par.mu <- exp(par.meanlog + 1/2*par.sdlog^2)
+        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog, mu = par.mu)
     }
     
     rownames(par) <- rownames(obj@dnaAnnot)
