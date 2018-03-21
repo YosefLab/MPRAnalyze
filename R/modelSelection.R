@@ -28,7 +28,5 @@ setModel <- function(obj, model) {
 
 autoChooseModel <- function(obj) {
     obj@model <- "gamma.pois"
-    ##modelDiag <- evalModels()
-    ##TODO: select the best model somehow
     return(obj)
 }

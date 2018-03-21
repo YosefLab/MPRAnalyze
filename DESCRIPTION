@@ -38,6 +38,7 @@ Collate:
     'likelihoodFunctions.R'
     'modelSelection.R'
     'mpraObject.R'
+    'accessFunctions.R'
     'objectiveFunctions.R'
     'optimizers.R'
     'utilFunctions.R'
