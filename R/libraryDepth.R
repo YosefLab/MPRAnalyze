@@ -24,7 +24,7 @@
 #' 
 #' @export
 estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both", 
-                                 depth.estimator="uq") {
+                                depth.estimator="uq") {
     
     if(!(which.lib %in% c("dna", "rna", "both"))) {
         stop("which.lib must be 'dna', 'rna' or 'both' (default)")
@@ -116,7 +116,7 @@ DEPTH_EST_FUNCTIONS = list(
 #' @export
 setDepthFactors <- function(obj, dnaDepth, rnaDepth) {
     if(length(dnaDepth) != NCOL(obj@dnaCounts) 
-       | length(rnaDepth) != NCOL(obj@rnaCounts)) {
+        | length(rnaDepth) != NCOL(obj@rnaCounts)) {
         stop("invalid length of depth factors")
     }
     obj@dnaDepth <- dnaDepth

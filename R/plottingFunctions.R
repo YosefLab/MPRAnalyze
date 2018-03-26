@@ -20,22 +20,18 @@
 #' @param show.outliers (bool)
 #' Whether to show outliers in boxplot. This slows if many samples were observed.
 #' 
-#' @return (gplot) Boxplot graphic.
+#' @return (ggplot) Boxplot graphic.
 #' 
 #' @import ggplot2
-#' 
 #' @export
 plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE, 
                          show.outliers=FALSE){
     
     ## set outlier handling
-    if(show.outliers) {
-        outlier.shape = "x"
-    } else {
-        outlier.shape = NA
-    } 
-    
+    outlier.shape <- if(show.outliers) "x" else NA
+
     ## check whether test results available
+    
     if(!is.null(obj@results)) {
         fdr <- round(log(obj@results[id,]$fdr)/log(10),2)
     } else {

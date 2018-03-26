@@ -17,8 +17,10 @@ test.lrt <- function(obj) {
     ll.full <- obj@modelFits$ll
     ll.red <- obj@modelFits.red$ll
     df.dna <- obj@modelFits$d.df
-    df.rna.full <- obj@modelFits$r.df + obj@modelFits$r.ctrl.df + length(obj@rnaCtrlScale)
-    df.rna.red <- obj@modelFits.red$r.df + obj@modelFits.red$r.ctrl.df + length(obj@rnaCtrlScale)
+    df.rna.full <- obj@modelFits$r.df + obj@modelFits$r.ctrl.df + 
+        length(obj@rnaCtrlScale)
+    df.rna.red <- obj@modelFits.red$r.df + obj@modelFits.red$r.ctrl.df + 
+        length(obj@rnaCtrlScale)
     df.full <- df.dna + df.rna.full 
     df.red <- df.dna + df.rna.red 
     
@@ -28,11 +30,11 @@ test.lrt <- function(obj) {
     fdr <- p.adjust(pval, 'BH')
     
     res <- data.frame(statistic=lrt, pval=pval, fdr=fdr, df.test=df,
-                      df.dna=df.dna, df.rna.full=df.rna.full, 
-                      df.rna.red=df.rna.red)
+                    df.dna=df.dna, df.rna.full=df.rna.full, 
+                    df.rna.red=df.rna.red)
     ## if condition is single term, extract the corresponding coefficient as logFC
     condition.name <- colnames(obj@designs@rnaFull)[!(colnames(obj@designs@rnaFull) %in% 
-                                                          colnames(obj@designs@rnaRed))]
+                                                        colnames(obj@designs@rnaRed))]
     if(length(condition.name) == 1) {
         ## single coefficient is the log Fold Change
         res$logFC <- extractModelParameters.RNA(obj)[,condition.name]
@@ -57,12 +59,12 @@ test.lrt <- function(obj) {
 test.coefficient <- function(obj, factor, contrast) {
     if(!(factor %in% colnames(obj@rnaAnnot))) {
         stop("given factor: ", factor, 
-             " is not included in object annotations")
+            " is not included in object annotations")
     } 
     ref <- levels(as.factor(obj@rnaAnnot[,factor]))[1]
     if (ref == contrast) {
         stop("given contrast ", contrast, 
-             " is the reference level of factor ", factor)
+            " is the reference level of factor ", factor)
     }
     coef.id <- colnames(obj@designs@rnaFull) %in% paste0(factor, contrast)
     if(!any(coef.id)) {
@@ -82,8 +84,9 @@ test.coefficient <- function(obj, factor, contrast) {
     pval <- pchisq(q = statistic, df = 1, lower.tail = FALSE)
     fdr <- p.adjust(pval, 'BH')
     
-    obj@results <- data.frame(logFC=logFC, statistic=statistic, pval=pval, fdr=fdr, 
-                              row.names = rownames(obj@dnaCounts))
+    obj@results <- data.frame(logFC=logFC, statistic=statistic, 
+                            pval=pval, fdr=fdr, 
+                            row.names = rownames(obj@dnaCounts))
     return(obj)
 }
 
@@ -124,20 +127,20 @@ test.empirical <- function(obj, statistic=NULL) {
     }
     
     zscore <- (statistic - mean(statistic, na.rm=TRUE)) / sd(statistic, 
-                                                             na.rm=TRUE)
+                                                            na.rm=TRUE)
     mad.score <- (statistic - median(statistic, na.rm=TRUE)) / mad(statistic, 
-                                                                   na.rm=TRUE)
+                                                                na.rm=TRUE)
     
     res <- data.frame(statistic=statistic,
-                      zscore=zscore,
-                      mad.score=mad.score)
+                    zscore=zscore,
+                    mad.score=mad.score)
     
     if(!is.null(obj@controls)) {
         ctrls <- statistic[obj@controls]
         res$zscore.ctrl <- ((statistic - mean(ctrls, na.rm=TRUE)) / 
                                 sd(ctrls, na.rm=TRUE))
         res$mad.score.ctrl <- ((statistic - median(ctrls, na.rm=TRUE)) / 
-                                   mad(ctrls, na.rm=TRUE))
+                                mad(ctrls, na.rm=TRUE))
         
         res$epval <- 1 - ecdf(ctrls)(statistic)
         res$fdr <- p.adjust(res$epval, "BH")

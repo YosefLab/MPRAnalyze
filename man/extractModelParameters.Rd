@@ -2,14 +2,18 @@
 % Please edit documentation in R/accessFunctions.R
 \name{extractModelParameters.DNA}
 \alias{extractModelParameters.DNA}
+\alias{extractModelParameters.RNA}
+\alias{extractModelParameters.RNA}
 \title{extract the DNA model parameters}
 \usage{
 extractModelParameters.DNA(obj, features = NULL, full = TRUE)
+
+extractModelParameters.RNA(obj, features = NULL, full = TRUE)
 }
 \arguments{
 \item{obj}{the MpraObject to extract the parameters from}
 
-\item{features}{the features to extract the parameters from (be default, 
+\item{features}{the features to extract the parameters from (by default, 
 parameters will be returned for all features)}
 
 \item{full}{if TRUE (default), return the parameters of the full model. 

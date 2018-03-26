@@ -8,7 +8,7 @@
 #' @return DNA fits (numeric, enhancers x samples)
 #' 
 #' @export
-getDNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE){
+getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE){
     if(is.null(enhancers)) {
         enhancers <- names(obj@modelFits$ll)
     }
@@ -48,7 +48,7 @@ getDNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE){
 #' @return RNA fits (numeric, enhancers x samples)
 #' 
 #' @export
-getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE){
+getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE){
     if(is.null(enhancers)) {
         enhancers <- names(obj@modelFits$ll)
     }
@@ -74,8 +74,8 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
     
     coef.mat <- t(fit$r.coef[enhancers,-1,drop=FALSE])
     if(!is.null(obj@rnaCtrlScale) & rnascale) {
-        coef.mat <- rbind(coef.mat, 
-                          replicate(NCOL(coef.mat), obj@rnaCtrlScale))
+        coef.mat <- rbind(coef.mat,
+                        replicate(NCOL(coef.mat), obj@rnaCtrlScale))
     }
     rfit <- exp(joint.des.mat %*% coef.mat)
     
@@ -91,8 +91,13 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
 }
 
 #' extract the DNA model parameters
+#' 
+#' @rdname extractModelParameters
+#' @aliases extractModelParameters.DNA
+#' extractModelParameters.RNA
+#' 
 #' @param obj the MpraObject to extract the parameters from
-#' @param features the features to extract the parameters from (be default, 
+#' @param features the features to extract the parameters from (by default, 
 #' parameters will be returned for all features)
 #' @param full if TRUE (default), return the parameters of the full model. 
 #' Otherwise, return the parameters of the reduced model (only relevant for 
@@ -102,6 +107,7 @@ getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE
 #' it depends on the distributional model used (`alpha` for `gamma.pois`, variance 
 #' for `ln.nb` and `ln.ln`)
 #' @export
+#' @rdname extractModelParameters
 extractModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(features)) {
         features <- 1:NROW(obj@dnaCounts)
@@ -124,17 +130,8 @@ extractModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
     return(as.data.frame(coef.mat))
 }
 
-#' extract the RNA model parameters
-#' @param obj the MpraObject to extract the parameters from
-#' @param features the features to extract the parameters from (be default, 
-#' parameters will be returned for all features)
-#' @param full if TRUE (default), return the parameters of the full model. 
-#' Otherwise, return the parameters of the reduced odel
-#' @return a data.frame of features (rows) by parameters (cols). By convension, the
-#' first parameter is related to the second moment, and the interpretation of 
-#' it depends on the distributional model used (`alpha` for `gamma.pois`,  
-#' `psi`for `ln.nb`, variance for `ln.ln`)
 #' @export
+#' @rdname extractModelParameters
 extractModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(obj@modelFits)){
         stop("can't extract model parameters before fitting a model")
@@ -172,7 +169,6 @@ extractModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
 #' @return fit parameters (numeric, samples x parameters)
 #' 
 #' @export
-
 #' @rdname getDistrParam
 getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
     
@@ -203,6 +199,7 @@ getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
     return(par)
 }
 
+#' @export
 #' @rdname getDistrParam
 getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
     
@@ -212,7 +209,7 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
         fit <- obj@modelFits.red
     }
     rfit <- as.vector(getRNAFits(obj, enhancers=enhancer, depth=FALSE, 
-                                 full=full, rnascale=TRUE))
+                                full=full, rnascale=TRUE))
     
     if(obj@model == "gamma.pois") {
         par.size <- as.vector(exp(fit$r.coef[enhancer,1]))

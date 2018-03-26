@@ -70,7 +70,7 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
     ## Fit the full model (with SE extraction if fit.SE is on)
     message("Fitting model...")
     pb <- progress_bar$new(format = "[:bar] :percent (:current/:total)", 
-                           total = NROW(obj@dnaCounts), clear = !verbose)
+                        total = NROW(obj@dnaCounts), clear = !verbose)
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         pb$tick()
         tryCatch({
@@ -94,11 +94,11 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
     
     if(!is.null(reducedDesign)) {
         obj@designs@rnaRed <- getDesignMat(design=reducedDesign, 
-                                           annotations=obj@rnaAnnot)
+                                        annotations=obj@rnaAnnot)
         
         message("Fitting reduced model...")
         pb <- progress_bar$new(format = "[:bar] :percent (:current/:total)", 
-                               total = NROW(obj@dnaCounts), clear = verbose)
+                            total = NROW(obj@dnaCounts), clear = verbose)
         models <- bplapply(rownames(obj@dnaCounts), function(rn) {
             pb$tick()
             tryCatch({
@@ -187,7 +187,7 @@ analyze.comparative.lrt <- function(obj, condition=NULL, mode=NULL,
     obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
     obj@designs@rnaFull <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot)
     obj@designs@rnaRed <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot, 
-                                       condition=condition)
+                                    condition=condition)
     
     return(analyze.lrt(obj=obj))
 }
@@ -335,7 +335,7 @@ analyze.lrt <- function(obj) {
                 model=obj@model,
                 dcounts=obj@dnaCounts[rn,,drop=FALSE],
                 rcounts=rbind(obj@rnaCounts[rn,], 
-                              obj@rnaCounts[obj@controls.forfit,]),
+                            obj@rnaCounts[obj@controls.forfit,]),
                 ddepth=obj@dnaDepth,
                 rdepth=obj@rnaDepth,
                 rctrlscale=obj@rnaCtrlScale,
@@ -357,7 +357,7 @@ analyze.lrt <- function(obj) {
                 model=obj@model,
                 dcounts=obj@dnaCounts[rn,,drop=FALSE],
                 rcounts=rbind(obj@rnaCounts[rn,], 
-                              obj@rnaCounts[obj@controls.forfit,]),
+                            obj@rnaCounts[obj@controls.forfit,]),
                 ddepth=obj@dnaDepth,
                 rdepth=obj@rnaDepth,
                 rctrlscale=obj@rnaCtrlScale,
@@ -382,17 +382,17 @@ analyze.quantitative.lrt <- function(obj, dnaDesign=NULL, rnaDesign=NULL) {
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         tryCatch({
             return(fit.dnarna.noctrlobs(model=obj@model,
-                                        dcounts=obj@dnaCounts[rn,,drop=FALSE],
-                                        rcounts=obj@rnaCounts[rn,,drop=FALSE],
-                                        ddepth=obj@dnaDepth,
-                                        rdepth=obj@rnaDepth,
-                                        rctrlscale=NULL,
-                                        ddesign.mat=obj@designs@dna,
-                                        rdesign.mat=obj@designs@rnaFull,
-                                        d2rdesign.mat=obj@designs@dna2rna,
-                                        rdesign.ctrl.mat=NULL,
-                                        theta.d.ctrl.prefit=NULL,
-                                        compute.hessian=FALSE))
+                dcounts=obj@dnaCounts[rn,,drop=FALSE],
+                rcounts=obj@rnaCounts[rn,,drop=FALSE],
+                ddepth=obj@dnaDepth,
+                rdepth=obj@rnaDepth,
+                rctrlscale=NULL,
+                ddesign.mat=obj@designs@dna,
+                rdesign.mat=obj@designs@rnaFull,
+                d2rdesign.mat=obj@designs@dna2rna,
+                rdesign.ctrl.mat=NULL,
+                theta.d.ctrl.prefit=NULL,
+                compute.hessian=FALSE))
         }, error = function(err) {message("error fitting: ", rn)})
     })
     names(models) <- rownames(obj@dnaCounts)
@@ -440,4 +440,4 @@ analyze.quantitative.lrt <- function(obj, dnaDesign=NULL, rnaDesign=NULL) {
 }
 
 QUANT_ANALYSIS <- list(quantitative.lrt = analyze.quantitative.lrt,
-                       quantitative.empirical = analyze.quantitative.empirical)
+                    quantitative.empirical = analyze.quantitative.empirical)

@@ -42,5 +42,5 @@ Collate:
     'objectiveFunctions.R'
     'optimizers.R'
     'utilFunctions.R'
-    'plotresults.R'
+    'plottingFunctions.R'
     'simulateMPRA.R'
