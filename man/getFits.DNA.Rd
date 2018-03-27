@@ -4,7 +4,8 @@
 \alias{getFits.DNA}
 \title{Get DNA model fits from an MpraObject}
 \usage{
-getFits.DNA(obj, enhancers = NULL, depth = TRUE, full = TRUE)
+getFits.DNA(obj, enhancers = NULL, depth = TRUE, full = TRUE,
+  transition = FALSE)
 }
 \arguments{
 \item{obj}{MpraObject to extract from}
@@ -14,6 +15,8 @@ getFits.DNA(obj, enhancers = NULL, depth = TRUE, full = TRUE)
 \item{depth}{include depth correction}
 
 \item{full}{whether to extract from full model}
+
+\item{transition}{use the DNA->RNA transition matrix (deafult: FALSE)}
 }
 \value{
 DNA fits (numeric, enhancers x samples)

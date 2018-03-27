@@ -104,19 +104,15 @@ test.coefficient <- function(obj, factor, contrast) {
 #'     \item statistic: the statistic (either the provided, or extracted from the
 #'     models)
 #'     \item zscore: Z-score of the statistic (number of standard devisations 
-#'     from the mean)
+#'     from the mean). If controls are available, the score is based on their 
+#'     distribution: so it's the number of control-sd from the control-mean
 #'     \item mad.score: a median-baed equivalent of the Z-score, with less 
-#'     sensitivity to outlier values
-#'     \item zscore.ctrl: only available if negative controls are provided.
-#'     a Z-score based on the controls distribution, instead of the distribution 
-#'     of the complete set of observations
-#'     \item mad.score.ctrl: only available if negative controls are provided.
-#'     a MAD-score based on the controls distribution, instead of the distribution 
-#'     of the complete set of observations
-#'     \item epval: only available if negative controls are provided. empirical 
-#'     P-value, using the control distribution as the null
-#'     \item fdr: only available if negative controls are provided. BH adjusted-
-#'     empricial p-values
+#'     sensitivity to outlier values. If controls are provided, it's based
+#'     on their distribution.
+#'     \item pval.zscore: a p-value based on the normal approximation of the
+#'     Z-scores
+#'     \item pval.empirical: only available if negative controls are provided. 
+#'     empirical P-value, using the control distribution as the null
 #' }
 test.empirical <- function(obj, statistic=NULL) {
     
@@ -124,25 +120,22 @@ test.empirical <- function(obj, statistic=NULL) {
         ## extract slope - second coefficient of the rna model
         statistic <- obj@modelFits$r.coef[,2]
     }
-    
-    zscore <- (statistic - mean(statistic, na.rm=TRUE)) / sd(statistic, 
-                                                            na.rm=TRUE)
-    mad.score <- (statistic - median(statistic, na.rm=TRUE)) / mad(statistic, 
-                                                                na.rm=TRUE)
-    
-    res <- data.frame(statistic=statistic,
-                    zscore=zscore,
-                    mad.score=mad.score)
-    
-    if(!is.null(obj@controls)) {
+    res <- data.frame(statistic=statistic)
+                      
+    if(is.null(obj@controls)) {
+        res$zscore <- (statistic - mean(statistic, na.rm=TRUE)) / 
+            sd(statistic, na.rm=TRUE)
+        res$mad.score <- (statistic - median(statistic, na.rm=TRUE)) / 
+            mad(statistic, na.rm=TRUE)
+        res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
+    } else {
         ctrls <- statistic[obj@controls]
-        res$zscore.ctrl <- ((statistic - mean(ctrls, na.rm=TRUE)) / 
+        res$zscore <- ((statistic - mean(ctrls, na.rm=TRUE)) / 
                                 sd(ctrls, na.rm=TRUE))
-        res$mad.score.ctrl <- ((statistic - median(ctrls, na.rm=TRUE)) / 
+        res$mad.score <- ((statistic - median(ctrls, na.rm=TRUE)) / 
                                 mad(ctrls, na.rm=TRUE))
-        
-        res$epval <- 1 - ecdf(ctrls)(statistic)
-        res$fdr <- p.adjust(res$epval, "BH")
+        res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
+        res$pval.empirical <- 1 - ecdf(ctrls)(statistic)
     }
     
     return(res)

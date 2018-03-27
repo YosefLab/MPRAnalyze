@@ -21,19 +21,15 @@ estimate of slope, or the given statistic. These are:
     \item statistic: the statistic (either the provided, or extracted from the
     models)
     \item zscore: Z-score of the statistic (number of standard devisations 
-    from the mean)
+    from the mean). If controls are available, the score is based on their 
+    distribution: so it's the number of control-sd from the control-mean
     \item mad.score: a median-baed equivalent of the Z-score, with less 
-    sensitivity to outlier values
-    \item zscore.ctrl: only available if negative controls are provided.
-    a Z-score based on the controls distribution, instead of the distribution 
-    of the complete set of observations
-    \item mad.score.ctrl: only available if negative controls are provided.
-    a MAD-score based on the controls distribution, instead of the distribution 
-    of the complete set of observations
-    \item epval: only available if negative controls are provided. empirical 
-    P-value, using the control distribution as the null
-    \item fdr: only available if negative controls are provided. BH adjusted-
-    empricial p-values
+    sensitivity to outlier values. If controls are provided, it's based
+    on their distribution.
+    \item pval.zscore: a p-value based on the normal approximation of the
+    Z-scores
+    \item pval.empirical: only available if negative controls are provided. 
+    empirical P-value, using the control distribution as the null
 }
 }
 \description{
