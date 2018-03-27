@@ -4,13 +4,17 @@
 #' @param enhancers enhancer to extract 
 #' @param depth include depth correction
 #' @param full whether to extract from full model
+#' @param transition use the DNA->RNA transition matrix (deafult: FALSE)
 #' 
 #' @return DNA fits (numeric, enhancers x samples)
 #' 
 #' @export
-getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE){
+getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, 
+                        transition=FALSE){
     if(is.null(enhancers)) {
         enhancers <- names(obj@modelFits$ll)
+    } else if(is.numeric(enhancers)) {
+        enhancers <- names(obj@modelFits$ll)[enhancers]
     }
     if(full == TRUE){
         fit <- obj@modelFits
@@ -21,11 +25,16 @@ getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE){
     coef.mat <- t(fit$d.coef[enhancers,,drop=FALSE])
     coef.mat[is.na(coef.mat)] <- 0
     
+    dmat <- obj@designs@dna
+    if(transition) {
+        dmat <- obj@designs@dna2rna
+    }
+    
     if(obj@model == "gamma.pois") {
         # alpha / rate
-        dfit <- exp(coef.mat[1,] + obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
+        dfit <- exp(coef.mat[1,] + dmat %*% coef.mat[-1,,drop=FALSE])
     } else if(obj@model == "ln.nb" | obj@model == "ln.ln") {
-        dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
+        dfit <- exp(dmat %*% coef.mat[-1,,drop=FALSE])
     }
     
     if(depth == TRUE){
@@ -33,7 +42,11 @@ getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE){
     }
     
     colnames(dfit) <- enhancers
-    rownames(dfit) <- rownames(obj@dnaAnnot)
+    if(transition) {
+        rownames(dfit) <- rownames(obj@rnaAnnot)
+    } else {
+        rownames(dfit) <- rownames(obj@dnaAnnot)
+    }
     return(t(dfit))
 }
 
@@ -68,7 +81,8 @@ getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRU
         rctrlscale <- NULL
     }
     
-    dfit <- getDNAFits(obj=obj, enhancers=enhancers, depth=FALSE, full=full)
+    dfit <- getFits.DNA(obj=obj, enhancers=enhancers, depth=FALSE, 
+                        full=full, transition=TRUE)
     
     joint.des.mat <- cbind(rdesign, rctrldesign)
     
