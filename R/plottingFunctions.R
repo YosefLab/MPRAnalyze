@@ -151,9 +151,8 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE,
 #' (intercept) vs the total data. Else, condition must be a valid factor in the 
 #' object column annotations that was included in the design. In that case, a 
 #' plot is generated for each level of the factor
-#' @param logScale iff TRUE, figure is plotted in log scale
 #' @export
-plotAlphaRatio <- function(obj, condition = NULL, logScale=TRUE) {
+plotAlphaRatio <- function(obj, condition = NULL) {
     if(is.null(condition)) {
         ratio <- rowMeans(obj@rnaCounts) / rowMeans(obj@dnaCounts)
         alpha <- getAlpha(obj)
@@ -205,21 +204,22 @@ plotPvalCDF <- function(p, categories, adjusted=FALSE) {
 #' @param enhancer the id of the enhancer to plot (index or name)
 #' @param rna if TRUE, plot the RNA distribution. Otherwise plot the DNA.
 #' @import ggplot2
-plotObsExpDistributions <- function(obj, enhancer, rna=TRUE) {
+#' @export
+plotObsExpDistributions <- function(obj, enhancer, rna=TRUE, bins=NULL) {
     if(length(enhancer) > 1) {
-        stop("plase supply a single enhancer (index or name)")
+        stop("please supply a single enhancer (index or name)")
     }
     if(rna) {
-        df <- data.frame(obs = obj@rnaCounts[enhancer,], 
-                         exd = as.numeric(getRNAFits(obj, enhancer)))
+        df <- data.frame(obs = obj@rnaCounts[enhancer,],
+                         exd = as.numeric(getFits.RNA(obj, enhancer)))
     } else {
         df <- data.frame(obs = obj@dnaCounts[enhancer,], 
-                         exd = as.numeric(getDNAFits(obj, enhancer)))
+                         exd = as.numeric(getFits.DNA(obj, enhancer)))
     }
     
     df <- df[df$obs > 0,]
     ggplot(df) + 
-        geom_histogram(aes_(x = ~obs, y = "..density..", fill="Observed")) + 
+        geom_histogram(aes_(x = ~obs, ~..density.., fill="Observed")) + 
         geom_density(aes_(x= ~exd, color="Expected"), size=2) + 
         scale_fill_manual(name=element_blank(), values = c("Observed"='grey33')) + 
         scale_colour_manual(name=element_blank(), values = c('Expected'='black')) + 
