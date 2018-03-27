@@ -5,29 +5,19 @@
 \title{Perform quantitative analysis on the MPRA data. This analysis aims to determine
 which sequences have a regulatory function, when no condition is being tested.}
 \usage{
-analyze.quantitative(obj, mode = NULL, dnaDesign = ~1, rnaDesign = ~1)
+analyze.quantitative(obj, dnaDesign = ~1, rnaDesign = ~1)
 }
 \arguments{
 \item{obj}{the MpraObject}
-
-\item{mode}{the analysis mode, see details}
 
 \item{dnaDesign}{the design of the DNA counts}
 
 \item{rnaDesign}{the design of the RNA counts}
 }
 \value{
-the MpraObject, with populated models and results
+the MpraObject, with populated models
 }
 \description{
-Perform quantitative analysis on the MPRA data. This analysis aims to determine
-which sequences have a regulatory function, when no condition is being tested.
-}
-\details{
-quantitative analysis can be performed in several ways, depending on
-the experimental design and user preference. This decision effects the model
-fitting and may cause certain types of hypothesis testing to be enabled or 
-disabled.
 \itemize{
   \item epirical: the model is fitted as specified, enabling future empirical
   testing (either empirical p-value if negative controls are provided, or a

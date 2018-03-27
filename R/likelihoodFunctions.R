@@ -9,10 +9,10 @@ get.ll.functions <- function(model) {
         llfnDNA <- ll.dna.gamma.pois
         llfnRNA <- ll.rna.gamma.pois
     } else if(model == "ln.nb"){
-        llfnDNA <- ll.dna.ln.nb
+        llfnDNA <- ll.dna.ln
         llfnRNA <- ll.rna.ln.nb
     } else if(model == "ln.ln"){
-        llfnDNA <- ll.dna.ln.ln
+        llfnDNA <- ll.dna.ln
         llfnRNA <- ll.rna.ln.ln
     } else {
         stop("model ", model, " not supported")
@@ -55,24 +55,7 @@ ll.dna.gamma.pois <- function(theta, dcounts, log.ddepth, ddesign.mat) {
 }
 
 #' @rdname ll.dna
-ll.dna.ln.nb <- function(theta, dcounts, log.ddepth, ddesign.mat) {
-    
-    log.d.est <- matrix(rep(ddesign.mat %*% theta[-1] + log.ddepth, 
-                            NCOL(dcounts)), ncol=NCOL(dcounts))
-    
-    ## compute likelihood
-    ll <- sum(dlnorm(x = dcounts,
-                    meanlog = log.d.est,
-                    sdlog = exp(theta[1]),
-                    log = TRUE))
-    
-    return(-ll)
-}
-
-#' @rdname ll.dna
-ll.dna.ln.ln <- function(theta,
-                        dcounts, log.ddepth,
-                        ddesign.mat) {
+ll.dna.ln <- function(theta, dcounts, log.ddepth, ddesign.mat) {
     
     log.d.est <- matrix(rep(ddesign.mat %*% theta[-1] + log.ddepth, 
                             NCOL(dcounts)), ncol=NCOL(dcounts))

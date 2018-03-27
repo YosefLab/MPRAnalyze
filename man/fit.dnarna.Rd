@@ -5,16 +5,11 @@
 \alias{fit.dnarna.noctrlobs}
 \alias{fit.dnarna.wctrlobs.iter}
 \alias{fit.dnarna.noctrlobs}
-\alias{fit.dnarna.wctrlobs.iter}
 \title{Fit dna and rna model to a given enhancer}
 \usage{
 fit.dnarna.noctrlobs(model, dcounts, rcounts, ddepth, rdepth, rctrlscale,
   ddesign.mat, rdesign.mat, d2rdesign.mat, rdesign.ctrl.mat,
   theta.d.ctrl.prefit, compute.hessian)
-
-fit.dnarna.wctrlobs.iter(model, dcounts, rcounts, ddepth, rdepth,
-  rctrlscale = NULL, ddesign.mat, rdesign.mat, d2rdesign.mat,
-  rdesign.ctrl.mat, theta.d.ctrl.prefit, compute.hessian)
 }
 \arguments{
 \item{model}{noise model}

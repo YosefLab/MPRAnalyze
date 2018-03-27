@@ -40,8 +40,7 @@ test.lrt <- function(obj) {
         res$logFC <- extractModelParameters.RNA(obj)[,condition.name]
     }
     
-    obj@results <- res
-    return(obj)
+    return(res)
 }
 
 #' Calculate the significance of a factor in the regression model
@@ -84,10 +83,10 @@ test.coefficient <- function(obj, factor, contrast) {
     pval <- pchisq(q = statistic, df = 1, lower.tail = FALSE)
     fdr <- p.adjust(pval, 'BH')
     
-    obj@results <- data.frame(logFC=logFC, statistic=statistic, 
-                            pval=pval, fdr=fdr, 
-                            row.names = rownames(obj@dnaCounts))
-    return(obj)
+    res <- data.frame(logFC=logFC, statistic=statistic, 
+                      pval=pval, fdr=fdr, 
+                      row.names = rownames(obj@dnaCounts))
+    return(res)
 }
 
 #' test for significant activity (quantitative analysis) using various empirical
@@ -146,6 +145,5 @@ test.empirical <- function(obj, statistic=NULL) {
         res$fdr <- p.adjust(res$epval, "BH")
     }
     
-    obj@results <- res
-    return(obj)
+    return(res)
 }

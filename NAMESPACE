@@ -2,7 +2,6 @@
 
 export(MpraObject)
 export(analyze.comparative)
-export(analyze.comparative.lrt)
 export(analyze.quantitative)
 export(estimateDepthFactors)
 export(extractModelParameters.DNA)

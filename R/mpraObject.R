@@ -80,14 +80,11 @@ setClass("MpraObject", validity = validateMpraObject,
              rnaDepth = "numeric",
              rnaCtrlScale = "numericORNULL",
              
-             mode = "character",
              model = "character",
              designs = "Designs",
              modelFits = "list",
              modelFits.red = "list", 
              modelPreFits.dna.ctrl = "listORNULL",
-             
-             results = "listORNULL",
              
              BPPARAM = "BiocParallelParam"
          ))
