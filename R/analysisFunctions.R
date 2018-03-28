@@ -167,7 +167,7 @@ analyze.quantitative <- function(obj, dnaDesign=~1, rnaDesign=~1){
     
     message("Fitting model...")
     pb <- progress_bar$new(format = "[:bar] :percent (:current/:total)", 
-                           total = NROW(obj@dnaCounts), clear = !verbose)
+                           total = NROW(obj@dnaCounts))
     models <- bplapply(rownames(obj@dnaCounts), function(rn) {
         tryCatch({
             pb$tick()
