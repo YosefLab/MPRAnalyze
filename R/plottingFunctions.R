@@ -226,3 +226,26 @@ plotObsExpDistributions <- function(obj, enhancer, rna=TRUE, bins=NULL) {
         theme(text=element_text(size=20), legend.position = "none") +
         xlab("counts")
 }
+
+#' plot the relationship between the mean and the variance of the DNA and RNA 
+#' distributions. Plots are in log scale.
+#' @param obj the MpraObject to plot
+#' @return a list of two ggplot objects: 'dna' and 'rna'.
+#' @import ggplot2
+#' @export
+plotMeanVariance <- function(obj) {
+    df.d <- data.frame(mean = rowMeans(obj@dnaCounts),
+                       var = apply(obj@dnaCounts, 1, var))
+                     
+    df.r <- data.frame(mean = rowMeans(obj@rnaCounts),
+                       var = apply(obj@rnaCounts, 1, var))
+    
+    pd <- ggplot(data = df.d, aes(log(mean), log(var))) + 
+        geom_point() +
+        theme(text=element_text(size=20), legend.position = "none")
+    pr <- ggplot(data = df.r, aes(log(mean), log(var))) + 
+        geom_point() + 
+        theme(text=element_text(size=20), legend.position = "none")
+    
+    return(list(dna = pd, rna = pr))
+}
