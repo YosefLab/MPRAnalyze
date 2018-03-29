@@ -87,7 +87,7 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
                 rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
                 theta.d.ctrl.prefit=theta.d.ctrl.prefit,
                 compute.hessian=fit.se))
-        }, error = function(err) {message("error fitting: ", rn)})
+        }, error = function(err) {message("error fitting ", rn, ": ", err)})
     }, BPPARAM = obj@BPPARAM)
     names(models) <- rownames(obj@dnaCounts)
     obj@modelFits <-reformatModels(models)
@@ -115,7 +115,7 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
                     rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
                     theta.d.ctrl.prefit=theta.d.ctrl.prefit,
                     compute.hessian=FALSE))
-            }, error = function(err) {message("error fitting: ", rn)})
+            }, error = function(err) {message("error fitting: ", rn, ": ", err)})
         }, BPPARAM = obj@BPPARAM)
         names(models) <- rownames(obj@dnaCounts)
         obj@modelFits.red <- reformatModels(models)
@@ -184,7 +184,7 @@ analyze.quantitative <- function(obj, dnaDesign=~1, rnaDesign=~1){
                 rdesign.ctrl.mat=NULL,
                 theta.d.ctrl.prefit=NULL,
                 compute.hessian=FALSE))
-        }, error = function(err) {message("error fitting: ", rn)})
+        }, error = function(err) {message("error fitting: ", rn, ": ", err)})
     }, BPPARAM = obj@BPPARAM)
     names(models) <- rownames(obj@dnaCounts)
     obj@modelFits <- reformatModels(models)
