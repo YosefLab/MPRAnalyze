@@ -96,6 +96,9 @@ test.coefficient <- function(obj, factor, contrast) {
 #' @param statistic if null [default], the intercept term is used as the score.
 #' An alternate score can be provided by setting 'statistic'. Must be a numeric
 #' vector.
+#' @param useControls is TRUE and controls are available, use the controls to
+#' establish the background model and compare against. This allows for more
+#' accurate zscores as well as empircal p-values.
 #' 
 #' @export
 #' @return a data.frame of empirical summary statistics based on the model's 
@@ -114,7 +117,7 @@ test.coefficient <- function(obj, factor, contrast) {
 #'     \item pval.empirical: only available if negative controls are provided. 
 #'     empirical P-value, using the control distribution as the null
 #' }
-test.empirical <- function(obj, statistic=NULL) {
+test.empirical <- function(obj, statistic=NULL, useControls=TRUE) {
     
     if(is.null(statistic)) {
         ## extract slope - second coefficient of the rna model
@@ -122,7 +125,7 @@ test.empirical <- function(obj, statistic=NULL) {
     }
     res <- data.frame(statistic=statistic)
                       
-    if(is.null(obj@controls)) {
+    if(is.null(obj@controls) | !useControls) {
         res$zscore <- (statistic - mean(statistic, na.rm=TRUE)) / 
             sd(statistic, na.rm=TRUE)
         res$mad.score <- (statistic - median(statistic, na.rm=TRUE)) / 
