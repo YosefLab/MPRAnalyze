@@ -141,6 +141,12 @@ getAlpha <- function(obj, term=NULL, value=NULL, full=TRUE) {
     } else {
         coef <- exp(coefs[,coef.id])
     }
+    
+    ##add the intercept from the control model
+    if(!is.null(obj@designs@rnaCtrlFull)) {
+        coef <- coef * exp(obj@modelPreFits.dna.ctrl$r.coef[1,2])
+    }
+    
     names(coef) <- rownames(coefs)
     return(coef)
 }
