@@ -5,7 +5,7 @@
 \title{create a scatter plot of the model alpha (trascription rate) vs. the naive
 estimator (RNA / DNA).}
 \usage{
-plotAlphaRatio(obj, condition = NULL)
+plotAlphaRatio(obj, condition = NULL, log = FALSE)
 }
 \arguments{
 \item{obj}{the MpraObject}
@@ -14,6 +14,8 @@ plotAlphaRatio(obj, condition = NULL)
 (intercept) vs the total data. Else, condition must be a valid factor in the 
 object column annotations that was included in the design. In that case, a 
 plot is generated for each level of the factor}
+
+\item{log}{plot in log scale}
 }
 \description{
 create a scatter plot of the model alpha (trascription rate) vs. the naive

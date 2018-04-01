@@ -5,7 +5,7 @@
 \title{test for significant activity (quantitative analysis) using various empirical
 tests (see details)}
 \usage{
-test.empirical(obj, statistic = NULL)
+test.empirical(obj, statistic = NULL, useControls = TRUE)
 }
 \arguments{
 \item{obj}{the MpraObject, after running an analysis function}
@@ -13,6 +13,10 @@ test.empirical(obj, statistic = NULL)
 \item{statistic}{if null [default], the intercept term is used as the score.
 An alternate score can be provided by setting 'statistic'. Must be a numeric
 vector.}
+
+\item{useControls}{is TRUE and controls are available, use the controls to
+establish the background model and compare against. This allows for more
+accurate zscores as well as empircal p-values.}
 }
 \value{
 a data.frame of empirical summary statistics based on the model's 

@@ -4,7 +4,7 @@
 \alias{plotObsExpDistributions}
 \title{Plot the observed and expected distributions of a given enhancer}
 \usage{
-plotObsExpDistributions(obj, enhancer, rna = TRUE, bins = NULL)
+plotObsExpDistributions(obj, enhancer, bins = NULL)
 }
 \arguments{
 \item{obj}{MpraObject after model fitting}
