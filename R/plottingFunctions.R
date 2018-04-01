@@ -151,8 +151,9 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE,
 #' (intercept) vs the total data. Else, condition must be a valid factor in the 
 #' object column annotations that was included in the design. In that case, a 
 #' plot is generated for each level of the factor
+#' @param log plot in log scale
 #' @export
-plotAlphaRatio <- function(obj, condition = NULL) {
+plotAlphaRatio <- function(obj, condition = NULL, log=FALSE) {
     if(is.null(condition)) {
         ratio <- rowMeans(obj@rnaCounts) / rowMeans(obj@dnaCounts)
         alpha <- getAlpha(obj)
@@ -160,6 +161,10 @@ plotAlphaRatio <- function(obj, condition = NULL) {
             geom_point(mapping = aes(x = ratio, y = alpha)) + 
             geom_abline(intercept=0, slope=1) + 
             xlab("RNA / DNA") + ylab("alpha")
+        if(log) {
+            res <- res + scale_x_log10() + scale_y_log10() +
+                xlab("log(RNA / DNA)") + ylab("log(alpha)")
+        }
     } else {
         first <- TRUE
         res <- lapply(levels(as.factor(obj@dnaAnnot[,condition])), function(l) {
@@ -174,10 +179,15 @@ plotAlphaRatio <- function(obj, condition = NULL) {
             ratio <- (rowMeans(obj@rnaCounts[,idx.rna,drop=FALSE]) / 
                      rowMeans(obj@dnaCounts[,idx.dna,drop=FALSE]))
             
-            ggplot(data = data.frame(ratio = ratio, alpha = alpha)) + 
+            res <- ggplot(data = data.frame(ratio = ratio, alpha = alpha)) + 
                 geom_point(mapping = aes(x = ratio, y = alpha)) + 
                 geom_abline(intercept=0, slope=1) + 
                 xlab("RNA / DNA") + ylab("alpha") + ggtitle(paste(condition, l))
+            if(log) {
+                res <- res + scale_x_log10() + scale_y_log10() +
+                    xlab("log(RNA / DNA)") + ylab("log(alpha)")
+            }
+            return(res)
         })
     }
     return(res)
@@ -205,26 +215,32 @@ plotPvalCDF <- function(p, categories, adjusted=FALSE) {
 #' @param rna if TRUE, plot the RNA distribution. Otherwise plot the DNA.
 #' @import ggplot2
 #' @export
-plotObsExpDistributions <- function(obj, enhancer, rna=TRUE, bins=NULL) {
+plotObsExpDistributions <- function(obj, enhancer, bins=NULL) {
     if(length(enhancer) > 1) {
         stop("please supply a single enhancer (index or name)")
     }
-    if(rna) {
-        df <- data.frame(obs = obj@rnaCounts[enhancer,],
-                         exd = as.numeric(getFits.RNA(obj, enhancer)))
-    } else {
-        df <- data.frame(obs = obj@dnaCounts[enhancer,], 
-                         exd = as.numeric(getFits.DNA(obj, enhancer)))
-    }
+    df <- data.frame(obs.r = obj@rnaCounts[enhancer,],
+                     exd.r = as.numeric(getFits.RNA(obj, enhancer)),
+                     obs.d = obj@dnaCounts[enhancer,], 
+                     exd.d = as.numeric(getFits.DNA(obj, enhancer)))
+    df$obs.r[df$obs.r <= 0] <- NA
+    df$obs.d[df$obs.d <= 0] <- NA
     
-    df <- df[df$obs > 0,]
-    ggplot(df) + 
-        geom_histogram(aes_(x = ~obs, ~..density.., fill="Observed")) + 
-        geom_density(aes_(x= ~exd, color="Expected"), size=2) + 
+    dp <- ggplot(df) + 
+        geom_histogram(aes_(x = ~obs.d, ~..density.., fill="Observed")) + 
+        geom_density(aes_(x= ~exd.d, color="Expected"), size=2) + 
         scale_fill_manual(name=element_blank(), values = c("Observed"='grey33')) + 
         scale_colour_manual(name=element_blank(), values = c('Expected'='black')) + 
         theme(text=element_text(size=20), legend.position = "none") +
         xlab("counts")
+    rp <- ggplot(df) + 
+        geom_histogram(aes_(x = ~obs.r, ~..density.., fill="Observed")) + 
+        geom_density(aes_(x= ~exd.r, color="Expected"), size=2) + 
+        scale_fill_manual(name=element_blank(), values = c("Observed"='grey33')) + 
+        scale_colour_manual(name=element_blank(), values = c('Expected'='black')) + 
+        theme(text=element_text(size=20), legend.position = "none") +
+        xlab("counts")
+    return(list(dna=dp, rna=rp))
 }
 
 #' plot the relationship between the mean and the variance of the DNA and RNA 
