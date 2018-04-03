@@ -153,12 +153,14 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE,
 #' plot is generated for each level of the factor
 #' @param log plot in log scale
 #' @export
-plotAlphaRatio <- function(obj, condition = NULL, log=FALSE) {
+plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=NULL) {
     if(is.null(condition)) {
         ratio <- rowMeans(obj@rnaCounts) / rowMeans(obj@dnaCounts)
         alpha <- getAlpha(obj)
-        res <- ggplot(data = data.frame(ratio = ratio, alpha = alpha)) + 
-            geom_point(mapping = aes(x = ratio, y = alpha)) + 
+        res <- ggplot(data = data.frame(ratio = ratio, 
+                                        alpha = alpha, 
+                                        category=categories)) + 
+            geom_point(mapping = aes(x = ratio, y = alpha, color=category)) + 
             geom_abline(intercept=0, slope=1) + 
             xlab("RNA / DNA") + ylab("alpha")
         if(log) {
@@ -174,13 +176,20 @@ plotAlphaRatio <- function(obj, condition = NULL, log=FALSE) {
             } else {
                 alpha <- getAlpha(obj, condition, l)
             }
-            idx.dna <- obj@dnaAnnot[,condition] == l
+            if(condition %in% colnames(obj@dnaAnnot)) {
+                idx.dna <- obj@dnaAnnot[,condition] == l
+            } else {
+                idx.dna <- 1:NCOL(obj@dnaCounts)
+            }
+            
             idx.rna <- obj@rnaAnnot[,condition] == l
             ratio <- (rowMeans(obj@rnaCounts[,idx.rna,drop=FALSE]) / 
                      rowMeans(obj@dnaCounts[,idx.dna,drop=FALSE]))
             
-            res <- ggplot(data = data.frame(ratio = ratio, alpha = alpha)) + 
-                geom_point(mapping = aes(x = ratio, y = alpha)) + 
+            res <- ggplot(data = data.frame(ratio = ratio, 
+                                            alpha = alpha,
+                                            category = categories)) + 
+                geom_point(mapping = aes(x = ratio, y = alpha, color=categories)) + 
                 geom_abline(intercept=0, slope=1) + 
                 xlab("RNA / DNA") + ylab("alpha") + ggtitle(paste(condition, l))
             if(log) {

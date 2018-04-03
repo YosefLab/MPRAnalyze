@@ -99,6 +99,8 @@ test.coefficient <- function(obj, factor, contrast) {
 #' @param useControls is TRUE and controls are available, use the controls to
 #' establish the background model and compare against. This allows for more
 #' accurate zscores as well as empircal p-values.
+#' @param subset only test a subset of the enhancers in the object (logical,
+#' indices or names). Default is NULL, then all the enhancers are included.
 #' 
 #' @export
 #' @return a data.frame of empirical summary statistics based on the model's 
@@ -117,26 +119,45 @@ test.coefficient <- function(obj, factor, contrast) {
 #'     \item pval.empirical: only available if negative controls are provided. 
 #'     empirical P-value, using the control distribution as the null
 #' }
-test.empirical <- function(obj, statistic=NULL, useControls=TRUE) {
+test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     
     if(is.null(statistic)) {
-        ## extract slope - second coefficient of the rna model
-        statistic <- obj@modelFits$r.coef[,2]
+        statistic <- getAlpha(obj)
     }
+    
+    if(!is.null(subset)) {
+        if(is.character(subset)) {
+            subset <- rownames(obj@dnaCounts) %in% subset
+        }
+        if(is.logical(subset)) {
+            subset <- which(subset)
+        }
+        statistic <- statistic[subset]
+    }
+    
     res <- data.frame(statistic=statistic)
-                      
-    if(is.null(obj@controls) | !useControls) {
+    
+    if(all(is.na(obj@controls)) | !useControls) {
         res$zscore <- (statistic - mean(statistic, na.rm=TRUE)) / 
             sd(statistic, na.rm=TRUE)
         res$mad.score <- (statistic - median(statistic, na.rm=TRUE)) / 
             mad(statistic, na.rm=TRUE)
+        res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
         res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
     } else {
-        ctrls <- statistic[obj@controls]
+        ctrl.idx <- rep(FALSE, NROW(obj@dnaCounts))
+        ctrl.idx[obj@controls] <- TRUE
+        if (!is.null(subset)) {
+            ctrl.idx <- ctrl.idx[subset]
+        }
+        ctrls <- statistic[ctrl.idx]
+        res$control = ctrl.idx
+        
         res$zscore <- ((statistic - mean(ctrls, na.rm=TRUE)) / 
                                 sd(ctrls, na.rm=TRUE))
         res$mad.score <- ((statistic - median(ctrls, na.rm=TRUE)) / 
                                 mad(ctrls, na.rm=TRUE))
+        res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
         res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
         res$pval.empirical <- 1 - ecdf(ctrls)(statistic)
     }
