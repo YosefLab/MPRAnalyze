@@ -152,8 +152,10 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE,
 #' object column annotations that was included in the design. In that case, a 
 #' plot is generated for each level of the factor
 #' @param log plot in log scale
+#' @param categories if provided, color accourding to the provided values. Must
+#' be the same length as the number of enhancers in the object
 #' @export
-plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=NULL) {
+plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
     if(is.null(condition)) {
         ratio <- rowMeans(obj@rnaCounts) / rowMeans(obj@dnaCounts)
         alpha <- getAlpha(obj)
