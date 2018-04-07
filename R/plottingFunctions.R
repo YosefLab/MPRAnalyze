@@ -170,11 +170,9 @@ plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
                 xlab("log(RNA / DNA)") + ylab("log(alpha)")
         }
     } else {
-        first <- TRUE
-        res <- lapply(levels(as.factor(obj@dnaAnnot[,condition])), function(l) {
-            if(first) {
+        plots <- lapply(levels(as.factor(obj@rnaAnnot[,condition])), function(l) {
+            if(l == levels(as.factor(obj@rnaAnnot[,condition]))[1]) {
                 alpha <- getAlpha(obj)
-                first <- FALSE
             } else {
                 alpha <- getAlpha(obj, condition, l)
             }
@@ -201,7 +199,7 @@ plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
             return(res)
         })
     }
-    return(res)
+    return(plots)
 }
 
 
