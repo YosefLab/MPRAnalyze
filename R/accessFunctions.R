@@ -268,7 +268,7 @@ getEstTR <- function(obj, by.factor=NULL, full=TRUE) {
     }
     
     if(is.null(by.factor)) {
-        return(getAlpha(obj, full=full))
+        return(data.frame(TR=getAlpha(obj, full=full)))
     } else if (by.factor=="all") {
         ## extract all parametres except for the dispersion
         alpha.mat <- extractModelParameters.RNA(obj, full=full)[,-1]
@@ -276,7 +276,7 @@ getEstTR <- function(obj, by.factor=NULL, full=TRUE) {
             ## add the intercept to all other columns
             alpha.mat[,-1] <- alpha.mat[,-1] + alpha.mat[,1]
         }
-        return(exp(alpha.mat))
+        return(as.data.frame(exp(alpha.mat)))
     } else {
         l <- levels(obj@rnaAnnot[,by.factor])
         ## if intercepted: first level is different
@@ -293,6 +293,6 @@ getEstTR <- function(obj, by.factor=NULL, full=TRUE) {
         alpha.mat <- cbind(int.alpha, alpha.mat)
         colnames(alpha.mat) <- levels(obj@rnaAnnot[,by.factor])
         
-        return(alpha.mat)
+        return(as.data.frame(alpha.mat))
     }
 }
