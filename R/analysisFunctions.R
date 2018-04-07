@@ -148,7 +148,12 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
 #' @export
 analyze.quantitative <- function(obj, dnaDesign=~1, rnaDesign=~1){
     if(length(obj@dnaDepth) == 0){
-        stop("library depth factors must be estimated or provided before analysis")
+        warning("No DNA library depth factors set")
+        obj <- estimateDepthFactors(obj, which.lib = "dna")
+    }
+    if(length(obj@rnaDepth) == 0){
+        warning("No RNA library depth factors set")
+        obj <- estimateDepthFactors(obj, which.lib = "rna")
     }
     if(length(obj@model) == 0) {
         obj <- autoChooseModel(obj)
