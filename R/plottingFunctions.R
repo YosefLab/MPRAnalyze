@@ -159,15 +159,16 @@ plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
     if(is.null(condition)) {
         ratio <- rowMeans(obj@rnaCounts) / rowMeans(obj@dnaCounts)
         alpha <- getAlpha(obj)
-        res <- ggplot(data = data.frame(ratio = ratio, 
+        plots <- ggplot(data = data.frame(ratio = ratio, 
                                         alpha = alpha, 
                                         category=categories)) + 
             geom_point(mapping = aes(x = ratio, y = alpha, color=category)) + 
             geom_abline(intercept=0, slope=1) + 
             xlab("RNA / DNA") + ylab("alpha")
         if(log) {
-            res <- res + scale_x_log10() + scale_y_log10() +
-                xlab("log(RNA / DNA)") + ylab("log(alpha)")
+            plots <- plots + scale_x_log10() + scale_y_log10() +
+                xlab("log(RNA / DNA)") + ylab("log(alpha)") + 
+                theme(legend.position = "none")
         }
     } else {
         plots <- lapply(levels(as.factor(obj@rnaAnnot[,condition])), function(l) {
@@ -194,7 +195,8 @@ plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
                 xlab("RNA / DNA") + ylab("alpha") + ggtitle(paste(condition, l))
             if(log) {
                 res <- res + scale_x_log10() + scale_y_log10() +
-                    xlab("log(RNA / DNA)") + ylab("log(alpha)")
+                    xlab("log(RNA / DNA)") + ylab("log(alpha)") + 
+                    theme(legend.position = "none")
             }
             return(res)
         })
