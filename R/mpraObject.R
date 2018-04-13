@@ -121,6 +121,20 @@ MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL,
         rnaAnnot <- dnaAnnot <- colAnnot
     }
     
+    ## remove invalid enhancers: either all dna or all rna counts are 0.
+    invalid <- union(which(apply(dnaCounts, 1, function(x) all(x==0))),
+                     which(apply(rnaCounts, 1, function(x) all(x==0))))
+    if(length(invalid) > 0) {
+        warning(length(invalid), " enhancer was removed from the analysis. Consider adding pseudocounts.")
+        if(!is.na(controls)) {
+            ctrl <- rep(FALSE, NROW(dnaCounts))
+            ctrl[controls] <- TRUE
+            controls <- which(ctrl[!invalid])
+        }
+        dnaCounts <- dnaCounts[-invalid,]
+        rnaCounts <- rnaCounts[-invalid,]
+    }
+    
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
                dnaAnnot=dnaAnnot, rnaAnnot=rnaAnnot, controls=controls, 
                BPPARAM=BPPARAM)
