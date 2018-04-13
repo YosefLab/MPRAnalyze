@@ -156,19 +156,27 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE,
 #' be the same length as the number of enhancers in the object
 #' @export
 plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
+    ## normalize for library size
+    rnaCounts <- obj@rnaCounts / matrix(rep(obj@rnaDepth, NROW(obj@rnaCounts)), 
+                                        nrow = NROW(obj@rnaCounts), 
+                                        byrow = TRUE)
+    dnaCounts <- obj@dnaCounts / matrix(rep(obj@dnaDepth, NROW(obj@dnaCounts)), 
+                                        nrow = NROW(obj@dnaCounts), 
+                                        byrow = TRUE)
+    
     if(is.null(condition)) {
-        ratio <- rowMeans(obj@rnaCounts) / rowMeans(obj@dnaCounts)
+        ratio <- rowMeans(rnaCounts) / rowMeans(dnaCounts)
         alpha <- getAlpha(obj)
         plots <- ggplot(data = data.frame(ratio = ratio, 
                                         alpha = alpha, 
                                         category=categories)) + 
             geom_point(mapping = aes(x = ratio, y = alpha, color=category)) + 
             geom_abline(intercept=0, slope=1) + 
-            xlab("RNA / DNA") + ylab("alpha")
+            xlab("RNA / DNA") + ylab("alpha") + 
+            theme(legend.position = "none")
         if(log) {
             plots <- plots + scale_x_log10() + scale_y_log10() +
-                xlab("log(RNA / DNA)") + ylab("log(alpha)") + 
-                theme(legend.position = "none")
+                xlab("log(RNA / DNA)") + ylab("log(alpha)") 
         }
     } else {
         plots <- lapply(levels(as.factor(obj@rnaAnnot[,condition])), function(l) {
@@ -184,19 +192,20 @@ plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
             }
             
             idx.rna <- obj@rnaAnnot[,condition] == l
-            ratio <- (rowMeans(obj@rnaCounts[,idx.rna,drop=FALSE]) / 
-                     rowMeans(obj@dnaCounts[,idx.dna,drop=FALSE]))
+            ratio <- (rowMeans(rnaCounts[,idx.rna,drop=FALSE]) / 
+                     rowMeans(dnaCounts[,idx.dna,drop=FALSE]))
             
             res <- ggplot(data = data.frame(ratio = ratio, 
                                             alpha = alpha,
                                             category = categories)) + 
                 geom_point(mapping = aes(x = ratio, y = alpha, color=categories)) + 
                 geom_abline(intercept=0, slope=1) + 
-                xlab("RNA / DNA") + ylab("alpha") + ggtitle(paste(condition, l))
+                xlab("RNA / DNA") + ylab("alpha") + 
+                ggtitle(paste(condition, l)) + 
+                theme(legend.position = "none")
             if(log) {
                 res <- res + scale_x_log10() + scale_y_log10() +
-                    xlab("log(RNA / DNA)") + ylab("log(alpha)") + 
-                    theme(legend.position = "none")
+                    xlab("log(RNA / DNA)") + ylab("log(alpha)") 
             }
             return(res)
         })
