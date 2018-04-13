@@ -111,7 +111,7 @@ extractProp <- function(models, prop, valids) {
 #' returned. Otherwise, term and value must be provided, such that term is a 
 #' valid term in the design provided to the fit, and value is one of the 
 #' levels in the term.
-getAlpha <- function(obj, term=NULL, value=NULL, full=TRUE) {
+getSingleAlpha <- function(obj, term=NULL, value=NULL, full=TRUE) {
     coefs <- extractModelParameters.RNA(obj, full = full)
     if(full) {
         des <- obj@designs@rnaFull

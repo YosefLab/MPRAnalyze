@@ -258,7 +258,7 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
 #' the reduced model (only applies if an LRT-based analysis was used)
 #' @export
 #' @return the estimate for transcription rate as fitted by the model
-getEstTR <- function(obj, by.factor=NULL, full=TRUE) {
+getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
     des <- obj@designs@rnaFull
     if(!full) {
         des <- obj@designs@rnaRed
@@ -268,7 +268,7 @@ getEstTR <- function(obj, by.factor=NULL, full=TRUE) {
     }
     
     if(is.null(by.factor)) {
-        return(data.frame(TR=getAlpha(obj, full=full)))
+        return(data.frame(TR=getSingleAlpha(obj, full=full)))
     } else if (by.factor=="all") {
         ## extract all parametres except for the dispersion
         alpha.mat <- extractModelParameters.RNA(obj, full=full)[,-1]
@@ -281,14 +281,14 @@ getEstTR <- function(obj, by.factor=NULL, full=TRUE) {
         l <- levels(obj@rnaAnnot[,by.factor])
         ## if intercepted: first level is different
         if(checkForIntercept(des)) {
-            int.alpha <- getAlpha(obj)
+            int.alpha <- getSingleAlpha(obj)
             l <- l[-1]
         } else {
             int.alpha <- NULL
         }
         
         alpha.mat <- do.call(cbind, lapply(l, function(v) {
-            getAlpha(obj, term = by.factor, value = v, full = full)
+            getSingleAlpha(obj, term = by.factor, value = v, full = full)
         }))
         alpha.mat <- cbind(int.alpha, alpha.mat)
         colnames(alpha.mat) <- levels(obj@rnaAnnot[,by.factor])
