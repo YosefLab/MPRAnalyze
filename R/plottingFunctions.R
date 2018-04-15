@@ -181,9 +181,9 @@ plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
     } else {
         plots <- lapply(levels(as.factor(obj@rnaAnnot[,condition])), function(l) {
             if(l == levels(as.factor(obj@rnaAnnot[,condition]))[1]) {
-                alpha <- getAlpha(obj)
+                alpha <- getSingleAlpha(obj)
             } else {
-                alpha <- getAlpha(obj, condition, l)
+                alpha <- getSingleAlpha(obj, condition, l)
             }
             if(condition %in% colnames(obj@dnaAnnot)) {
                 idx.dna <- obj@dnaAnnot[,condition] == l
