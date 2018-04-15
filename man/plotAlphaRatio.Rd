@@ -5,7 +5,7 @@
 \title{create a scatter plot of the model alpha (trascription rate) vs. the naive
 estimator (RNA / DNA).}
 \usage{
-plotAlphaRatio(obj, condition = NULL, log = FALSE, categories = 1)
+plotAlphaRatio(obj, condition = NULL, log = TRUE, categories = 1)
 }
 \arguments{
 \item{obj}{the MpraObject}
@@ -15,7 +15,7 @@ plotAlphaRatio(obj, condition = NULL, log = FALSE, categories = 1)
 object column annotations that was included in the design. In that case, a 
 plot is generated for each level of the factor}
 
-\item{log}{plot in log scale}
+\item{log}{plot in log scale (default)}
 
 \item{categories}{if provided, color accourding to the provided values. Must
 be the same length as the number of enhancers in the object}

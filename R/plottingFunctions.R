@@ -151,11 +151,11 @@ plotBoxplots <- function(obj, id, condition=NULL, batch=NULL, full=TRUE,
 #' (intercept) vs the total data. Else, condition must be a valid factor in the 
 #' object column annotations that was included in the design. In that case, a 
 #' plot is generated for each level of the factor
-#' @param log plot in log scale
+#' @param log plot in log scale (default)
 #' @param categories if provided, color accourding to the provided values. Must
 #' be the same length as the number of enhancers in the object
 #' @export
-plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
+plotAlphaRatio <- function(obj, condition = NULL, log=TRUE, categories=1) {
     ## normalize for library size
     rnaCounts <- obj@rnaCounts / matrix(rep(obj@rnaDepth, NROW(obj@rnaCounts)), 
                                         nrow = NROW(obj@rnaCounts), 
@@ -172,7 +172,6 @@ plotAlphaRatio <- function(obj, condition = NULL, log=FALSE, categories=1) {
                                         category=categories)) + 
             geom_point(mapping = aes(x = ratio, y = alpha, color=category)) + 
             geom_abline(intercept=0, slope=1) + 
-            xlab("RNA / DNA") + ylab("alpha") + 
             theme(legend.position = "none")
         if(log) {
             plots <- plots + scale_x_log10() + scale_y_log10() +
