@@ -4,7 +4,7 @@
 \name{DEPTH_EST_FUNCTIONS}
 \alias{DEPTH_EST_FUNCTIONS}
 \title{easy access container for depth estimation functions}
-\format{An object of class \code{list} of length 2.}
+\format{An object of class \code{list} of length 3.}
 \usage{
 DEPTH_EST_FUNCTIONS
 }

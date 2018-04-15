@@ -1,3 +1,10 @@
+#' easy access container for depth estimation functions
+DEPTH_EST_FUNCTIONS = list(
+    uq = function(x) quantile(c(unlist((x))), .75),
+    rle = function(x) exp(mean(log(c(unlist((x)))))),
+    totsum = function(x) sum(c(unlist(x)))
+)
+
 
 #' estimate library size correction factors
 #'
@@ -49,9 +56,9 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both",
 #' @param annotations the annotations (data.frame)
 #' @param lib.factor the name of the factors describing the libraries
 #' @param depth.estimator a character indicating which depth estimation to use.
-#' Currently supported values are "uq" for upper quantile (default) and "rle"
-#' for RLE (uses geometric mean, and is therefore not recommended if libraries
-#' have 0 counts)
+#' Currently supported values are "uq" for upper quartile (default), "totsum"
+#' for total sum normalization, and "rle" for RLE (uses geometric mean, and is 
+#' therefore not recommended if libraries have 0 counts)
 #' @return computed library depth corection factors
 estimateFactors <- function(counts, annotations, lib.factor=NULL, depth.estimator='uq') {
     if(is.null(lib.factor)) {
@@ -96,12 +103,6 @@ compute.depth <- function(data, lib.factor, func) {
 
     return(as.vector(depth[lib.factor]))
 }
-
-#' easy access container for depth estimation functions
-DEPTH_EST_FUNCTIONS = list(
-    uq = function(x) quantile(c(unlist((x))), .75),
-    rle = function(x) exp(mean(log(c(unlist((x))))))
-)
 
 #' Manually set library depth correction factors
 #'
