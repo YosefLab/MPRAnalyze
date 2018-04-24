@@ -172,10 +172,10 @@ plotAlphaRatio <- function(obj, condition = NULL, log=TRUE, categories=1) {
                                         category=categories)) + 
             geom_point(mapping = aes(x = ratio, y = alpha, color=category)) + 
             geom_abline(intercept=0, slope=1) + 
+            xlab("RNA / DNA") + ylab("alpha") + 
             theme(legend.position = "none")
         if(log) {
-            plots <- plots + scale_x_log10() + scale_y_log10() +
-                xlab("log(RNA / DNA)") + ylab("log(alpha)") 
+            plots <- plots + scale_x_log10() + scale_y_log10()
         }
     } else {
         plots <- lapply(levels(as.factor(obj@rnaAnnot[,condition])), function(l) {
@@ -196,15 +196,15 @@ plotAlphaRatio <- function(obj, condition = NULL, log=TRUE, categories=1) {
             
             res <- ggplot(data = data.frame(ratio = ratio, 
                                             alpha = alpha,
-                                            category = categories)) + 
+                                            category = categories,
+                                            condition=l)) + 
                 geom_point(mapping = aes(x = ratio, y = alpha, color=categories)) + 
                 geom_abline(intercept=0, slope=1) + 
                 xlab("RNA / DNA") + ylab("alpha") + 
                 ggtitle(paste(condition, l)) + 
                 theme(legend.position = "none")
             if(log) {
-                res <- res + scale_x_log10() + scale_y_log10() +
-                    xlab("log(RNA / DNA)") + ylab("log(alpha)") 
+                res <- res + scale_x_log10() + scale_y_log10()
             }
             return(res)
         })
@@ -234,7 +234,7 @@ plotPvalCDF <- function(p, categories, adjusted=FALSE) {
 #' @param rna if TRUE, plot the RNA distribution. Otherwise plot the DNA.
 #' @import ggplot2
 #' @export
-plotObsExpDistributions <- function(obj, enhancer, bins=NULL) {
+plotObsExpDistributions <- function(obj, enhancer, bins.d=NULL, bins.r=NULL) {
     if(length(enhancer) > 1) {
         stop("please supply a single enhancer (index or name)")
     }
@@ -246,14 +246,14 @@ plotObsExpDistributions <- function(obj, enhancer, bins=NULL) {
     df$obs.d[df$obs.d <= 0] <- NA
     
     dp <- ggplot(df) + 
-        geom_histogram(aes_(x = ~obs.d, ~..density.., fill="Observed")) + 
+        geom_histogram(aes_(x = ~obs.d, ~..density.., fill="Observed"), bins=bins.d) + 
         geom_density(aes_(x= ~exd.d, color="Expected"), size=2) + 
         scale_fill_manual(name=element_blank(), values = c("Observed"='grey33')) + 
         scale_colour_manual(name=element_blank(), values = c('Expected'='black')) + 
         theme(text=element_text(size=20), legend.position = "none") +
         xlab("counts")
     rp <- ggplot(df) + 
-        geom_histogram(aes_(x = ~obs.r, ~..density.., fill="Observed")) + 
+        geom_histogram(aes_(x = ~obs.r, ~..density.., fill="Observed"), bins=bins.r) + 
         geom_density(aes_(x= ~exd.r, color="Expected"), size=2) + 
         scale_fill_manual(name=element_blank(), values = c("Observed"='grey33')) + 
         scale_colour_manual(name=element_blank(), values = c('Expected'='black')) + 

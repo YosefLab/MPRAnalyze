@@ -296,3 +296,12 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
         return(as.data.frame(alpha.mat))
     }
 }
+
+#' extract library depth factors.
+#' @param obj the object o extract the factors from
+#' @return a list with two elements: 'dna' with the dna library depth factors, 
+#' and 'rna' with the rna factors
+#' @export
+getLibraryDepthFactors <- function(obj) {
+    return(list(dna=obj@dnaDepth, rna=obj@rnaDepth))
+}

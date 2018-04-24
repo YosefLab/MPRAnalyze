@@ -146,7 +146,7 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE,
 #' @return the MpraObject, with populated models
 #' @import progress
 #' @export
-analyze.quantitative <- function(obj, dnaDesign=~1, rnaDesign=~1){
+analyze.quantification <- function(obj, dnaDesign=~1, rnaDesign=~1){
     if(length(obj@dnaDepth) == 0){
         warning("No DNA library depth factors set")
         obj <- estimateDepthFactors(obj, which.lib = "dna")
