@@ -61,7 +61,8 @@ getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #' @return RNA fits (numeric, enhancers x samples)
 #' 
 #' @export
-getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE){
+getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, 
+                        rnascale=TRUE){
     if(is.null(enhancers)) {
         enhancers <- names(obj@modelFits$ll)
     }
@@ -122,7 +123,7 @@ getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRU
 #' for `ln.nb` and `ln.ln`)
 #' @export
 #' @rdname extractModelParameters
-extractModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
+getModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(features)) {
         features <- 1:NROW(obj@dnaCounts)
     } else if (is.character(features)) {
@@ -146,7 +147,7 @@ extractModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
 
 #' @export
 #' @rdname extractModelParameters
-extractModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
+getModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(obj@modelFits)){
         stop("can't extract model parameters before fitting a model")
     }
