@@ -122,7 +122,9 @@ test.coefficient <- function(obj, factor, contrast) {
 test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     
     if(is.null(statistic)) {
-        statistic <- getAlpha(obj)
+        alpha <- getAlpha(obj)
+        statistic <- alpha$TR
+        names(statistic) <- rownames(alpha)
     }
     
     if(!is.null(subset)) {
