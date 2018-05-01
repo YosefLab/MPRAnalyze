@@ -170,7 +170,8 @@ plotAlphaRatio <- function(obj, condition = NULL, log=TRUE, categories=1) {
         plots <- ggplot(data = data.frame(ratio = ratio, 
                                         alpha = alpha, 
                                         category=categories)) + 
-            geom_point(mapping = aes(x = ratio, y = alpha, color=category)) + 
+            geom_point(mapping = aes_(x = ~ ratio, y = ~ alpha, 
+                                      color = ~ category)) + 
             geom_abline(intercept=0, slope=1) + 
             xlab("RNA / DNA") + ylab("alpha") + 
             theme(legend.position = "none")
@@ -231,7 +232,8 @@ plotPvalCDF <- function(p, categories, adjusted=FALSE) {
 #' Plot the observed and expected distributions of a given enhancer
 #' @param obj MpraObject after model fitting
 #' @param enhancer the id of the enhancer to plot (index or name)
-#' @param rna if TRUE, plot the RNA distribution. Otherwise plot the DNA.
+#' @param bins.d the bins parameter for the DNA plot
+#' @param bins.r the bins parameter for the RNA plot
 #' @import ggplot2
 #' @export
 plotObsExpDistributions <- function(obj, enhancer, bins.d=NULL, bins.r=NULL) {

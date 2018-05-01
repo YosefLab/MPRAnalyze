@@ -223,7 +223,7 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
     } else {
         fit <- obj@modelFits.red
     }
-    rfit <- as.vector(getRNAFits(obj, enhancers=enhancer, depth=FALSE, 
+    rfit <- as.vector(getFits.RNA(obj, enhancers=enhancer, depth=FALSE, 
                                 full=full, rnascale=TRUE))
     
     if(obj@model == "gamma.pois") {
@@ -272,7 +272,7 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
         return(data.frame(TR=getSingleAlpha(obj, full=full)))
     } else if (by.factor=="all") {
         ## extract all parametres except for the dispersion
-        alpha.mat <- extractModelParameters.RNA(obj, full=full)[,-1]
+        alpha.mat <- getModelParameters.RNA(obj, full=full)[,-1]
         if(checkForIntercept(des)) {
             ## add the intercept to all other columns
             alpha.mat[,-1] <- alpha.mat[,-1] + alpha.mat[,1]

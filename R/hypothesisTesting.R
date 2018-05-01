@@ -37,7 +37,7 @@ test.lrt <- function(obj) {
                                                         colnames(obj@designs@rnaRed))]
     if(length(condition.name) == 1) {
         ## single coefficient is the log Fold Change
-        res$logFC <- extractModelParameters.RNA(obj)[,condition.name]
+        res$logFC <- getModelParameters.RNA(obj)[,condition.name]
     }
     
     return(res)

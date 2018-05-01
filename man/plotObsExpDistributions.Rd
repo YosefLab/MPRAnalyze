@@ -11,7 +11,9 @@ plotObsExpDistributions(obj, enhancer, bins.d = NULL, bins.r = NULL)
 
 \item{enhancer}{the id of the enhancer to plot (index or name)}
 
-\item{rna}{if TRUE, plot the RNA distribution. Otherwise plot the DNA.}
+\item{bins.d}{the bins parameter for the DNA plot}
+
+\item{bins.r}{the bins parameter for the RNA plot}
 }
 \description{
 Plot the observed and expected distributions of a given enhancer
