@@ -88,7 +88,7 @@ estimateFactors <- function(counts, annotations, lib.factor=NULL, depth.estimato
 #'
 #' @param data the data matrix to compute the depth factor for
 #' @param lib.factor the partitioning of the data matrix columns into library.
-#' A separate depth factor is computer per library.
+#' A separate depth factor is computed per library.
 #' @param func the function to use to compute the library depth
 #'
 #' @return a numeric of length NCOL(data) with the appropriate epth factor for
@@ -97,8 +97,8 @@ compute.depth <- function(data, lib.factor, func) {
     lib.factor <- as.factor(lib.factor)
 
     depth <- by(data = t(data), INDICES = lib.factor, FUN = func)
-    if(median(depth) > 0) {
-        depth <- depth / median(depth)
+    if(depth[1] > 0) {
+        depth <- depth / depth[1]
     }
 
     return(as.vector(depth[lib.factor]))

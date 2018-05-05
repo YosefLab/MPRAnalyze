@@ -3,9 +3,9 @@
 #' @param dnaDesign the design for the DNA model. Only terms that are matched
 #' with the RNA design should be included.
 #' @param rnaDesign the design for the RNA model.
-#' @param fit.se logical, if TRUE (default) the standard errors of the coefficients
+#' @param fit.se logical, if TRUE the standard errors of the coefficients
 #' are extracted from the model. These are necessary for computing coefficient-based
-#' testing, but make the model fitting slower.
+#' testing, but make the model fitting slower. Deafult: FALSE
 #' @param reducedDesign the design for the reduced RNA model, for a likelihood-ratio
 #' testing scheme. The Reduced design must be nested within the full design (i.e
 #' all terms in the reduced must be included in the full).
@@ -15,7 +15,7 @@
 #' @import progress
 #' @export
 #' @return the MpraObject with fitted models for the input enhancers
-analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=TRUE, 
+analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE, 
                                 reducedDesign=NULL, correctControls=TRUE, 
                                 verbose=TRUE) {
     ##TODO: if full becomes operational, add 'fullLRT' as a logical argument
