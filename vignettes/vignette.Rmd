@@ -156,6 +156,6 @@ When the hypothesis teseting is simple (two-condition comparison), a fold-change
 
 ggplot(res) + stat_density(aes(logFC), fill="white", color="black", size=1) + 
     geom_vline(xintercept = 0)
-ggplot(res, aes(logFC, -log10(pval), color=fdr<0.05, shape=control)) + geom_point()
+ggplot(res, aes(logFC, -log10(pval), color=fdr<0.05)) + geom_point()
 ```
 
