@@ -4,7 +4,7 @@
 \alias{analyze.comparative}
 \title{Run a comparative analysis between conditions}
 \usage{
-analyze.comparative(obj, dnaDesign, rnaDesign, fit.se = TRUE,
+analyze.comparative(obj, dnaDesign, rnaDesign, fit.se = FALSE,
   reducedDesign = NULL, correctControls = TRUE, verbose = TRUE)
 }
 \arguments{
@@ -15,9 +15,9 @@ with the RNA design should be included.}
 
 \item{rnaDesign}{the design for the RNA model.}
 
-\item{fit.se}{logical, if TRUE (default) the standard errors of the coefficients
+\item{fit.se}{logical, if TRUE the standard errors of the coefficients
 are extracted from the model. These are necessary for computing coefficient-based
-testing, but make the model fitting slower.}
+testing, but make the model fitting slower. Deafult: FALSE}
 
 \item{reducedDesign}{the design for the reduced RNA model, for a likelihood-ratio
 testing scheme. The Reduced design must be nested within the full design (i.e
