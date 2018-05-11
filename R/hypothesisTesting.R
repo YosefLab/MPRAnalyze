@@ -56,6 +56,11 @@ test.lrt <- function(obj) {
 #' @return a data.frame of the results
 #' this include the test statistic, logFC, p-value and BH-corrected FDR.
 test.coefficient <- function(obj, factor, contrast) {
+    if(is.null(obj@modelFits$r.se)) {
+        stop("Model fitting did not include standard error estimation.\
+             Coefficient-based testing cannot be perfromed.")
+    }
+    
     if(!(factor %in% colnames(obj@rnaAnnot))) {
         stop("given factor: ", factor, 
             " is not included in object annotations")
