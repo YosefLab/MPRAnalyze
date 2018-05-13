@@ -6,15 +6,12 @@
 \alias{ll.dna.ln.nb}
 \alias{ll.dna.ln.ln}
 \alias{ll.dna.gamma.pois}
-\alias{ll.dna.ln.nb}
-\alias{ll.dna.ln.ln}
+\alias{ll.dna.ln}
 \title{likelihood of dna observations}
 \usage{
 ll.dna.gamma.pois(theta, dcounts, log.ddepth, ddesign.mat)
 
-ll.dna.ln.nb(theta, dcounts, log.ddepth, ddesign.mat)
-
-ll.dna.ln.ln(theta, dcounts, log.ddepth, ddesign.mat)
+ll.dna.ln(theta, dcounts, log.ddepth, ddesign.mat)
 }
 \arguments{
 \item{theta}{the vector of rna model parameters to evaluate likelihood for

@@ -17,8 +17,10 @@ test.lrt <- function(obj) {
     ll.full <- obj@modelFits$ll
     ll.red <- obj@modelFits.red$ll
     df.dna <- obj@modelFits$d.df
-    df.rna.full <- obj@modelFits$r.df + obj@modelFits$r.ctrl.df + length(obj@rnaCtrlScale)
-    df.rna.red <- obj@modelFits.red$r.df + obj@modelFits.red$r.ctrl.df + length(obj@rnaCtrlScale)
+    df.rna.full <- obj@modelFits$r.df + obj@modelFits$r.ctrl.df + 
+        length(obj@rnaCtrlScale)
+    df.rna.red <- obj@modelFits.red$r.df + obj@modelFits.red$r.ctrl.df + 
+        length(obj@rnaCtrlScale)
     df.full <- df.dna + df.rna.full 
     df.red <- df.dna + df.rna.red 
     
@@ -28,18 +30,17 @@ test.lrt <- function(obj) {
     fdr <- p.adjust(pval, 'BH')
     
     res <- data.frame(statistic=lrt, pval=pval, fdr=fdr, df.test=df,
-                      df.dna=df.dna, df.rna.full=df.rna.full, 
-                      df.rna.red=df.rna.red)
+                    df.dna=df.dna, df.rna.full=df.rna.full, 
+                    df.rna.red=df.rna.red)
     ## if condition is single term, extract the corresponding coefficient as logFC
     condition.name <- colnames(obj@designs@rnaFull)[!(colnames(obj@designs@rnaFull) %in% 
-                                                          colnames(obj@designs@rnaRed))]
+                                                        colnames(obj@designs@rnaRed))]
     if(length(condition.name) == 1) {
         ## single coefficient is the log Fold Change
-        res$logFC <- extractModelParameters.RNA(obj)[,condition.name]
+        res$logFC <- getModelParameters.RNA(obj)[,condition.name]
     }
     
-    obj@results <- res
-    return(obj)
+    return(res)
 }
 
 #' Calculate the significance of a factor in the regression model
@@ -55,14 +56,19 @@ test.lrt <- function(obj) {
 #' @return a data.frame of the results
 #' this include the test statistic, logFC, p-value and BH-corrected FDR.
 test.coefficient <- function(obj, factor, contrast) {
+    if(is.null(obj@modelFits$r.se)) {
+        stop("Model fitting did not include standard error estimation.\
+             Coefficient-based testing cannot be perfromed.")
+    }
+    
     if(!(factor %in% colnames(obj@rnaAnnot))) {
         stop("given factor: ", factor, 
-             " is not included in object annotations")
+            " is not included in object annotations")
     } 
     ref <- levels(as.factor(obj@rnaAnnot[,factor]))[1]
     if (ref == contrast) {
         stop("given contrast ", contrast, 
-             " is the reference level of factor ", factor)
+            " is the reference level of factor ", factor)
     }
     coef.id <- colnames(obj@designs@rnaFull) %in% paste0(factor, contrast)
     if(!any(coef.id)) {
@@ -82,9 +88,10 @@ test.coefficient <- function(obj, factor, contrast) {
     pval <- pchisq(q = statistic, df = 1, lower.tail = FALSE)
     fdr <- p.adjust(pval, 'BH')
     
-    obj@results <- data.frame(logFC=logFC, statistic=statistic, pval=pval, fdr=fdr, 
-                              row.names = rownames(obj@dnaCounts))
-    return(obj)
+    res <- data.frame(logFC=logFC, statistic=statistic, 
+                      pval=pval, fdr=fdr, 
+                      row.names = rownames(obj@dnaCounts))
+    return(res)
 }
 
 #' test for significant activity (quantitative analysis) using various empirical
@@ -94,6 +101,11 @@ test.coefficient <- function(obj, factor, contrast) {
 #' @param statistic if null [default], the intercept term is used as the score.
 #' An alternate score can be provided by setting 'statistic'. Must be a numeric
 #' vector.
+#' @param useControls is TRUE and controls are available, use the controls to
+#' establish the background model and compare against. This allows for more
+#' accurate zscores as well as empircal p-values.
+#' @param subset only test a subset of the enhancers in the object (logical,
+#' indices or names). Default is NULL, then all the enhancers are included.
 #' 
 #' @export
 #' @return a data.frame of empirical summary statistics based on the model's 
@@ -102,47 +114,60 @@ test.coefficient <- function(obj, factor, contrast) {
 #'     \item statistic: the statistic (either the provided, or extracted from the
 #'     models)
 #'     \item zscore: Z-score of the statistic (number of standard devisations 
-#'     from the mean)
+#'     from the mean). If controls are available, the score is based on their 
+#'     distribution: so it's the number of control-sd from the control-mean
 #'     \item mad.score: a median-baed equivalent of the Z-score, with less 
-#'     sensitivity to outlier values
-#'     \item zscore.ctrl: only available if negative controls are provided.
-#'     a Z-score based on the controls distribution, instead of the distribution 
-#'     of the complete set of observations
-#'     \item mad.score.ctrl: only available if negative controls are provided.
-#'     a MAD-score based on the controls distribution, instead of the distribution 
-#'     of the complete set of observations
-#'     \item epval: only available if negative controls are provided. empirical 
-#'     P-value, using the control distribution as the null
-#'     \item fdr: only available if negative controls are provided. BH adjusted-
-#'     empricial p-values
+#'     sensitivity to outlier values. If controls are provided, it's based
+#'     on their distribution.
+#'     \item pval.zscore: a p-value based on the normal approximation of the
+#'     Z-scores
+#'     \item pval.empirical: only available if negative controls are provided. 
+#'     empirical P-value, using the control distribution as the null
 #' }
-test.empirical <- function(obj, statistic=NULL) {
+test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     
     if(is.null(statistic)) {
-        ## extract slope - second coefficient of the rna model
-        statistic <- obj@modelFits$r.coef[,2]
+        alpha <- getAlpha(obj)
+        statistic <- alpha$TR
+        names(statistic) <- rownames(alpha)
     }
     
-    zscore <- (statistic - mean(statistic, na.rm=TRUE)) / sd(statistic, 
-                                                             na.rm=TRUE)
-    mad.score <- (statistic - median(statistic, na.rm=TRUE)) / mad(statistic, 
-                                                                   na.rm=TRUE)
+    if(!is.null(subset)) {
+        if(is.character(subset)) {
+            subset <- rownames(obj@dnaCounts) %in% subset
+        }
+        if(is.logical(subset)) {
+            subset <- which(subset)
+        }
+        statistic <- statistic[subset]
+    }
     
-    res <- data.frame(statistic=statistic,
-                      zscore=zscore,
-                      mad.score=mad.score)
+    res <- data.frame(statistic=statistic)
     
-    if(!is.null(obj@controls)) {
-        ctrls <- statistic[obj@controls]
-        res$zscore.ctrl <- ((statistic - mean(ctrls, na.rm=TRUE)) / 
-                                sd(ctrls, na.rm=TRUE))
-        res$mad.score.ctrl <- ((statistic - median(ctrls, na.rm=TRUE)) / 
-                                   mad(ctrls, na.rm=TRUE))
+    if(all(is.na(obj@controls)) | !useControls) {
+        res$zscore <- (statistic - mean(statistic, na.rm=TRUE)) / 
+            sd(statistic, na.rm=TRUE)
+        res$mad.score <- (statistic - median(statistic, na.rm=TRUE)) / 
+            mad(statistic, na.rm=TRUE)
+        res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
+        res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
+    } else {
+        ctrl.idx <- rep(FALSE, NROW(obj@dnaCounts))
+        ctrl.idx[obj@controls] <- TRUE
+        if (!is.null(subset)) {
+            ctrl.idx <- ctrl.idx[subset]
+        }
+        ctrls <- statistic[ctrl.idx]
+        res$control = ctrl.idx
         
-        res$epval <- 1 - ecdf(ctrls)(statistic)
-        res$fdr <- p.adjust(res$epval, "BH")
+        res$zscore <- ((statistic - mean(ctrls, na.rm=TRUE)) / 
+                                sd(ctrls, na.rm=TRUE))
+        res$mad.score <- ((statistic - median(ctrls, na.rm=TRUE)) / 
+                                mad(ctrls, na.rm=TRUE))
+        res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
+        res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
+        res$pval.empirical <- 1 - ecdf(ctrls)(statistic)
     }
     
-    obj@results <- res
-    return(obj)
+    return(res)
 }

@@ -80,14 +80,11 @@ setClass("MpraObject", validity = validateMpraObject,
              rnaDepth = "numeric",
              rnaCtrlScale = "numericORNULL",
              
-             mode = "character",
              model = "character",
              designs = "Designs",
              modelFits = "list",
              modelFits.red = "list", 
              modelPreFits.dna.ctrl = "listORNULL",
-             
-             results = "listORNULL",
              
              BPPARAM = "BiocParallelParam"
          ))
@@ -124,289 +121,22 @@ MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL,
         rnaAnnot <- dnaAnnot <- colAnnot
     }
     
+    ## remove invalid enhancers: either all dna or all rna counts are 0.
+    invalid <- union(which(apply(dnaCounts, 1, function(x) all(x==0))),
+                     which(apply(rnaCounts, 1, function(x) all(x==0))))
+    if(length(invalid) > 0) {
+        warning(length(invalid), " enhancers were removed from the analysis")
+        if(length(controls) > 1) {
+            ctrl <- rep(FALSE, NROW(dnaCounts))
+            ctrl[controls] <- TRUE
+            controls <- which(ctrl[-invalid])
+        }
+        dnaCounts <- dnaCounts[-invalid,]
+        rnaCounts <- rnaCounts[-invalid,]
+    }
+    
     obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
                dnaAnnot=dnaAnnot, rnaAnnot=rnaAnnot, controls=controls, 
                BPPARAM=BPPARAM)
     return(obj)
-}
-
-
-#' Get DNA model fits from an MpraObject
-#' 
-#' @param obj MpraObject to extract from
-#' @param enhancers enhancer to extract 
-#' @param depth include depth correction
-#' @param full whether to extract from full model
-#' 
-#' @return DNA fits (numeric, enhancers x samples)
-#' 
-#' @export
-getDNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE){
-    if(is.null(enhancers)) {
-        enhancers <- names(obj@modelFits$ll)
-    }
-    if(full == TRUE){
-        fit <- obj@modelFits
-    } else {
-        fit <- obj@modelFits.red
-    }
-    
-    coef.mat <- t(fit$d.coef[enhancers,,drop=FALSE])
-    coef.mat[is.na(coef.mat)] <- 0
-    
-    if(obj@model == "gamma.pois") {
-        # alpha / rate
-        dfit <- exp(coef.mat[1,] + obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
-    } else if(obj@model == "ln.nb" | obj@model == "ln.ln") {
-        dfit <- exp(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
-    }
-    
-    if(depth == TRUE){
-        dfit <- dfit * replicate(NCOL(dfit), obj@dnaDepth)
-    }
-    
-    colnames(dfit) <- enhancers
-    rownames(dfit) <- rownames(obj@dnaAnnot)
-    return(t(dfit))
-}
-
-#' Get RNA full model fits from an MpraObject
-#' 
-#' @param obj MpraObject to extract from
-#' @param enhancers enhancer to extract 
-#' @param depth include depth correction
-#' @param full whether to extract from full model
-#' @param rnascale whether to use prefit rna model factors
-#' 
-#' @return RNA fits (numeric, enhancers x samples)
-#' 
-#' @export
-getRNAFits <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, rnascale=TRUE){
-    if(is.null(enhancers)) {
-        enhancers <- names(obj@modelFits$ll)
-    }
-    if(full == TRUE){
-        fit <- obj@modelFits
-        rdesign <- obj@designs@rnaFull
-        rctrldesign <- obj@designs@rnaCtrlFull
-    } else {
-        fit <- obj@modelFits.red
-        rdesign <- obj@designs@rnaRed
-        rctrldesign <- obj@designs@rnaCtrlRed
-    }
-    if(!is.null(obj@rnaCtrlScale) & rnascale) {
-        rctrlscale <- obj@rnaCtrlScale
-    } else {
-        rctrldesign <- NULL # overwrite initialisation
-        rctrlscale <- NULL
-    }
-    
-    dfit <- getDNAFits(obj=obj, enhancers=enhancers, depth=FALSE, full=full)
-    
-    joint.des.mat <- cbind(rdesign, rctrldesign)
-    
-    coef.mat <- t(fit$r.coef[enhancers,-1,drop=FALSE])
-    if(!is.null(obj@rnaCtrlScale) & rnascale) {
-        coef.mat <- rbind(coef.mat, 
-                          replicate(NCOL(coef.mat), obj@rnaCtrlScale))
-    }
-    rfit <- exp(joint.des.mat %*% coef.mat)
-        
-    if(depth == TRUE){
-        rfit <- rfit * replicate(NCOL(rfit), obj@rnaDepth)
-    }
-    
-    rfit <- t(rfit) * dfit
-    
-    rownames(rfit) <- enhancers
-    colnames(rfit) <- rownames(obj@rnaAnnot)
-    return(rfit)
-}
-
-#' extract the DNA model parameters
-#' @param obj the MpraObject to extract the parameters from
-#' @param features the features to extract the parameters from (be default, 
-#' parameters will be returned for all features)
-#' @param full if TRUE (default), return the parameters of the full model. 
-#' Otherwise, return the parameters of the reduced model (only relevant for 
-#' LRT-based analyses)
-#' @return a data.frame of features (rows) by parameters (cols). By convension, the
-#' first parameter is related to the second moment, and the interpretation of 
-#' it depends on the distributional model used (`alpha` for `gamma.pois`, variance 
-#' for `ln.nb`)
-#' @export
-extractModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
-    if(is.null(features)) {
-        features <- 1:NROW(obj@dnaCounts)
-    } else if (is.character(features)) {
-        features <- which(rownames(obj@dnaCounts) %in% features)
-    }
-    
-    if(is.null(obj@modelFits)){
-        stop("can't extract model parameters before fitting a model. An analysis function must be called first.")
-    }
-    if(full) {
-        coef.mat <- obj@modelFits$d.coef[features,,drop=FALSE] 
-    } else if (!full & !is.null(obj@modelFits.red)) {
-        coef.mat <- obj@modelFits.red$d.coef[features,,drop=FALSE] 
-    } else {
-        stop("Parameters can't be extracted from reduced model, since analysis did not include fitting a reduced model")
-    }
-    colnames(coef.mat) <- c("disp", colnames(obj@designs@dna))
-    rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
-    return(as.data.frame(coef.mat))
-}
-
-#' extract the RNA model parameters
-#' @param obj the MpraObject to extract the parameters from
-#' @param features the features to extract the parameters from (be default, 
-#' parameters will be returned for all features)
-#' @param full if TRUE (default), return the parameters of the full model. 
-#' Otherwise, return the parameters of the reduced odel
-#' @return a data.frame of features (rows) by parameters (cols). By convension, the
-#' first parameter is related to the second moment, and the interpretation of 
-#' it depends on the distributional model used (`alpha` for `gamma.pois`,  
-#' `psi`for `ln.nb`)
-#' @export
-extractModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
-    if(is.null(obj@modelFits)){
-        stop("can't extract model parameters before fitting a model")
-    }
-    if(is.null(features)) {
-        features <- 1:NROW(obj@dnaCounts)
-    } else if (is.character(features)) {
-        features <- which(rownames(obj@dnaCounts) %in% features)
-    }
-    
-    if(full) {
-        coef.mat <- obj@modelFits$r.coef[features,,drop=FALSE] 
-        colnames(coef.mat) <- c("disp", colnames(obj@designs@rnaFull))
-    } else if (!full & !is.null(obj@modelFits.red)) {
-        coef.mat <- obj@modelFits.red$r.coef[features,,drop=FALSE] 
-        colnames(coef.mat) <- c("disp", colnames(obj@designs@rnaRed))
-    } else {
-        stop("Reduced model unavailable")
-    }
-    
-    rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
-    return(as.data.frame(coef.mat))
-}
-
-#' Get model distribution parameters from an MpraObject
-#' 
-#' @rdname getDistrParam
-#' @aliases getDistrParam.DNA
-#' getDistrParam.RNA
-#' 
-#' @param obj MpraObject to extract from
-#' @param enhancer enhancer to extract 
-#' @param full whether to extract from full model
-#' 
-#' @return fit parameters (numeric, samples x parameters)
-#' 
-#' @export
-
-#' @rdname getDistrParam
-getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
-    
-    if(full == TRUE){
-        fit <- obj@modelFits
-    } else {
-        fit <- obj@modelFits.red
-    }
-    
-    coef.mat <- t(fit$d.coef[enhancer,,drop=FALSE])
-    coef.mat[is.na(coef.mat)] <- 0
-    
-    if(obj@model == "gamma.pois") {
-        par.shape <- as.vector(exp(coef.mat[1,]))
-        par.rate <- as.vector(exp(-obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
-        par.mu <- par.shape*par.rate
-        par.intercept <- par.shape*as.vector(exp(coef.mat[2,]))
-        par <- data.frame(shape = par.shape, rate = par.rate,
-                          mu = par.mu, intercept=par.intercept)
-    } else if(obj@model == "ln.nb") {
-        par.sdlog <- as.vector( exp(coef.mat[1,]))
-        par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
-        par.mu <- exp(par.meanlog + 1/2*par.sdlog^2)
-        par.intercept <- exp(as.vector(coef.mat[2,]) + 1/2*par.sdlog^2)
-        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog, 
-                          mu = par.mu, intercept=par.intercept)
-    } else if(obj@model == "ln.ln") {
-        par.sdlog <- as.vector( exp(coef.mat[1,]))
-        par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
-        par.mu <- exp(par.meanlog + 1/2*par.sdlog^2)
-        par.intercept <- exp(as.vector(coef.mat[2,]) + 1/2*par.sdlog^2)
-        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog, 
-                          mu = par.mu, intercept=par.intercept)
-    }
-    
-    rownames(par) <- rownames(obj@dnaAnnot)
-    return(par)
-}
-
-#' @rdname getDistrParam
-getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
-    
-    if(full == TRUE){
-        fit <- obj@modelFits
-    } else {
-        fit <- obj@modelFits.red
-    }
-    rfit <- as.vector(getRNAFits(obj, enhancers=enhancer, depth=FALSE, 
-                                 full=full, rnascale=TRUE))
-    
-    if(obj@model == "gamma.pois") {
-        par.size <- as.vector(exp(fit$r.coef[enhancer,1]))
-        par.mu <- rfit
-        par <- data.frame(size = par.size, mu = par.mu)
-    } else if(obj@model == "ln.nb") {
-        par.size <- as.vector(exp(fit$r.coef[enhancer,1]))
-        par.mu <- rfit
-        par <- data.frame(size = par.size, mu = par.mu)
-    } else if(obj@model == "ln.ln") {
-        par.sdlog <- as.vector(exp(fit$r.coef[enhancer,1]))
-        par.meanlog <- log(rfit)
-        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
-    }
-    
-    rownames(par) <- rownames(obj@rnaAnnot)
-    return(par)
-}
-
-#' Resample observations of enhancer from fit distribution
-#' 
-#' @param obj MpraObject to extract from
-#' @param enhancer enhancer to extract 
-#' @param full whether to extract from full model
-#' 
-#' @return resampled observations
-#' 
-#' @export
-resampleObs <- function(obj, enhancer=NULL, full=TRUE){
-    dpar <- getDistrParam.DNA(obj, enhancer=enhancer, full=full)
-    rpar <- getDistrParam.RNA(obj, enhancer=enhancer, full=full)
-    if(obj@model=="gamma.pois") {
-        dsample <- apply(dpar, 1, function(x) {
-            rgamma(n = 1, shape = x["shape"], rate = x["rate"])
-        })
-        rsample <- apply(rpar, 1, function(x) {
-            rnbinom(n = 1, size = x["size"], mu = x["mu"])
-        })
-    } else if(obj@model=="ln.nb") {
-        dsample <- apply(dpar, 1, function(x) {
-            rlnorm(n = 1, meanlog = x["meanlog"], sdlog = x["sdlog"])
-        })
-        rsample <- apply(rpar, 1, function(x) {
-            rnbinom(n = 1, size = x["size"], mu = x["mu"])
-        }) 
-    } else if(obj@model=="ln.ln") {
-        dsample <- apply(dpar, 1, function(x) {
-            rlnorm(n = 1, meanlog = x["meanlog"], sdlog = x["sdlog"])
-        })
-        rsample <- apply(rpar, 1, function(x) {
-            rlnorm(n = 1,meanlog = x["meanlog"], sdlog = x["sdlog"])
-        }) 
-    } 
-    return(data.frame(dna=dsample, rna=rsample))
 }

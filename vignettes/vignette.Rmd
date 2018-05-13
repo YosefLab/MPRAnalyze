@@ -1,0 +1,161 @@
+---
+title: "Analyzing MPRA data with MPRAnalyze"
+author: "Tal Ashuach"
+date: "March 28, 2018"
+output:
+    BiocStyle::html_document:
+toc: true
+vignette: >
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
+    %\VignetteIndexEntry{Analyzing MPRA data with MPRAnalyze}
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+# Introduction
+MPRAnalyze aims to infer the transcription rate induced by each enhacer in a Massively Parallel Reporter Assay (MPRA). MPRAnalyze uses a parametric graphical model that enables direct modeling of the observed count data, without the need to use ratio-based summary statistics, and provides robust statistical methodology that addresses all major uses of MPRA.
+
+# Setup
+An MPRA experiment is made up of two matching datasets: the RNA counts used to estimate transcription, and the DNA counts used to normalize by copy-number. MPRAnalyze assumes the input is unnormalized count data. Normalization is achieved by external factors (to correct library size) and regressing out confounding factors (by carefully designing the model).
+
+Throughout this vignette, we'll be using a subset of enhancers from Inoue et al. [TODO], that examined a set of enhancers that were tranduced and remained episomal, and after being genomically integrated. We'll be using a subset of the data, both in terms of number of enhancers and number of observations, for runtime purposes.
+
+## Formatting the data
+MPRanalyze expects the input to be provided as two matrices: one for the DNA and one for the RNA counts. The formatting is fairly straightforward: each row is a single enhancer, and each column is an observation. Annotations for the columns are provided for each matrix to identify batches, barcodes and conditions.
+When formatting the data, note that all enhancers must have the same number of columns. In the case of missing data, padding with 0s is recommended.
+
+```{r load and examine data, include=TRUE}
+data("ChrEpi")
+summary(colAnnot)
+head(colAnnot)
+```
+
+In the filtered dataset we have 110 enhancers, 40 observations each: 10 unique barcodes, 2 replicates and 2 conditions (MT stands for episomal, WT for chromosomally integrated).
+Note that while this datset is "paired", and therefore the dimensionality of the two matrices and the annotations are identical, this is not always the case, and separate data frames can be used for the DNA and RNA annotations.
+
+## Creating an MpraObject object
+
+The MpraObject is the basic class that the package works with, and is very easy to initialize once the data is properly formatted. In addition to the data itself, the user can specify certain enhancers as "controls" (usaully scrambled, random sequences included in the experiment). These will be used by MPRAnalyze to establish the null behavior.
+Additionally, MPRAnalyze uses parallelization to reduce runtime, with the BiocParallel package. To utilize this, the user can create a BPPARAM object and pass it to the MpraObject, it will be used throughout the analysis.
+```{r init object}
+library(MPRAnalyze)
+obj <- MpraObject(dnaCounts = dnaCounts, rnaCounts = rnaCounts, 
+                  dnaAnnot = colAnnot, rnaAnnot = colAnnot, 
+                  controls = control)
+```
+
+Note that since we are using only a subset of the data, one of the enhancers included was not detected (all observations are 0). If this is the case, MPRAnalyze removes it from the analysis. In datasets with many zeros, it is possible to add pseudo-counts. With MPRA this should be done carefully, and we recommend only adding pseudocounts in cases where the RNA counts are positive but the DNA counts are 0 (these are the only cases we know this is a false 0).
+
+## Library size normalization
+
+MPRAnalyze allows for external factors to be used for normalization, espacially useful for library depth correction. These factors can be estimated automatically using upper quartile (default), total sum, or DESeq2 normalization. If other factors are to be used, the user can provide them directly using the `setDepthFactors` function, and providing correction factors for the RNA and DNA counts (length of the factors must be the same as the number of columns in the respective data matrix).
+Note that unlike other genomic data, in which every column is a separate library, with MPRA a library is often multiple columns, since multiple barcodes can originate from a single library. For this reason, automatic estimation of library size requires the user to specify what columns belong to what library. This can be done easily by providing the names of factors from the annotations data.frame that identify library (this can be a single factor or multiple factors).
+
+```{r library size estimation}
+## If the library factors are different for the DNA and RNA data, separate 
+## estimation of these factors is needed. We can also change the estimation 
+## method (Upper quartile by default)
+obj <- estimateDepthFactors(obj, lib.factor = c("batch", "condition"),
+                            which.lib = "dna", 
+                            depth.estimator = "totsum")
+obj <- estimateDepthFactors(obj, lib.factor = c("condition"),
+                            which.lib = "rna", 
+                            depth.estimator = "uq")
+
+## In this case, the factors are the same - each combination of batch and 
+## condition is a single library, and we'll use the default estimation
+obj <- estimateDepthFactors(obj, lib.factor = c("batch", "condition"),
+                            which.lib = "both")
+```
+
+# Model Design
+
+MPRAnalyze fits two nested generalized linear models. The two models have a conceptually different role: the DNA model is estimating plasmid copy numbers, and the RNA model is estimating transcription rate. Different factors should therefore be included or not included in either model, and the nested nature of the overall model requires careful thinking about the model design, and often using a different design for the DNA and the RNA model. 
+Two common considerations are covered here:
+
+## DNA design of paired factors only
+In some MPRA experiments, the DNA counts originate from pre-transduction plasmid libraries. In these cases, multiple replicates may be available, but they are independant of the multiple RNA replicates. Therefore, while there may be batch effect present in the DNA data, this effect cannot be transferred into the RNA model, and should be discarded. By not including it, the DNA estimates will essentially be averaged over replicates, but the multiple replicates will still be used to estimate the dispersion.
+Essentially - any factor that cannot or should not be carried from the DNA to the RNA model, should not be included in the DNA model at all. 
+
+## including barcode annotations in the design
+While replicate and condition factors are not always transferrable, barcode information - if available - is. Including barcode information in the DNA model allows MPRAnalyze to provide different estimated counts for each barcode, and dramatically increases the statistical power of the model.
+However - modeling barcode effect in the RNA model essentially means different transcription rate estimates will be calculated for different barcodes of the same enhancer, which is not desired. In quantification analyses, this would make comparing enhancers to eachother exceedingly complicated, since unlike batch- or condition- effects, barcodes are not comparable between enhancers. In compartive analyses, while modeling barcodes isn't conceptually problematic, in practice this could result in overfitting the model and inlfating the results.
+Broadly, barcode factors should be included in the DNA model design and ignored in the RNA model design. 
+
+# Quantification Analysis
+Quantification analysis is addressing the question of what is the transription rate for each enhancer in the dataset. These estimates can then be used to identify and classify active enhancers that induce a higher transcription rate.
+Regarding model design - this data is from a paired experiment, so DNA factors are fully transferable to the RNA model. For the RNA, we will be interested in having a separate estimate of transcription rate for each condition (chromosomal and episomal), so this is the only factor included in the RNA model.
+Finally, fitting the model is done by calling the `analyze.quantification` function:
+```{r quant model fit}
+obj <- analyze.quantification(obj = obj, 
+                              dnaDesign = ~ barcode + batch + condition,
+                              rnaDesign = ~ condition)
+```
+
+We can now extract the transcription rate estimates from the model, denoted 'alpha values' in the MPRAnalyze model, and use the testing functionality to test for activtiy.
+extracting alpha values is done with the `getAlpha` function, that will provide separate values per-factor if a factor is provided. In this case we want a separate alpha estimate by condition:
+```{r quant extract and viz}
+##extract alpha values from the fitted model
+alpha <- getAlpha(obj, by.factor = "condition")
+
+##visualize the estimates
+boxplot(alpha)
+```
+
+We can also leverage negative controls included in the data to establish a baseline rate of transcription, and use that to test for activty among the candidate enhancers. The `test.empirical` function provides several statistics and p-values based on those statistics: empirical p-values, z-score based and MAD-score based p-values are currently supported.
+In most cases, we recommend using the MAD-score pvalues, which are median-based variant of z-scores, which makes them more robust to outliers.
+
+```{r quant test and viz}
+## test 
+res.epi <- test.empirical(obj = obj, 
+                               statistic = alpha$MT)
+summary(res.epi)
+
+res.chr <- test.empirical(obj = obj,
+                               statistic = alpha$WT)
+par(mfrow=c(2,2))
+
+hist(res.epi$pval.mad, main="episomal, all")
+hist(res.epi$pval.mad[control], main="episomal, controls")
+hist(res.chr$pval.mad, main="chromosomal, all")
+hist(res.chr$pval.mad[control], main="chromosomal, controls")
+
+par(mfrow=c(1,1))
+```
+
+P-values seem well calibrated, getting a uniform distribution for inactive enhancers, and enrichment for low p-values with the active enhancers.
+
+# Comparative Analysis
+
+MPRAnalyze also supports comparative analyses, in this case: identifying enhancers that are differentially active between conditions. While we can do this indirectly by taking the quantification results and identify enhancers that are active in one condition but not the other, a direct compartive analysis is more sensitive, and allows identification of enhancers that are more or less active, avoiding the binarization of activity.
+MPRAnalyze also leverages negative controls to estbalish the null differential behavior, thereby correcting any systemic bias that may be present in the data.
+This analysis is done very similarly to quantification, with an additional reduced model that describes the null hypothesis. In this case, the null hypothesis is no differential activtiy between conditions, so the reduced model is an empty model (intercept only)
+
+```{r comp fit}
+obj <- analyze.comparative(obj = obj, 
+                           dnaDesign = ~ barcode + batch + condition, 
+                           rnaDesign = ~ condition, 
+                           reducedDesign = ~ 1)
+```
+
+with the fitted model, we can now test for differential activity, by calling `test.lrt`
+```{r comp lrt}
+res <- test.lrt(obj)
+
+head(res)
+summary(res)
+```
+
+When the hypothesis teseting is simple (two-condition comparison), a fold-change estimate is also available:
+```{r foldchange}
+
+## plot log Fold-Change
+
+ggplot(res) + stat_density(aes(logFC), fill="white", color="black", size=1) + 
+    geom_vline(xintercept = 0)
+ggplot(res, aes(logFC, -log10(pval), color=fdr<0.05)) + geom_point()
+```
+

@@ -10,7 +10,7 @@ compute.depth(data, lib.factor, func)
 \item{data}{the data matrix to compute the depth factor for}
 
 \item{lib.factor}{the partitioning of the data matrix columns into library.
-A separate depth factor is computer per library.}
+A separate depth factor is computed per library.}
 
 \item{func}{the function to use to compute the library depth}
 }

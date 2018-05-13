@@ -15,9 +15,9 @@ estimateFactors(counts, annotations, lib.factor = NULL,
 \item{lib.factor}{the name of the factors describing the libraries}
 
 \item{depth.estimator}{a character indicating which depth estimation to use.
-Currently supported values are "uq" for upper quantile (default) and "rle"
-for RLE (uses geometric mean, and is therefore not recommended if libraries
-have 0 counts)}
+Currently supported values are "uq" for upper quartile (default), "totsum"
+for total sum normalization, and "rle" for RLE (uses geometric mean, and is 
+therefore not recommended if libraries have 0 counts)}
 }
 \value{
 computed library depth corection factors

@@ -5,7 +5,7 @@
 \title{test for significant activity (quantitative analysis) using various empirical
 tests (see details)}
 \usage{
-test.empirical(obj, statistic = NULL)
+test.empirical(obj, statistic = NULL, useControls = TRUE, subset = NULL)
 }
 \arguments{
 \item{obj}{the MpraObject, after running an analysis function}
@@ -13,6 +13,13 @@ test.empirical(obj, statistic = NULL)
 \item{statistic}{if null [default], the intercept term is used as the score.
 An alternate score can be provided by setting 'statistic'. Must be a numeric
 vector.}
+
+\item{useControls}{is TRUE and controls are available, use the controls to
+establish the background model and compare against. This allows for more
+accurate zscores as well as empircal p-values.}
+
+\item{subset}{only test a subset of the enhancers in the object (logical,
+indices or names). Default is NULL, then all the enhancers are included.}
 }
 \value{
 a data.frame of empirical summary statistics based on the model's 
@@ -21,19 +28,15 @@ estimate of slope, or the given statistic. These are:
     \item statistic: the statistic (either the provided, or extracted from the
     models)
     \item zscore: Z-score of the statistic (number of standard devisations 
-    from the mean)
+    from the mean). If controls are available, the score is based on their 
+    distribution: so it's the number of control-sd from the control-mean
     \item mad.score: a median-baed equivalent of the Z-score, with less 
-    sensitivity to outlier values
-    \item zscore.ctrl: only available if negative controls are provided.
-    a Z-score based on the controls distribution, instead of the distribution 
-    of the complete set of observations
-    \item mad.score.ctrl: only available if negative controls are provided.
-    a MAD-score based on the controls distribution, instead of the distribution 
-    of the complete set of observations
-    \item epval: only available if negative controls are provided. empirical 
-    P-value, using the control distribution as the null
-    \item fdr: only available if negative controls are provided. BH adjusted-
-    empricial p-values
+    sensitivity to outlier values. If controls are provided, it's based
+    on their distribution.
+    \item pval.zscore: a p-value based on the normal approximation of the
+    Z-scores
+    \item pval.empirical: only available if negative controls are provided. 
+    empirical P-value, using the control distribution as the null
 }
 }
 \description{

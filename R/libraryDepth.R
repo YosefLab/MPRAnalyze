@@ -1,3 +1,10 @@
+#' easy access container for depth estimation functions
+DEPTH_EST_FUNCTIONS = list(
+    uq = function(x) quantile(c(unlist((x))), .75),
+    rle = function(x) exp(mean(log(c(unlist((x)))))),
+    totsum = function(x) sum(c(unlist(x)))
+)
+
 
 #' estimate library size correction factors
 #'
@@ -24,7 +31,7 @@
 #' 
 #' @export
 estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both", 
-                                 depth.estimator="uq") {
+                                depth.estimator="uq") {
     
     if(!(which.lib %in% c("dna", "rna", "both"))) {
         stop("which.lib must be 'dna', 'rna' or 'both' (default)")
@@ -49,9 +56,9 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both",
 #' @param annotations the annotations (data.frame)
 #' @param lib.factor the name of the factors describing the libraries
 #' @param depth.estimator a character indicating which depth estimation to use.
-#' Currently supported values are "uq" for upper quantile (default) and "rle"
-#' for RLE (uses geometric mean, and is therefore not recommended if libraries
-#' have 0 counts)
+#' Currently supported values are "uq" for upper quartile (default), "totsum"
+#' for total sum normalization, and "rle" for RLE (uses geometric mean, and is 
+#' therefore not recommended if libraries have 0 counts)
 #' @return computed library depth corection factors
 estimateFactors <- function(counts, annotations, lib.factor=NULL, depth.estimator='uq') {
     if(is.null(lib.factor)) {
@@ -81,7 +88,7 @@ estimateFactors <- function(counts, annotations, lib.factor=NULL, depth.estimato
 #'
 #' @param data the data matrix to compute the depth factor for
 #' @param lib.factor the partitioning of the data matrix columns into library.
-#' A separate depth factor is computer per library.
+#' A separate depth factor is computed per library.
 #' @param func the function to use to compute the library depth
 #'
 #' @return a numeric of length NCOL(data) with the appropriate epth factor for
@@ -90,18 +97,12 @@ compute.depth <- function(data, lib.factor, func) {
     lib.factor <- as.factor(lib.factor)
 
     depth <- by(data = t(data), INDICES = lib.factor, FUN = func)
-    if(median(depth) > 0) {
-        depth <- depth / median(depth)
+    if(depth[1] > 0) {
+        depth <- depth / depth[1]
     }
 
     return(as.vector(depth[lib.factor]))
 }
-
-#' easy access container for depth estimation functions
-DEPTH_EST_FUNCTIONS = list(
-    uq = function(x) quantile(c(unlist((x))), .75),
-    rle = function(x) exp(mean(log(c(unlist((x))))))
-)
 
 #' Manually set library depth correction factors
 #'
@@ -116,7 +117,7 @@ DEPTH_EST_FUNCTIONS = list(
 #' @export
 setDepthFactors <- function(obj, dnaDepth, rnaDepth) {
     if(length(dnaDepth) != NCOL(obj@dnaCounts) 
-       | length(rnaDepth) != NCOL(obj@rnaCounts)) {
+        | length(rnaDepth) != NCOL(obj@rnaCounts)) {
         stop("invalid length of depth factors")
     }
     obj@dnaDepth <- dnaDepth
