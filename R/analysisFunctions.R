@@ -196,4 +196,5 @@ analyze.quantification <- function(obj, dnaDesign=~1, rnaDesign=~1){
     
     message("Analysis done!")
     return(obj)
+
 }
