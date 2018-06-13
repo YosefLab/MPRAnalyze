@@ -269,7 +269,7 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
     }
     
     if(is.null(by.factor)) {
-        return(data.frame(TR=getSingleAlpha(obj, full=full)))
+        return(data.frame(alpha=getSingleAlpha(obj, full=full)))
     } else if (by.factor=="all") {
         ## extract all parametres except for the dispersion
         alpha.mat <- getModelParameters.RNA(obj, full=full)[,-1]
