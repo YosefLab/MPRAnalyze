@@ -128,7 +128,7 @@ test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     
     if(is.null(statistic)) {
         alpha <- getAlpha(obj)
-        statistic <- alpha$TR
+        statistic <- alpha$alpha
         names(statistic) <- rownames(alpha)
     }
     
