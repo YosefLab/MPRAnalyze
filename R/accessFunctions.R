@@ -22,7 +22,7 @@ getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
         fit <- obj@modelFits.red
     }
     
-    coef.mat <- t(fit$d.coef[enhancers,,drop=FALSE])
+    coef.mat <- fit$d.coef[enhancers,,drop=FALSE]
     coef.mat[is.na(coef.mat)] <- 0
     
     dmat <- obj@designs@dna
@@ -31,23 +31,26 @@ getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
     }
     
     if(obj@model == "gamma.pois") {
-        # alpha / rate
-        dfit <- exp(coef.mat[1,] + dmat %*% coef.mat[-1,,drop=FALSE])
+        # disp * (1/beta)
+        disp <- rep(coef.mat[,1], NROW(dmat))
+        beta.inv <- coef.mat[,-1] %*% t(dmat)
+        dfit <- exp(disp + beta.inv)
+        
     } else if(obj@model == "ln.nb" | obj@model == "ln.ln") {
-        dfit <- exp(dmat %*% coef.mat[-1,,drop=FALSE])
+        dfit <- exp(coef.mat[-1,,drop=FALSE] %*% t(dmat))
     }
     
     if(depth == TRUE){
-        dfit <- dfit * replicate(NCOL(dfit), obj@dnaDepth)
+        dfit <- dfit * rep(obj@dnaDepth, each = NROW(coef.mat))
     }
     
-    colnames(dfit) <- enhancers
+    rownames(dfit) <- enhancers
     if(transition) {
-        rownames(dfit) <- rownames(obj@rnaAnnot)
+        colnames(dfit) <- rownames(obj@rnaAnnot)
     } else {
-        rownames(dfit) <- rownames(obj@dnaAnnot)
+        colnames(dfit) <- rownames(obj@dnaAnnot)
     }
-    return(t(dfit))
+    return(dfit)
 }
 
 #' Get RNA full model fits from an MpraObject
