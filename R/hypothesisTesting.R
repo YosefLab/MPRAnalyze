@@ -145,12 +145,27 @@ test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     res <- data.frame(statistic=statistic)
     
     if(all(is.na(obj@controls)) | !useControls) {
-        res$zscore <- (statistic - mean(statistic, na.rm=TRUE)) / 
-            sd(statistic, na.rm=TRUE)
-        res$mad.score <- (statistic - median(statistic, na.rm=TRUE)) / 
-            mad(statistic, na.rm=TRUE)
-        res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
+        ## No controls, use bottom 50% of the distribution to establish the baseline
+        
+        #estimate mode of distribution
+        dist.peak <- est.mode(statistic)
+        base <- statistic[statistic < dist.peak]
+        
+        std.div <- sqrt(mean((base - dist.peak) ^ 2, na.rm = TRUE))
+        mad.score <- 1.4826 * median(abs(base - dist.peak), na.rm = TRUE)
+        
+        res$zscore <- (statistic - dist.peak) / std.div
+        res$mad.score <- (statistic - dist.peak) / mad.score
+        
         res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
+        res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
+        
+        # res$zscore <- (statistic - mean(statistic, na.rm=TRUE)) / 
+        #     sd(statistic, na.rm=TRUE)
+        # res$mad.score <- (statistic - median(statistic, na.rm=TRUE)) / 
+        #     mad(statistic, na.rm=TRUE)
+        # res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
+        # res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
     } else {
         ctrl.idx <- rep(FALSE, NROW(obj@dnaCounts))
         ctrl.idx[obj@controls] <- TRUE
@@ -170,4 +185,15 @@ test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     }
     
     return(res)
+}
+
+#' estimate mode of a sample
+est.mode <- function(x) {
+    bin.x = x
+    while(length(bin.x)  > 1) {
+        h <- hist(bin.x, plot = FALSE)
+        bin.max <- which.max(h$counts)
+        bin.x <- x[x > h$breaks[bin.max] & x < h$breaks[bin.max + 1]]
+    }
+    return(bin.x)
 }
