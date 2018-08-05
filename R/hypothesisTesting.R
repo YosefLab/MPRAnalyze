@@ -145,7 +145,7 @@ test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     res <- data.frame(statistic=statistic)
     
     if(all(is.na(obj@controls)) | !useControls) {
-        ## No controls, use bottom 50% of the distribution to establish the baseline
+        ## No controls, use bottom of the distribution to establish the baseline
         
         #estimate mode of distribution
         dist.peak <- est.mode(statistic)

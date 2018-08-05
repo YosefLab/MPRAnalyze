@@ -223,7 +223,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
         }, BPPARAM = BPPARAM)
         
         d.par <- matrix(0, nrow=NROW(dcounts), ncol=NCOL(ddesign.mat)+1)
-        d.par[,1] <- sapply(dfits, function(x) x$par[1])
+        d.par[,1] <- vapply(dfits, function(x) x$par[1], 0.0)
         for(i in seq_len(NROW(dcounts))){
             valid.df <- apply(ddesign.mat[valid.c.d[i,],,drop=FALSE], 2, 
                               function(x) !all(x==0))
@@ -262,7 +262,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     }
     
     d.coef <- d.par
-    d.df <- sapply(dfits, function(x) length(x$fit))
+    d.df <- vapply(dfits, function(x) length(x$fit), 0)
     
     r.coef <- rep(NA, NCOL(rdesign.mat))
     r.coef[valid.rf] <- r.par[-1]

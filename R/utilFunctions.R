@@ -52,7 +52,7 @@ checkForIntercept <- function(design) {
 #' fit.* function
 #' @return a list of formatted extacted properties 
 reformatModels <- function(models) {
-    valid <- !sapply(models, is.null)
+    valid <- !vapply(models, is.null, TRUE)
     res <- list(
         ll = extractProp(models, "ll", valid),
         converged = extractProp(models, "converged", valid),

@@ -48,7 +48,7 @@ ll.dna.gamma.pois <- function(theta, dcounts, log.ddepth, ddesign.mat) {
     # shape_gamma = alpha
     # rate_gamma = beta = 1/model_dna
     ll <- sum(dgamma(x = dcounts,
-                    shape = exp(theta[1]), # alpha
+                    shape = exp(theta[1]), # dispersion
                     rate = exp(log.rate.est),
                     log = TRUE))
     return(-ll)

@@ -128,7 +128,7 @@ getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #' @rdname extractModelParameters
 getModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(features)) {
-        features <- 1:NROW(obj@dnaCounts)
+        features <- seq_len(NROW(obj@dnaCounts))
     } else if (is.character(features)) {
         features <- which(rownames(obj@dnaCounts) %in% features)
     }
@@ -155,7 +155,7 @@ getModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
         stop("can't extract model parameters before fitting a model")
     }
     if(is.null(features)) {
-        features <- 1:NROW(obj@dnaCounts)
+        features <- seq_len(NROW(obj@dnaCounts))
     } else if (is.character(features)) {
         features <- which(rownames(obj@dnaCounts) %in% features)
     }
