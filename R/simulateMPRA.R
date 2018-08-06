@@ -32,17 +32,27 @@
 #' default MPRAnalyze uses a Gamma-Poisson model).
 #' The data generated can have multiple batches, and either 1 or 2 conditions,
 #' and the simulated data is always paired (DNA and RNA extracted from the same
-#' library)
-#' 
+#' library).
+#' User can control both true and observed variation levels (noise), the number
+#' of expected plasmids per barcode, the true transcription ratio, the size
+#' of the batch and barcode effects. 
 #' 
 #' @export
 #' 
 #' @examples
-simulate.dataset <- function(tr = rep(2, 100), da = c(rep(0, 50), rep(0.5, 50)),
-                             dna.noise.sd = 0.2, rna.noise.sd = 0.3,
-                             dna.inter = 5, dna.inter.sd = 0.5,
-                             nbc = 100, coef.bc.sd = 0.5,
-                             nbatch = 3, coef.batch.sd = 0.5) {
+#' 
+#' data <- simulateMPRA()
+#' # single condition
+#' data <- simulateMPRA(da=NULL)
+#' # more observed noise
+#' data <- simulateMPRA(dna.noise.sd = 0.75, rna.noise.sd = 0.75)
+#' # gradually increasing dataset
+#' data <- simulateMPRA(tr = seq(2,3,0.01), da=NULL)
+simulateMPRA <- function(tr = rep(2, 100), da = c(rep(0, 50), rep(0.5, 50)),
+                         dna.noise.sd = 0.2, rna.noise.sd = 0.3,
+                         dna.inter = 5, dna.inter.sd = 0.5,
+                         nbc = 100, coef.bc.sd = 0.5,
+                         nbatch = 3, coef.batch.sd = 0.5) {
     nenhancer = length(tr)
     stopifnot(is.null(da) | length(tr) == length(da))
     

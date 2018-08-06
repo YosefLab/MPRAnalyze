@@ -2,7 +2,9 @@
 % Please edit documentation in R/accessFunctions.R
 \name{getFits.DNA}
 \alias{getFits.DNA}
-\title{Get DNA model fits from an MpraObject}
+\title{Get DNA model fits from an MpraObject (the expected values based on the 
+model). These can be compared with the observed counts to assess goodness
+of fit.}
 \usage{
 getFits.DNA(obj, enhancers = NULL, depth = TRUE, full = TRUE,
   transition = FALSE)
@@ -10,17 +12,24 @@ getFits.DNA(obj, enhancers = NULL, depth = TRUE, full = TRUE,
 \arguments{
 \item{obj}{MpraObject to extract from}
 
-\item{enhancers}{enhancer to extract}
+\item{enhancers}{which enhancers to get the fits for. Can be character 
+vectors with enhancer names, logical or numeric enhancer indices, or NULL if 
+all enhancers are to be extracted (default)}
 
-\item{depth}{include depth correction}
+\item{depth}{include depth correction in the model fitting (default TRUE)}
 
-\item{full}{whether to extract from full model}
+\item{full}{if LRT modeling was used, TRUE (default) would return the fits
+of the full model, FALSEwould return the reduced model fits.}
 
-\item{transition}{use the DNA->RNA transition matrix (deafult: FALSE)}
+\item{transition}{use the DNA->RNA transition matrix (deafult: FALSE). This 
+is useful if the DNA observations need to be distributed to match the RNA
+observations.}
 }
 \value{
 DNA fits (numeric, enhancers x samples)
 }
 \description{
-Get DNA model fits from an MpraObject
+Get DNA model fits from an MpraObject (the expected values based on the 
+model). These can be compared with the observed counts to assess goodness
+of fit.
 }
