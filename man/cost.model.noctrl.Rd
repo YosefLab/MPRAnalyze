@@ -5,14 +5,11 @@
 \alias{cost.dnarna}
 \alias{cost.dna}
 \alias{cost.rna}
-\alias{cost.dnarna}
-\alias{cost.dna}
-\alias{cost.rna}
 \title{likelihood wrapper to compute terms of likelihood with non-zero derivative
 with respect to case dna model and rna model without control enhancer observations}
 \usage{
-cost.dnarna(theta, dcounts, rcounts, llfnDNA, llfnRNA, log.ddepth, log.rdepth,
-  rctrlscale = NULL, ddesign.mat, rdesign.mat, d2rdesign.mat,
+cost.dnarna(theta, dcounts, rcounts, llfnDNA, llfnRNA, log.ddepth,
+  log.rdepth, rctrlscale = NULL, ddesign.mat, rdesign.mat, d2rdesign.mat,
   rdesign.ctrl.mat = NULL)
 
 cost.dna(theta, theta.r, llfnDNA, llfnRNA, dcounts, rcounts, log.ddepth,

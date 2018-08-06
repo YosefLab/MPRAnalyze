@@ -4,7 +4,6 @@
 \alias{fit.dnarna}
 \alias{fit.dnarna.noctrlobs}
 \alias{fit.dnarna.wctrlobs.iter}
-\alias{fit.dnarna.noctrlobs}
 \title{Fit dna and rna model to a given enhancer}
 \usage{
 fit.dnarna.noctrlobs(model, dcounts, rcounts, ddepth, rdepth, rctrlscale,

@@ -5,8 +5,9 @@
 \title{fit the control-based joint model. Seperate DNA model per enhancer, joint RNA
 model.}
 \usage{
-fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth, ddesign.mat,
-  rdesign.mat, d2rdesign.mat, BPPARAM, print.progress = TRUE)
+fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth,
+  ddesign.mat, rdesign.mat, d2rdesign.mat, BPPARAM,
+  print.progress = TRUE)
 }
 \arguments{
 \item{model}{noise model}

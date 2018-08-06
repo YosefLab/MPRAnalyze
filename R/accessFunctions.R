@@ -1,10 +1,17 @@
-#' Get DNA model fits from an MpraObject
+#' Get DNA model fits from an MpraObject (the expected values based on the 
+#' model). These can be compared with the observed counts to assess goodness
+#' of fit.
 #' 
 #' @param obj MpraObject to extract from
-#' @param enhancers enhancer to extract 
-#' @param depth include depth correction
-#' @param full whether to extract from full model
-#' @param transition use the DNA->RNA transition matrix (deafult: FALSE)
+#' @param enhancers which enhancers to get the fits for. Can be character 
+#' vectors with enhancer names, logical or numeric enhancer indices, or NULL if 
+#' all enhancers are to be extracted (default)
+#' @param depth include depth correction in the model fitting (default TRUE)
+#' @param full if LRT modeling was used, TRUE (default) would return the fits
+#' of the full model, FALSEwould return the reduced model fits.
+#' @param transition use the DNA->RNA transition matrix (deafult: FALSE). This 
+#' is useful if the DNA observations need to be distributed to match the RNA
+#' observations.
 #' 
 #' @return DNA fits (numeric, enhancers x samples)
 #' 

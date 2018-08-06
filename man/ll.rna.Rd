@@ -5,17 +5,16 @@
 \alias{ll.rna.gamma.pois}
 \alias{ll.rna.ln.nb}
 \alias{ll.rna.ln.ln}
-\alias{ll.rna.gamma.pois}
-\alias{ll.rna.ln.nb}
-\alias{ll.rna.ln.ln}
 \title{likelihood of rna observations}
 \usage{
 ll.rna.gamma.pois(theta, theta.d, rcounts, log.rdepth, d2rdesign.mat,
   rdesign.mat)
 
-ll.rna.ln.nb(theta, theta.d, rcounts, log.rdepth, d2rdesign.mat, rdesign.mat)
+ll.rna.ln.nb(theta, theta.d, rcounts, log.rdepth, d2rdesign.mat,
+  rdesign.mat)
 
-ll.rna.ln.ln(theta, theta.d, rcounts, log.rdepth, d2rdesign.mat, rdesign.mat)
+ll.rna.ln.ln(theta, theta.d, rcounts, log.rdepth, d2rdesign.mat,
+  rdesign.mat)
 }
 \arguments{
 \item{theta}{the vector of rna model parameters to evaluate likelihood for

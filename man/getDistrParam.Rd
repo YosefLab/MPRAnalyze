@@ -3,7 +3,6 @@
 \name{getDistrParam.DNA}
 \alias{getDistrParam.DNA}
 \alias{getDistrParam.RNA}
-\alias{getDistrParam.RNA}
 \title{Get model distribution parameters from an MpraObject}
 \usage{
 getDistrParam.DNA(obj, enhancer = NULL, full = TRUE)

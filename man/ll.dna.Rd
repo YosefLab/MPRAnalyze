@@ -5,7 +5,6 @@
 \alias{ll.dna.gamma.pois}
 \alias{ll.dna.ln.nb}
 \alias{ll.dna.ln.ln}
-\alias{ll.dna.gamma.pois}
 \alias{ll.dna.ln}
 \title{likelihood of dna observations}
 \usage{
