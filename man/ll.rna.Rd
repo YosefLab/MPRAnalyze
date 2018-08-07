@@ -24,12 +24,14 @@ ll.rna.ln.ln(theta, theta.d, rcounts, log.rdepth, d2rdesign.mat,
 
 \item{rcounts}{the observed RNA counts (integer, samples x enhancers)}
 
-\item{log.rdepth}{rna library size correction vector, log scale (numeric, samples)}
+\item{log.rdepth}{rna library size correction vector, log scale 
+(numeric, samples)}
 
 \item{d2rdesign.mat}{the trasitional matrix to distribute and match DNA 
 estimates to RNA observations (logical, rna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix 
+(logical, rna samples x rna parameters)}
 }
 \value{
 negative log likelihood of rna observations under the specified model

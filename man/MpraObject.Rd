@@ -16,7 +16,8 @@ MpraObject(dnaCounts, rnaCounts, dnaAnnot = NULL, rnaAnnot = NULL,
 
 \item{rnaAnnot}{column annotations for the RNA matrix}
 
-\item{colAnnot}{(deprecated) column annotations - should only be used if DNA, RNA annotations are the same.}
+\item{colAnnot}{(deprecated) column annotations - should only be used if DNA,
+RNA annotations are the same.}
 
 \item{controls}{a vector specifying which enhancers are negative controls
 (scrambles)}

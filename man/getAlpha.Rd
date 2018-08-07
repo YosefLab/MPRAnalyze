@@ -36,7 +36,7 @@ obj <- MpraObject(dnaCounts = data$obs.dna,
                   rnaCounts = data$obs.rna, 
                   colAnnot = data$annot)
 obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
-obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+obj <- analyzeComparative(obj, dnaDesign = ~ batch + barcode + condition, 
                               rnaDesign = ~ condition, reducedDesign = ~ 1)
 ## get alpha estimate for the two conditions
 alpha <- getAlpha(obj, by.factor="condition")

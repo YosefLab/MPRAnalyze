@@ -33,10 +33,13 @@ get.ll.functions <- function(model) {
 #' @param theta the vector of rna model parameters to evaluate likelihood for
 #' (numeric, rna parameters)
 #' @param dcounts the observed DNA counts (integer, enhancers x samples)
-#' @param log.ddepth dna library size correction vector, log scale (numeric, samples)
-#' @param ddesign.mat the dna model design matrix (logical, samples x dna parameters)
+#' @param log.ddepth dna library size correction vector,
+#' log scale (numeric, samples)
+#' @param ddesign.mat the dna model design matrix
+#' (logical, samples x dna parameters)
 #'
-#' @return negative log likelihood of dna  observations under the specified model
+#' @return negative log likelihood of dna  observations under the specified 
+#' model
 NULL
 
 #' @rdname ll.dna
@@ -83,10 +86,12 @@ ll.dna.ln <- function(theta, dcounts, log.ddepth, ddesign.mat) {
 #' (numeric, rna parameters)
 #' @param theta.d dna model parameters to condition likelihood on
 #' @param rcounts the observed RNA counts (integer, samples x enhancers)
-#' @param log.rdepth rna library size correction vector, log scale (numeric, samples)
+#' @param log.rdepth rna library size correction vector, log scale 
+#' (numeric, samples)
 #' @param d2rdesign.mat the trasitional matrix to distribute and match DNA 
 #' estimates to RNA observations (logical, rna samples x dna parameters)
-#' @param rdesign.mat the rna model design matrix (logical, rna samples x rna parameters)
+#' @param rdesign.mat the rna model design matrix 
+#' (logical, rna samples x rna parameters)
 #'
 #' @return negative log likelihood of rna observations under the specified model
 NULL

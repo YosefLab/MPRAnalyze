@@ -35,6 +35,6 @@ obj <- MpraObject(dnaCounts = data$obs.dna,
                   colAnnot = data$annot)
 obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
 obj <- setModel(obj, "ln.ln")
-obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+obj <- analyzeQuantification(obj, dnaDesign = ~ batch + barcode, 
                               rnaDesign = ~1)
 }

@@ -48,10 +48,12 @@ validateMpraObject <- function(object) {
 #' The main container class for MPRAnalyze
 #' @slot dnaCounts matrix of DNA counts
 #' @slot rnaCounts matrix of RNA counts
-#' @slot dnaAnnot DNA column annotations (info on condition, batch, barcode, etc)
-#' @slot rnaAnnot RNA column annotations (info on condition, batch, barcode, etc)
+#' @slot dnaAnnot DNA column annotations 
+#' (info on condition, batch, barcode, etc)
+#' @slot rnaAnnot RNA column annotations 
+#' (info on condition, batch, barcode, etc)
 #' @slot controls indices of negative controls
-#' @slot controls.forfit indices of negative controls used for fitting in `full` 
+#' @slot controls.forfit indices of negative controls used for fitting in `full`
 #' mode
 #' @slot lib.factor a factor with a level for each library, used for depth 
 #' estimation and in `idr` quantitative mode
@@ -62,7 +64,8 @@ validateMpraObject <- function(object) {
 #' @slot model id of the distributional model used
 #' @slot designs a Designs object containing the various design matrices used
 #' @slot modelFits fitted models, populated by an analysis function
-#' @slot modelFits.red fitted reduced models, populated by an LRT analysis function
+#' @slot modelFits.red fitted reduced models, populated by an LRT analysis 
+#' function
 #' @slot modelPreFits.dna.ctrl fitted models for control DNA
 #' @slot BPPARAM The BiocParallel parallelization backend to use throughout
 setClass("MpraObject", validity = validateMpraObject,
@@ -98,7 +101,8 @@ setClass("MpraObject", validity = validateMpraObject,
 #' @param rnaCounts the RNA counts matrix
 #' @param dnaAnnot column annotations for the DNA matrix
 #' @param rnaAnnot column annotations for the RNA matrix
-#' @param colAnnot (deprecated) column annotations - should only be used if DNA, RNA annotations are the same.
+#' @param colAnnot (deprecated) column annotations - should only be used if DNA,
+#' RNA annotations are the same.
 #' @param controls a vector specifying which enhancers are negative controls
 #' (scrambles)
 #' @param BPPARAM the biocParalell backend to use for parallelization throughout

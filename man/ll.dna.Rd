@@ -18,12 +18,15 @@ ll.dna.ln(theta, dcounts, log.ddepth, ddesign.mat)
 
 \item{dcounts}{the observed DNA counts (integer, enhancers x samples)}
 
-\item{log.ddepth}{dna library size correction vector, log scale (numeric, samples)}
+\item{log.ddepth}{dna library size correction vector,
+log scale (numeric, samples)}
 
-\item{ddesign.mat}{the dna model design matrix (logical, samples x dna parameters)}
+\item{ddesign.mat}{the dna model design matrix
+(logical, samples x dna parameters)}
 }
 \value{
-negative log likelihood of dna  observations under the specified model
+negative log likelihood of dna  observations under the specified 
+model
 }
 \description{
 likelihood of dna observations

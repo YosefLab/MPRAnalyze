@@ -9,12 +9,12 @@ DEPTH_EST_FUNCTIONS = list(
 #' estimate library size correction factors
 #'
 #' @note since in most MPRA experiments multiple barcodes exist within a single
-#' library, each column in the matrix is usually not a separate library. For this
-#' reason, it is recommended to supply this function with the appropriate
+#' library, each column in the matrix is usually not a separate library. For
+#' this reason, it is recommended to supply this function with the appropriate
 #' partitioning of the data matrix columns into libraries, see lib.factor
 #'
 #' @param obj the MpraObject
-#' @param which.lib which library to compute the depth factors for. Options are 
+#' @param which.lib which library to compute the depth factors for. Options are
 #' "both" (default), "dna" or "rna". If the DNA and RNA counts have different 
 #' library factors, this function should be called twice: once with "dna" and
 #' once with "rna"
@@ -67,7 +67,8 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both",
 #' for total sum normalization, and "rle" for RLE (uses geometric mean, and is 
 #' therefore not recommended if libraries have 0 counts)
 #' @return computed library depth corection factors
-estimateFactors <- function(counts, annotations, lib.factor=NULL, depth.estimator='uq') {
+estimateFactors <- function(counts, annotations, lib.factor=NULL, 
+                            depth.estimator='uq') {
     if(is.null(lib.factor)) {
         return(rep(1, NCOL(counts)))
     }
@@ -114,10 +115,10 @@ compute.depth <- function(data, lib.factor, func) {
 #' Manually set library depth correction factors
 #'
 #' @param obj the MpraObject
-#' @param dnaDepth library size factors for the DNA data, a numeric vector of length
-#' of the number of columns in the DNA data matrix
-#' @param rnaDepth library size factors for the RNA data, a numeric vector of length
-#' of the number of columns in the RNA data matrix
+#' @param dnaDepth library size factors for the DNA data, a numeric vector of 
+#' length of the number of columns in the DNA data matrix
+#' @param rnaDepth library size factors for the RNA data, a numeric vector of 
+#' length of the number of columns in the RNA data matrix
 #'
 #' @return the MpraObject with library depth factors
 #' 

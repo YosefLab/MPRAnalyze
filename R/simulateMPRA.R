@@ -94,7 +94,7 @@ simulateMPRA <- function(tr = rep(2, 100), da = c(rep(0, 50), rep(0.5, 50)),
     ## another set of observations (different noise)
     if (!is.null(da)) {
         obs.dna.log.diff <- matrix(rnorm(n = prod(dim(true.dna.log)), 
-                                        mean = true.dna.log, sd = dna.noise.sd), 
+                                        mean = true.dna.log, sd = dna.noise.sd),
                               nrow = NROW(true.dna.log))
         obs.dna.log <- cbind(obs.dna.log, obs.dna.log.diff)
         

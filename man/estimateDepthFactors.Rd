@@ -15,7 +15,7 @@ factor or the name of a column in the object's colAnnot. If not provided, the
 data is assumed to have been generated from a single library, and constant
 library depth is set.}
 
-\item{which.lib}{which library to compute the depth factors for. Options are 
+\item{which.lib}{which library to compute the depth factors for. Options are
 "both" (default), "dna" or "rna". If the DNA and RNA counts have different 
 library factors, this function should be called twice: once with "dna" and
 once with "rna"}
@@ -33,8 +33,8 @@ estimate library size correction factors
 }
 \note{
 since in most MPRA experiments multiple barcodes exist within a single
-library, each column in the matrix is usually not a separate library. For this
-reason, it is recommended to supply this function with the appropriate
+library, each column in the matrix is usually not a separate library. For
+this reason, it is recommended to supply this function with the appropriate
 partitioning of the data matrix columns into libraries, see lib.factor
 }
 \examples{

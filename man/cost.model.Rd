@@ -18,23 +18,30 @@ with respect to case dna model and rna model}
 
 \item{llfnRNA}{cost function to compute rna likelihood terms on (function)}
 
-\item{dcounts}{the observed case DNA counts (integer, enhancers x dna samples)}
+\item{dcounts}{the observed case DNA counts 
+(integer, enhancers x dna samples)}
 
 \item{rcounts}{the observed RNA counts (integer, enhancers x rna samples)}
 
-\item{log.ddepth}{dna library size correction vector, log scale (numeric, dna samples)}
+\item{log.ddepth}{dna library size correction vector, 
+log scale (numeric, dna samples)}
 
-\item{log.rdepth}{rna library size correction vector, log scale (numeric, rna samples)}
+\item{log.rdepth}{rna library size correction vector, 
+log scale (numeric, rna samples)}
 
-\item{ddesign.mat}{the dna model design matrix (logical, dna samples x dna parameters)}
+\item{ddesign.mat}{the dna model design matrix 
+(logical, dna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix 
+(logical, rna samples x rna parameters)}
 
-\item{d2rdesign.mat}{the transitional design matrix, distributiong the DNA estimates to the RNA observations}
+\item{d2rdesign.mat}{the transitional design matrix, distributiong the DNA 
+estimates to the RNA observations}
 
 \item{rdesign.ctrl.mat}{the control rna model design matrix 
 (logical, samples x rna parameters)}
 }
 \description{
-nomenclature cost.[model components to be estimated].[if ctrl obs are included in fitting]
+likelihood wrapper to compute terms of likelihood with non-zero derivative
+with respect to case dna model and rna model
 }

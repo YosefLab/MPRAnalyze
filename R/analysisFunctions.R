@@ -4,13 +4,13 @@
 #' with the RNA design should be included.
 #' @param rnaDesign the design for the RNA model.
 #' @param fit.se logical, if TRUE the standard errors of the coefficients
-#' are extracted from the model. These are necessary for computing coefficient-based
-#' testing, but make the model fitting slower. Deafult: FALSE
-#' @param reducedDesign the design for the reduced RNA model, for a likelihood-ratio
-#' testing scheme. The Reduced design must be nested within the full design (i.e
-#' all terms in the reduced must be included in the full).
-#' @param correctControls if TRUE (default), use the negative controls to establish
-#' the null hypothesis, correcting for systemic bias in the data
+#' are extracted from the model. These are necessary for computing coefficient-
+#' based testing, but make the model fitting slower. Deafult: FALSE
+#' @param reducedDesign the design for the reduced RNA model, for a likelihood-
+#' ratio testing scheme. The Reduced design must be nested within the full 
+#' design (i.e all terms in the reduced must be included in the full).
+#' @param correctControls if TRUE (default), use the negative controls to 
+#' establish the null hypothesis, correcting for systemic bias in the data
 #' @param verbose print progress reports (default: TRUE)
 #' @import progress
 #' @export
@@ -23,19 +23,20 @@
 #'                   colAnnot = data$annot)
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
 #' ## run an LRT-based analysis, as recommnded:
-#' obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+#' obj <- analyzeComparative(obj, dnaDesign = ~ batch + barcode + condition, 
 #'                               rnaDesign = ~ condition, reducedDesign = ~ 1)
 #'                               
 #' ## alternatively, run a coefficient-based analysis:
-#' obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+#' obj <- analyzeComparative(obj, dnaDesign = ~ batch + barcode + condition, 
 #'                               rnaDesign = ~ condition, fit.se = TRUE)
-analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE, 
+analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE, 
                                 reducedDesign=NULL, correctControls=TRUE, 
                                 verbose=TRUE) {
     ##TODO: if full becomes operational, add 'fullLRT' as a logical argument
     
     if(!fit.se & is.null(reducedDesign)) {
-        stop("Comparative analysis requires either a reduced design or fitting the SE")
+        stop("Comparative analysis requires either a reduced design or fitting \
+             the SE")
     }
     if(!is.null(reducedDesign)) {
         if (!isNestedDesign(full=rnaDesign, reduced=reducedDesign)) {
@@ -53,8 +54,10 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
     }
     
     obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=obj@dnaAnnot)
-    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
-    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot)
+    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, 
+                                        annotations=obj@rnaAnnot)
+    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, 
+                                        annotations=obj@rnaAnnot)
     
     ##TODO: if full model, call a different function.
     
@@ -129,7 +132,8 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
                     rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
                     theta.d.ctrl.prefit=theta.d.ctrl.prefit,
                     compute.hessian=FALSE))
-            }, error = function(err) {message("error fitting: ", rn, ": ", err)})
+            }, error = function(err) {message("error fitting: ", 
+                                              rn, ": ", err)})
         }, BPPARAM = obj@BPPARAM)
         names(models) <- rownames(obj@dnaCounts)
         obj@modelFits.red <- reformatModels(models)
@@ -140,8 +144,9 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
 }
 
 
-#' Perform quantitative analysis on the MPRA data. This analysis aims to determine
-#' which sequences have a regulatory function, when no condition is being tested.
+#' Perform quantitative analysis on the MPRA data. This analysis aims to 
+#' determine which sequences have a regulatory function, when no condition is 
+#' being tested.
 #' 
 #' \itemize{
 #'   \item epirical: the model is fitted as specified, enabling future empirical
@@ -167,9 +172,9 @@ analyze.comparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
-#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#' obj <- analyzeQuantification(obj, dnaDesign = ~ batch + barcode, 
 #'                               rnaDesign = ~1)
-analyze.quantification <- function(obj, dnaDesign=~1, rnaDesign=~1){
+analyzeQuantification <- function(obj, dnaDesign=~1, rnaDesign=~1){
     if(length(obj@dnaDepth) == 0){
         warning("No DNA library depth factors set")
         obj <- estimateDepthFactors(obj, which.lib = "dna")
@@ -183,8 +188,10 @@ analyze.quantification <- function(obj, dnaDesign=~1, rnaDesign=~1){
     }
     
     obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=obj@dnaAnnot)
-    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, annotations=obj@rnaAnnot)
-    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, annotations=obj@rnaAnnot)
+    obj@designs@dna2rna <- getDesignMat(design=dnaDesign, 
+                                        annotations=obj@rnaAnnot)
+    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, 
+                                        annotations=obj@rnaAnnot)
     
     ## fit model
     obj@designs@rnaRed <- NULL

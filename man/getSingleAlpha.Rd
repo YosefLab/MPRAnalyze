@@ -24,8 +24,8 @@ return the fitted value for alpha (transcription rate).
 }
 \details{
 return the estimate for transcription rate as fitted by the package.
-If the design is intercepted, then by default the baseline (intercept) rate is
-returned. Otherwise, term and value must be provided, such that term is a 
+If the design is intercepted, then by default the baseline (intercept) rate 
+is returned. Otherwise, term and value must be provided, such that term is a
 valid term in the design provided to the fit, and value is one of the 
 levels in the term.
 }

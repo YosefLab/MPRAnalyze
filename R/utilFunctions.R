@@ -109,12 +109,12 @@ extractProp <- function(models, prop, valids) {
 #' @return a named vector 
 #' 
 #' @details return the estimate for transcription rate as fitted by the package.
-#' If the design is intercepted, then by default the baseline (intercept) rate is
-#' returned. Otherwise, term and value must be provided, such that term is a 
+#' If the design is intercepted, then by default the baseline (intercept) rate 
+#' is returned. Otherwise, term and value must be provided, such that term is a
 #' valid term in the design provided to the fit, and value is one of the 
 #' levels in the term.
 getSingleAlpha <- function(obj, term=NULL, value=NULL, full=TRUE) {
-    coefs <- getModelParameters.RNA(obj, full = full)
+    coefs <- getModelParameters_RNA(obj, full = full)
     if(full) {
         des <- obj@designs@rnaFull
     } else {

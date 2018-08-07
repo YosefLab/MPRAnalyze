@@ -15,10 +15,10 @@
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
-#' obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+#' obj <- analyzeComparative(obj, dnaDesign = ~ batch + barcode + condition, 
 #'                               rnaDesign = ~ condition, reducedDesign = ~ 1)
-#' results <- test.lrt(obj)
-test.lrt <- function(obj) {
+#' results <- testLrt(obj)
+testLrt <- function(obj) {
     if(length(obj@modelFits) == 0 | length(obj@modelFits.red) == 0) {
         stop("An LRT analysis must be performed before computing the test")
     }
@@ -43,12 +43,12 @@ test.lrt <- function(obj) {
     res <- data.frame(statistic=lrt, pval=pval, fdr=fdr, df.test=df,
                     df.dna=df.dna, df.rna.full=df.rna.full, 
                     df.rna.red=df.rna.red)
-    ## if condition is single term, extract the corresponding coefficient as logFC
+    ## if condition is single term, extract the coefficient as logFC
     condition.name <- colnames(obj@designs@rnaFull)[!(colnames(obj@designs@rnaFull) %in% 
                                                         colnames(obj@designs@rnaRed))]
     if(length(condition.name) == 1) {
         ## single coefficient is the log Fold Change
-        res$logFC <- getModelParameters.RNA(obj)[,condition.name]
+        res$logFC <- getModelParameters_RNA(obj)[,condition.name]
     }
     
     return(res)
@@ -75,10 +75,10 @@ test.lrt <- function(obj) {
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
 #' 
 #' ## fit.se must be TRUE for coefficient based testing to work
-#' obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+#' obj <- analyzeComparative(obj, dnaDesign = ~ batch + barcode + condition, 
 #'                               rnaDesign = ~ condition, fit.se = TRUE)
-#' results <- test.coefficient(obj, "condition", "contrast")
-test.coefficient <- function(obj, factor, contrast) {
+#' results <- testCoefficient(obj, "condition", "contrast")
+testCoefficient <- function(obj, factor, contrast) {
     if(is.null(obj@modelFits$r.se)) {
         stop("Model fitting did not include standard error estimation.\
              Coefficient-based testing cannot be perfromed.")
@@ -133,8 +133,8 @@ test.coefficient <- function(obj, factor, contrast) {
 #' @return a data.frame of empirical summary statistics based on the model's 
 #' estimate of slope, or the given statistic. These are:
 #' \itemize{
-#'     \item statistic: the statistic (either the provided, or extracted from the
-#'     models)
+#'     \item statistic: the statistic (either the provided, or extracted from 
+#'     the models)
 #'     \item zscore: Z-score of the statistic (number of standard devisations 
 #'     from the mean). If controls are available, the score is based on their 
 #'     distribution: so it's the number of control-sd from the control-mean
@@ -153,14 +153,14 @@ test.coefficient <- function(obj, factor, contrast) {
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
-#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#' obj <- analyzeQuantification(obj, dnaDesign = ~ batch + barcode, 
 #'                               rnaDesign = ~1)
-#' results <- test.empirical(obj)
+#' results <- testEmpirical(obj)
 #' 
 #' ## or test with a different statistic:
 #' aggregated.ratio <- rowSums(data$obs.rna) / rowSums(data$obs.dna)
-#' results <- test.empirical(obj, aggregated.ratio)
-test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
+#' results <- testEmpirical(obj, aggregated.ratio)
+testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     
     if(is.null(statistic)) {
         alpha <- getAlpha(obj)
@@ -195,13 +195,6 @@ test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
         
         res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
         res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
-        
-        # res$zscore <- (statistic - mean(statistic, na.rm=TRUE)) / 
-        #     sd(statistic, na.rm=TRUE)
-        # res$mad.score <- (statistic - median(statistic, na.rm=TRUE)) / 
-        #     mad(statistic, na.rm=TRUE)
-        # res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
-        # res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
     } else {
         ctrl.idx <- rep(FALSE, NROW(obj@dnaCounts))
         ctrl.idx[obj@controls] <- TRUE

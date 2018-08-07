@@ -1,8 +1,8 @@
 #' Fit dna and rna model to a given enhancer
 #' 
 #' Optim wrapper that performs numerical optimisation and extracts results.
-#' Depending on the function chosen, a single optimisation or iterative estimation
-#' are performed.
+#' Depending on the function chosen, a single optimisation or iterative 
+#' estimation are performed.
 #' 
 #' @name fit.dnarna
 #' @rdname fit.dnarna
@@ -20,33 +20,38 @@
 #' as encoded in the model matrix.
 #' 
 #' @details rna model
-#' The case rna model and the control rna interaction terms are encoded as seperate
-#' linear models so that they can be added up by design matrix concatenation (cbind)
-#' if a control enhancer is considered. Note that the first parameter
-#' may be a variance link parameter (ln.nb: nb: dispersion) which does not contribute
-#' to the linear model that constitutes the mean parameter. As all parameters only act
-#' on the mean parameter in the case of gamma.pois, the rna model matrix is 
-#' augmented by a first column containing only padding 0s if such a variance parameter
-#' exists, so that the mean parameter can be computed via the same matrix multiplication
-#' irrespective of whether the rna model contains such parameter that does not contribute
-#' to the mean model. The code that throws away non-used coefficients before fitting
-#' is blocked for this parameter. Note that the ctrl rna model is not allowed to have
-#' and additional variance coefficient so that the testing is only on the first moment.
-#' This is guaranteed by the default that this non-use cofficient is discarded. 
+#' The case rna model and the control rna interaction terms are encoded as 
+#' seperate linear models so that they can be added up by design matrix 
+#' concatenation (cbind) if a control enhancer is considered. Note that the 
+#' first parameter may be a variance link parameter (ln.nb: nb: dispersion) 
+#' which does not contribute to the linear model that constitutes the mean 
+#' parameter. As all parameters only act on the mean parameter in the case of 
+#' gamma.pois, the rna model matrix is augmented by a first column containing 
+#' only padding 0s if such a variance parameter exists, so that the mean 
+#' parameter can be computed via the same matrix multiplication irrespective of
+#' whether the rna model contains such parameter that does not contribute to the
+#' mean model. The code that throws away non-used coefficients before fitting
+#' is blocked for this parameter. Note that the ctrl rna model is not allowed to
+#' have and additional variance coefficient so that the testing is only on the 
+#' first moment. This is guaranteed by the default that this non-use cofficient
+#' is discarded. 
 #' 
 #' @param model noise model
 #' @param dcounts the DNA counts
 #' @param rcounts the RNA counts
 #' @param ddepth dna library size correction vector (numeric, dna samples)
 #' @param rdepth rna library size correction vector (numeric, rna samples)
-#' @param ddesign.mat the dna model design matrix (logical, rna samples x dna parameters)
-#' @param rdesign.mat the rna model design matrix (logical, rna samples x rna parameters)
-#' @param d2rdesign.mat the transition matrix relating DNA estimates to RNA observations (logical, rna sample x dna parameters)
+#' @param ddesign.mat the dna model design matrix 
+#' (logical, rna samples x dna parameters)
+#' @param rdesign.mat the rna model design matrix 
+#' (logical, rna samples x rna parameters)
+#' @param d2rdesign.mat the transition matrix relating DNA estimates to RNA 
+#' observations (logical, rna sample x dna parameters)
 #' @param rctrlscale control-based correction scalers
 #' @param rdesign.ctrl.mat the control rna model design matrix 
 #' (logical, samples x rna parameters)
-#' @param theta.d.ctrl.prefit ctrl dna model parameters to condition likelihood on
-#' (numeric, control enhancers x dna parameters)
+#' @param theta.d.ctrl.prefit ctrl dna model parameters to condition likelihood
+#' on (numeric, control enhancers x dna parameters)
 #' @param compute.hessian if TRUE (default), compute the Hessian matrix of the
 #' coefficients to facilitate coefficient-based hypothesis testing
 #'
@@ -83,8 +88,10 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     log.rdepth.valid <- log(rdepth[valid.c.r])
     
     ## clean design matrix from unused factors
-    valid.df <- apply(ddesign.mat[valid.c.d,,drop=FALSE], 2, function(x) !all(x==0))
-    valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2, function(x) !all(x==0))
+    valid.df <- apply(ddesign.mat[valid.c.d,,drop=FALSE], 2, 
+                      function(x) !all(x==0))
+    valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2,
+                      function(x) !all(x==0))
     
     ddmat.valid <- ddesign.mat[valid.c.d,valid.df,drop=FALSE]
     rdmat.valid <- rdesign.mat[valid.c.r,valid.rf,drop=FALSE]
@@ -143,7 +150,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
             d.se[1 + which(valid.df)] <- se[seq(2, 1+NCOL(ddmat.valid))]
             r.se <- c(se[1], rep(NA, NCOL(rdesign.mat)))
             r.se[1 + which(valid.rf)] <- se[seq(1+NCOL(ddmat.valid)+1,
-                                                1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
+                                        1+NCOL(ddmat.valid)+NCOL(rdmat.valid))]
         } else {
             message(se.comp$message)
         }
@@ -213,22 +220,23 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                               function(x) !all(x==0))
             d.par <- rep(0, sum(valid.df) + 1)
             suppressWarnings(
-                fit <- optim(
-                    par = d.par, 
-                    fn = cost.dna, 
-                    theta.r = r.par,
-                    llfnDNA = ll.funs$dna, 
-                    llfnRNA = ll.funs$rna,
-                    dcounts = t(dcounts[i,valid.c.d[i,],drop=FALSE]),
-                    rcounts = t(rcounts[i,valid.c.r.agg,drop=FALSE]),
-                    log.ddepth = log.ddepth[valid.c.d[i,]], 
-                    log.rdepth = log.rdepth[valid.c.r.agg],
-                    ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
-                    rdesign.mat = rdesign.mat[valid.c.r.agg,valid.rf,drop=FALSE], 
-                    d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,valid.df,drop=FALSE],
-                    hessian = FALSE, 
-                    method = "L-BFGS-B", control = list(maxit=1000), 
-                    lower=-23, upper=23)
+            fit <- optim(
+                par = d.par, 
+                fn = cost.dna, 
+                theta.r = r.par,
+                llfnDNA = ll.funs$dna, 
+                llfnRNA = ll.funs$rna,
+                dcounts = t(dcounts[i,valid.c.d[i,],drop=FALSE]),
+                rcounts = t(rcounts[i,valid.c.r.agg,drop=FALSE]),
+                log.ddepth = log.ddepth[valid.c.d[i,]], 
+                log.rdepth = log.rdepth[valid.c.r.agg],
+                ddesign.mat = ddesign.mat[valid.c.d[i,],valid.df,drop=FALSE], 
+                rdesign.mat = rdesign.mat[valid.c.r.agg,valid.rf,drop=FALSE], 
+                d2rdesign.mat = d2rdesign.mat[valid.c.r.agg,
+                                              valid.df,drop=FALSE],
+                hessian = FALSE, 
+                method = "L-BFGS-B", control = list(maxit=1000), 
+                lower=-23, upper=23)
             )
             fit$par <- pmax(pmin(fit$par, 23), -23)
             return(fit)

@@ -87,9 +87,9 @@ Broadly, barcode factors should be included in the DNA model design and ignored 
 # Quantification Analysis
 Quantification analysis is addressing the question of what is the transription rate for each enhancer in the dataset. These estimates can then be used to identify and classify active enhancers that induce a higher transcription rate.
 Regarding model design - this data is from a paired experiment, so DNA factors are fully transferable to the RNA model. For the RNA, we will be interested in having a separate estimate of transcription rate for each condition (chromosomal and episomal), so this is the only factor included in the RNA model.
-Finally, fitting the model is done by calling the `analyze.quantification` function:
+Finally, fitting the model is done by calling the `analyzeQuantification` function:
 ```{r quant model fit}
-obj <- analyze.quantification(obj = obj, 
+obj <- analyzeQuantification(obj = obj, 
                               dnaDesign = ~ barcode + batch + condition,
                               rnaDesign = ~ condition)
 ```
@@ -104,16 +104,16 @@ alpha <- getAlpha(obj, by.factor = "condition")
 boxplot(alpha)
 ```
 
-We can also leverage negative controls included in the data to establish a baseline rate of transcription, and use that to test for activty among the candidate enhancers. The `test.empirical` function provides several statistics and p-values based on those statistics: empirical p-values, z-score based and MAD-score based p-values are currently supported.
+We can also leverage negative controls included in the data to establish a baseline rate of transcription, and use that to test for activty among the candidate enhancers. The `testEmpirical` function provides several statistics and p-values based on those statistics: empirical p-values, z-score based and MAD-score based p-values are currently supported.
 In most cases, we recommend using the MAD-score pvalues, which are median-based variant of z-scores, which makes them more robust to outliers.
 
 ```{r quant test and viz}
 ## test 
-res.epi <- test.empirical(obj = obj, 
+res.epi <- testEmpirical(obj = obj, 
                                statistic = alpha$MT)
 summary(res.epi)
 
-res.chr <- test.empirical(obj = obj,
+res.chr <- testEmpirical(obj = obj,
                                statistic = alpha$WT)
 par(mfrow=c(2,2))
 
@@ -134,15 +134,15 @@ MPRAnalyze also leverages negative controls to estbalish the null differential b
 This analysis is done very similarly to quantification, with an additional reduced model that describes the null hypothesis. In this case, the null hypothesis is no differential activtiy between conditions, so the reduced model is an empty model (intercept only)
 
 ```{r comp fit}
-obj <- analyze.comparative(obj = obj, 
+obj <- analyzeComparative(obj = obj, 
                            dnaDesign = ~ barcode + batch + condition, 
                            rnaDesign = ~ condition, 
                            reducedDesign = ~ 1)
 ```
 
-with the fitted model, we can now test for differential activity, by calling `test.lrt`
+with the fitted model, we can now test for differential activity, by calling `testLrt`
 ```{r comp lrt}
-res <- test.lrt(obj)
+res <- testLrt(obj)
 
 head(res)
 summary(res)

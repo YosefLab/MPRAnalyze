@@ -23,17 +23,20 @@ fit.dnarna.noctrlobs(model, dcounts, rcounts, ddepth, rdepth, rctrlscale,
 
 \item{rctrlscale}{control-based correction scalers}
 
-\item{ddesign.mat}{the dna model design matrix (logical, rna samples x dna parameters)}
+\item{ddesign.mat}{the dna model design matrix 
+(logical, rna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix 
+(logical, rna samples x rna parameters)}
 
-\item{d2rdesign.mat}{the transition matrix relating DNA estimates to RNA observations (logical, rna sample x dna parameters)}
+\item{d2rdesign.mat}{the transition matrix relating DNA estimates to RNA 
+observations (logical, rna sample x dna parameters)}
 
 \item{rdesign.ctrl.mat}{the control rna model design matrix 
 (logical, samples x rna parameters)}
 
-\item{theta.d.ctrl.prefit}{ctrl dna model parameters to condition likelihood on
-(numeric, control enhancers x dna parameters)}
+\item{theta.d.ctrl.prefit}{ctrl dna model parameters to condition likelihood
+on (numeric, control enhancers x dna parameters)}
 
 \item{compute.hessian}{if TRUE (default), compute the Hessian matrix of the
 coefficients to facilitate coefficient-based hypothesis testing}
@@ -54,8 +57,8 @@ a list with components:
 }
 \description{
 Optim wrapper that performs numerical optimisation and extracts results.
-Depending on the function chosen, a single optimisation or iterative estimation
-are performed.
+Depending on the function chosen, a single optimisation or iterative 
+estimation are performed.
 }
 \details{
 dna model
@@ -65,17 +68,19 @@ are the coefficient of the linear model that consitutes the mean parameter,
 as encoded in the model matrix.
 
 rna model
-The case rna model and the control rna interaction terms are encoded as seperate
-linear models so that they can be added up by design matrix concatenation (cbind)
-if a control enhancer is considered. Note that the first parameter
-may be a variance link parameter (ln.nb: nb: dispersion) which does not contribute
-to the linear model that constitutes the mean parameter. As all parameters only act
-on the mean parameter in the case of gamma.pois, the rna model matrix is 
-augmented by a first column containing only padding 0s if such a variance parameter
-exists, so that the mean parameter can be computed via the same matrix multiplication
-irrespective of whether the rna model contains such parameter that does not contribute
-to the mean model. The code that throws away non-used coefficients before fitting
-is blocked for this parameter. Note that the ctrl rna model is not allowed to have
-and additional variance coefficient so that the testing is only on the first moment.
-This is guaranteed by the default that this non-use cofficient is discarded.
+The case rna model and the control rna interaction terms are encoded as 
+seperate linear models so that they can be added up by design matrix 
+concatenation (cbind) if a control enhancer is considered. Note that the 
+first parameter may be a variance link parameter (ln.nb: nb: dispersion) 
+which does not contribute to the linear model that constitutes the mean 
+parameter. As all parameters only act on the mean parameter in the case of 
+gamma.pois, the rna model matrix is augmented by a first column containing 
+only padding 0s if such a variance parameter exists, so that the mean 
+parameter can be computed via the same matrix multiplication irrespective of
+whether the rna model contains such parameter that does not contribute to the
+mean model. The code that throws away non-used coefficients before fitting
+is blocked for this parameter. Note that the ctrl rna model is not allowed to
+have and additional variance coefficient so that the testing is only on the 
+first moment. This is guaranteed by the default that this non-use cofficient
+is discarded.
 }

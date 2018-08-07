@@ -14,13 +14,15 @@ The main container class for MPRAnalyze
 
 \item{\code{rnaCounts}}{matrix of RNA counts}
 
-\item{\code{dnaAnnot}}{DNA column annotations (info on condition, batch, barcode, etc)}
+\item{\code{dnaAnnot}}{DNA column annotations 
+(info on condition, batch, barcode, etc)}
 
-\item{\code{rnaAnnot}}{RNA column annotations (info on condition, batch, barcode, etc)}
+\item{\code{rnaAnnot}}{RNA column annotations 
+(info on condition, batch, barcode, etc)}
 
 \item{\code{controls}}{indices of negative controls}
 
-\item{\code{controls.forfit}}{indices of negative controls used for fitting in `full` 
+\item{\code{controls.forfit}}{indices of negative controls used for fitting in `full`
 mode}
 
 \item{\code{lib.factor}}{a factor with a level for each library, used for depth 
@@ -40,7 +42,8 @@ estimation and in `idr` quantitative mode}
 
 \item{\code{modelFits}}{fitted models, populated by an analysis function}
 
-\item{\code{modelFits.red}}{fitted reduced models, populated by an LRT analysis function}
+\item{\code{modelFits.red}}{fitted reduced models, populated by an LRT analysis 
+function}
 
 \item{\code{modelPreFits.dna.ctrl}}{fitted models for control DNA}
 

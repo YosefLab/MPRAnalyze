@@ -23,10 +23,10 @@
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
-#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#' obj <- analyzeQuantification(obj, dnaDesign = ~ batch + barcode, 
 #'                               rnaDesign = ~1)
-#' dna.fits <- getFits.DNA(obj)
-getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, 
+#' dna.fits <- getFits_DNA(obj)
+getFits_DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, 
                         transition=FALSE){
     if(is.null(enhancers)) {
         enhancers <- names(obj@modelFits$ll)
@@ -93,10 +93,10 @@ getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
-#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#' obj <- analyzeQuantification(obj, dnaDesign = ~ batch + barcode, 
 #'                               rnaDesign = ~1)
-#' rna.fits <- getFits.RNA(obj)
-getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, 
+#' rna.fits <- getFits_RNA(obj)
+getFits_RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, 
                         rnascale=TRUE){
     if(is.null(enhancers)) {
         enhancers <- names(obj@modelFits$ll)
@@ -117,7 +117,7 @@ getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
         rctrlscale <- NULL
     }
     
-    dfit <- getFits.DNA(obj=obj, enhancers=enhancers, depth=FALSE, 
+    dfit <- getFits_DNA(obj=obj, enhancers=enhancers, depth=FALSE, 
                         full=full, transition=TRUE)
     
     joint.des.mat <- cbind(rdesign, rctrldesign)
@@ -143,8 +143,8 @@ getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #' extract the DNA model parameters
 #' 
 #' @rdname extractModelParameters
-#' @aliases extractModelParameters.DNA
-#' extractModelParameters.RNA
+#' @aliases extractModelParameters_DNA
+#' extractModelParameters_RNA
 #' 
 #' @param obj the MpraObject to extract the parameters from
 #' @param features the features to extract the parameters from (by default, 
@@ -152,10 +152,10 @@ getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #' @param full if TRUE (default), return the parameters of the full model. 
 #' Otherwise, return the parameters of the reduced model (only relevant for 
 #' LRT-based analyses)
-#' @return a data.frame of features (rows) by parameters (cols). By convension, the
-#' first parameter is related to the second moment, and the interpretation of 
-#' it depends on the distributional model used (`alpha` for `gamma.pois`, variance 
-#' for `ln.nb` and `ln.ln`)
+#' @return a data.frame of features (rows) by parameters (cols). By convension,
+#' the first parameter is related to the second moment, and the interpretation 
+#' of  it depends on the distributional model used (`alpha` for `gamma.pois`, 
+#' variance  for `ln.nb` and `ln.ln`)
 #' 
 #' @examples
 #' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
@@ -163,14 +163,14 @@ getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
-#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#' obj <- analyzeQuantification(obj, dnaDesign = ~ batch + barcode, 
 #'                               rnaDesign = ~1)
-#' model.params.dna <- getModelParameters.DNA(obj)
-#' model.params.rna <- getModelParameters.RNA(obj)
+#' model.params.dna <- getModelParameters_DNA(obj)
+#' model.params.rna <- getModelParameters_RNA(obj)
 #' 
 #' @export
 #' @rdname extractModelParameters
-getModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
+getModelParameters_DNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(features)) {
         features <- seq_len(NROW(obj@dnaCounts))
     } else if (is.character(features)) {
@@ -196,7 +196,7 @@ getModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
 
 #' @export
 #' @rdname extractModelParameters
-getModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
+getModelParameters_RNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(obj@modelFits)){
         stop("can't extract model parameters before fitting a model")
     }
@@ -223,8 +223,8 @@ getModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
 #' Get model distribution parameters from an MpraObject
 #' 
 #' @rdname getDistrParam
-#' @aliases getDistrParam.DNA
-#' getDistrParam.RNA
+#' @aliases getDistrParam_DNA
+#' getDistrParam_RNA
 #' 
 #' @param obj MpraObject to extract from
 #' @param enhancer enhancer to extract 
@@ -234,7 +234,7 @@ getModelParameters.RNA <- function(obj, features=NULL, full=TRUE) {
 #' 
 #' @export
 #' @rdname getDistrParam
-getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
+getDistrParam_DNA <- function(obj, enhancer=NULL, full=TRUE){
     
     if(full == TRUE){
         fit <- obj@modelFits
@@ -265,14 +265,14 @@ getDistrParam.DNA <- function(obj, enhancer=NULL, full=TRUE){
 
 #' @export
 #' @rdname getDistrParam
-getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
+getDistrParam_RNA <- function(obj, enhancer=NULL, full=TRUE){
     
     if(full == TRUE){
         fit <- obj@modelFits
     } else {
         fit <- obj@modelFits.red
     }
-    rfit <- as.vector(getFits.RNA(obj, enhancers=enhancer, depth=FALSE, 
+    rfit <- as.vector(getFits_RNA(obj, enhancers=enhancer, depth=FALSE, 
                                 full=full, rnascale=TRUE))
     
     if(obj@model == "gamma.pois") {
@@ -317,7 +317,7 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
-#' obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+#' obj <- analyzeComparative(obj, dnaDesign = ~ batch + barcode + condition, 
 #'                               rnaDesign = ~ condition, reducedDesign = ~ 1)
 #' ## get alpha estimate for the two conditions
 #' alpha <- getAlpha(obj, by.factor="condition")
@@ -334,7 +334,7 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
         return(data.frame(alpha=getSingleAlpha(obj, full=full)))
     } else if (by.factor=="all") {
         ## extract all parametres except for the dispersion
-        alpha.mat <- getModelParameters.RNA(obj, full=full)[,-1]
+        alpha.mat <- getModelParameters_RNA(obj, full=full)[,-1]
         if(checkForIntercept(des)) {
             ## add the intercept to all other columns
             alpha.mat[,-1] <- alpha.mat[,-1] + alpha.mat[,1]

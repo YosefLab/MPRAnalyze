@@ -20,11 +20,14 @@ fit.dnarna.onlyctrl.iter(model, dcounts, rcounts, ddepth, rdepth,
 
 \item{rdepth}{rna library size correction vector (numeric, rna samples)}
 
-\item{ddesign.mat}{the dna model design matrix (logical, rna samples x dna parameters)}
+\item{ddesign.mat}{the dna model design matrix 
+(logical, rna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix 
+(logical, rna samples x rna parameters)}
 
-\item{d2rdesign.mat}{the transition matrix relating DNA estimates to RNA observations (logical, rna sample x dna parameters)}
+\item{d2rdesign.mat}{the transition matrix relating DNA estimates to RNA 
+observations (logical, rna sample x dna parameters)}
 
 \item{BPPARAM}{the parallelization backend to use}
 

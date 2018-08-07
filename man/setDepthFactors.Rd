@@ -9,11 +9,11 @@ setDepthFactors(obj, dnaDepth, rnaDepth)
 \arguments{
 \item{obj}{the MpraObject}
 
-\item{dnaDepth}{library size factors for the DNA data, a numeric vector of length
-of the number of columns in the DNA data matrix}
+\item{dnaDepth}{library size factors for the DNA data, a numeric vector of 
+length of the number of columns in the DNA data matrix}
 
-\item{rnaDepth}{library size factors for the RNA data, a numeric vector of length
-of the number of columns in the RNA data matrix}
+\item{rnaDepth}{library size factors for the RNA data, a numeric vector of 
+length of the number of columns in the RNA data matrix}
 }
 \value{
 the MpraObject with library depth factors

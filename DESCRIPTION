@@ -15,7 +15,6 @@ License: GPL-3
 Encoding: UTF-8
 Imports:
     BiocParallel,
-    graphics,
     methods,
     progress,
     stats

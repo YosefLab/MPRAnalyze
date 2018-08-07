@@ -6,7 +6,8 @@
 \alias{cost.dna}
 \alias{cost.rna}
 \title{likelihood wrapper to compute terms of likelihood with non-zero derivative
-with respect to case dna model and rna model without control enhancer observations}
+with respect to case dna model and rna model without control enhancer
+observations}
 \usage{
 cost.dnarna(theta, dcounts, rcounts, llfnDNA, llfnRNA, log.ddepth,
   log.rdepth, rctrlscale = NULL, ddesign.mat, rdesign.mat, d2rdesign.mat,
@@ -23,7 +24,8 @@ cost.rna(theta, theta.d, llfnRNA, rcounts, log.rdepth, rctrlscale = NULL,
 \item{theta}{vector of model parameters to evaluate likelihood for
 (numeric, parameters)}
 
-\item{dcounts}{the observed case DNA counts (integer, enhancers x dna samples)}
+\item{dcounts}{the observed case DNA counts 
+(integer, enhancers x dna samples)}
 
 \item{rcounts}{the observed RNA counts (integer, enhancers x rna samples)}
 
@@ -31,19 +33,24 @@ cost.rna(theta, theta.d, llfnRNA, rcounts, log.rdepth, rctrlscale = NULL,
 
 \item{llfnRNA}{cost function to compute rna likelihood terms on (function)}
 
-\item{log.ddepth}{dna library size correction vector, log scale (numeric, dna samples)}
+\item{log.ddepth}{dna library size correction vector, 
+log scale (numeric, dna samples)}
 
-\item{log.rdepth}{rna library size correction vector, log scale (numeric, rna samples)}
+\item{log.rdepth}{rna library size correction vector, 
+log scale (numeric, rna samples)}
 
-\item{rctrlscale}{vector of scaling parameters for rna model that correct for 
+\item{rctrlscale}{vector of scaling parameters for rna model that correct for
 variation between conditions pre-fit on control enhancers 
 (numeric, ctrl rna parameters)}
 
-\item{ddesign.mat}{the dna model design matrix (logical, dna samples x dna parameters)}
+\item{ddesign.mat}{the dna model design matrix 
+(logical, dna samples x dna parameters)}
 
-\item{rdesign.mat}{the rna model design matrix (logical, rna samples x rna parameters)}
+\item{rdesign.mat}{the rna model design matrix 
+(logical, rna samples x rna parameters)}
 
-\item{d2rdesign.mat}{the transitional design matrix, distributiong the DNA estimates to the RNA observations}
+\item{d2rdesign.mat}{the transitional design matrix, distributiong the DNA 
+estimates to the RNA observations}
 
 \item{rdesign.ctrl.mat}{the control rna model design matrix 
 (logical, samples x rna parameters)}
@@ -62,7 +69,8 @@ with respect to case model
 nomenclature cost.[model components to be estimated]
 }
 \details{
-Each of these function can only be called to optimise a single (enhancer) model:
-cost.dnarna and cost.dna can only be used on observations from one enhancer
-cost.rna can be used on observation from multiple enhancers under the same rna model
+Each of these function can only be called to optimise a single (enhancer) 
+model: cost.dnarna and cost.dna can only be used on observations from one 
+enhancer cost.rna can be used on observation from multiple enhancers under 
+the same rna model
 }
