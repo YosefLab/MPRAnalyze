@@ -12,7 +12,6 @@ vignette: >
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(ggplot2)
 ```
 
 # Introduction
@@ -153,9 +152,8 @@ When the hypothesis teseting is simple (two-condition comparison), a fold-change
 ```{r foldchange}
 
 ## plot log Fold-Change
-
-ggplot(res) + stat_density(aes(logFC), fill="white", color="black", size=1) + 
-    geom_vline(xintercept = 0)
-ggplot(res, aes(logFC, -log10(pval), color=fdr<0.05)) + geom_point()
+plot(density(res$logFC))
+## plot volcano
+plot(res$logFC, -log10(res$pval))
 ```
 
