@@ -103,8 +103,16 @@ setClass("MpraObject", validity = validateMpraObject,
 #' (scrambles)
 #' @param BPPARAM the biocParalell backend to use for parallelization throughout
 #' the analysis
-#'
+#' @return an MpraObject
 #' @export
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+#'                      nbatch=2, nbc=20)
+#' ## use 3 of the non-active enhancers as controls
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot,
+#'                   controls = as.integer(c(1,2,4)))
 MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
                        colAnnot=NULL, controls=NA_integer_,
                        BPPARAM=NULL) {

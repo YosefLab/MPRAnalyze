@@ -2,9 +2,9 @@
 % Please edit documentation in R/accessFunctions.R
 \name{getFits.DNA}
 \alias{getFits.DNA}
-\title{Get DNA model fits from an MpraObject (the expected values based on the 
-model). These can be compared with the observed counts to assess goodness
-of fit.}
+\title{Get DNA model-based estimates from an MpraObject (the expected values based 
+on the model). These can be compared with the observed counts to assess 
+goodness of fit.}
 \usage{
 getFits.DNA(obj, enhancers = NULL, depth = TRUE, full = TRUE,
   transition = FALSE)
@@ -29,7 +29,17 @@ observations.}
 DNA fits (numeric, enhancers x samples)
 }
 \description{
-Get DNA model fits from an MpraObject (the expected values based on the 
-model). These can be compared with the observed counts to assess goodness
-of fit.
+Get DNA model-based estimates from an MpraObject (the expected values based 
+on the model). These can be compared with the observed counts to assess 
+goodness of fit.
+}
+\examples{
+data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+obj <- MpraObject(dnaCounts = data$obs.dna, 
+                  rnaCounts = data$obs.rna, 
+                  colAnnot = data$annot)
+obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+                              rnaDesign = ~1)
+dna.fits <- getFits.DNA(obj)
 }

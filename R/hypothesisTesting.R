@@ -7,6 +7,17 @@
 #' 
 #' @export 
 #' @return results data frame
+#' 
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+#'                      nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+#'                               rnaDesign = ~ condition, reducedDesign = ~ 1)
+#' results <- test.lrt(obj)
 test.lrt <- function(obj) {
     if(length(obj@modelFits) == 0 | length(obj@modelFits.red) == 0) {
         stop("An LRT analysis must be performed before computing the test")
@@ -55,6 +66,18 @@ test.lrt <- function(obj) {
 #' @export
 #' @return a data.frame of the results
 #' this include the test statistic, logFC, p-value and BH-corrected FDR.
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+#'                      nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' 
+#' ## fit.se must be TRUE for coefficient based testing to work
+#' obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+#'                               rnaDesign = ~ condition, fit.se = TRUE)
+#' results <- test.coefficient(obj, "condition", "contrast")
 test.coefficient <- function(obj, factor, contrast) {
     if(is.null(obj@modelFits$r.se)) {
         stop("Model fitting did not include standard error estimation.\
@@ -124,6 +147,20 @@ test.coefficient <- function(obj, factor, contrast) {
 #'     \item pval.empirical: only available if negative controls are provided. 
 #'     empirical P-value, using the control distribution as the null
 #' }
+#' 
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#'                               rnaDesign = ~1)
+#' results <- test.empirical(obj)
+#' 
+#' ## or test with a different statistic:
+#' aggregated.ratio <- rowSums(data$obs.rna) / rowSums(data$obs.dna)
+#' results <- test.empirical(obj, aggregated.ratio)
 test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     
     if(is.null(statistic)) {
@@ -188,6 +225,11 @@ test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
 }
 
 #' estimate mode of a sample
+#' @param x the sample to estimate the mode of
+#' @return the estimate mode of the sample distribution
+#' @importFrom graphics hist
+#' @details the mode is estimates by repeatedly computing a histogram and 
+#' "focusing" on the highest bar. 
 est.mode <- function(x) {
     bin.x = x
     while(length(bin.x)  > 1) {

@@ -1,6 +1,6 @@
-#' Get DNA model fits from an MpraObject (the expected values based on the 
-#' model). These can be compared with the observed counts to assess goodness
-#' of fit.
+#' Get DNA model-based estimates from an MpraObject (the expected values based 
+#' on the model). These can be compared with the observed counts to assess 
+#' goodness of fit.
 #' 
 #' @param obj MpraObject to extract from
 #' @param enhancers which enhancers to get the fits for. Can be character 
@@ -16,6 +16,16 @@
 #' @return DNA fits (numeric, enhancers x samples)
 #' 
 #' @export
+#' 
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#'                               rnaDesign = ~1)
+#' dna.fits <- getFits.DNA(obj)
 getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, 
                         transition=FALSE){
     if(is.null(enhancers)) {
@@ -60,17 +70,32 @@ getFits.DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
     return(dfit)
 }
 
-#' Get RNA full model fits from an MpraObject
+#' Get RNA model-based estimates from an MpraObject (the expected values based 
+#' on the model). These can be compared with the observed counts to assess 
+#' goodness of fit.
 #' 
 #' @param obj MpraObject to extract from
-#' @param enhancers enhancer to extract 
-#' @param depth include depth correction
-#' @param full whether to extract from full model
-#' @param rnascale whether to use prefit rna model factors
+#' @param enhancers which enhancers to get the fits for. Can be character 
+#' vectors with enhancer names, logical or numeric enhancer indices, or NULL if 
+#' all enhancers are to be extracted (default)
+#' @param depth include depth correction in the model fitting (default TRUE)
+#' @param full if LRT modeling was used, TRUE (default) would return the fits
+#' of the full model, FALSEwould return the reduced model fits.
+#' @param rnascale if controls were used to correct the fitting (in comparative
+#' analyses), use these factors to re-adjust the estimates back.
 #' 
 #' @return RNA fits (numeric, enhancers x samples)
 #' 
 #' @export
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#'                               rnaDesign = ~1)
+#' rna.fits <- getFits.RNA(obj)
 getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, 
                         rnascale=TRUE){
     if(is.null(enhancers)) {
@@ -131,6 +156,18 @@ getFits.RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #' first parameter is related to the second moment, and the interpretation of 
 #' it depends on the distributional model used (`alpha` for `gamma.pois`, variance 
 #' for `ln.nb` and `ln.ln`)
+#' 
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#'                               rnaDesign = ~1)
+#' model.params.dna <- getModelParameters.DNA(obj)
+#' model.params.rna <- getModelParameters.RNA(obj)
+#' 
 #' @export
 #' @rdname extractModelParameters
 getModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
@@ -141,14 +178,16 @@ getModelParameters.DNA <- function(obj, features=NULL, full=TRUE) {
     }
     
     if(is.null(obj@modelFits)){
-        stop("can't extract model parameters before fitting a model. An analysis function must be called first.")
+        stop("can't extract model parameters before fitting a model. An \
+             analysis function must be called first.")
     }
     if(full) {
         coef.mat <- obj@modelFits$d.coef[features,,drop=FALSE] 
     } else if (!full & !is.null(obj@modelFits.red)) {
         coef.mat <- obj@modelFits.red$d.coef[features,,drop=FALSE] 
     } else {
-        stop("Parameters can't be extracted from reduced model, since analysis did not include fitting a reduced model")
+        stop("Parameters can't be extracted from reduced model, since analysis \
+             did not include fitting a reduced model")
     }
     colnames(coef.mat) <- c("disp", colnames(obj@designs@dna))
     rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
@@ -264,11 +303,24 @@ getDistrParam.RNA <- function(obj, enhancer=NULL, full=TRUE){
 #' "all": will return the corresponding transcription rates for all values 
 #' included in the model
 #' factor name: must be a factor included in the RNA annotations and the rna 
-#' design. Will return the corresponding rates for all values of the given factor
+#' design. Will return the corresponding rates for all values of the given 
+#' factor
 #' @param full if true, return rate of the full model (default), otherwise of
 #' the reduced model (only applies if an LRT-based analysis was used)
 #' @export
 #' @return the estimate for transcription rate as fitted by the model
+#' 
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+#'                      nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+#'                               rnaDesign = ~ condition, reducedDesign = ~ 1)
+#' ## get alpha estimate for the two conditions
+#' alpha <- getAlpha(obj, by.factor="condition")
 getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
     des <- obj@designs@rnaFull
     if(!full) {
@@ -313,6 +365,14 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
 #' @return a list with two elements: 'dna' with the dna library depth factors, 
 #' and 'rna' with the rna factors
 #' @export
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+#'                      nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' depth.factors <- getLibraryDepthFactors(obj)
 getLibraryDepthFactors <- function(obj) {
     return(list(dna=obj@dnaDepth, rna=obj@rnaDepth))
 }

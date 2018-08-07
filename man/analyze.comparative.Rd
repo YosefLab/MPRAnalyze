@@ -34,3 +34,18 @@ the MpraObject with fitted models for the input enhancers
 \description{
 Run a comparative analysis between conditions
 }
+\examples{
+data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+                     nbatch=2, nbc=20)
+obj <- MpraObject(dnaCounts = data$obs.dna, 
+                  rnaCounts = data$obs.rna, 
+                  colAnnot = data$annot)
+obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+## run an LRT-based analysis, as recommnded:
+obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+                              rnaDesign = ~ condition, reducedDesign = ~ 1)
+                              
+## alternatively, run a coefficient-based analysis:
+obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+                              rnaDesign = ~ condition, fit.se = TRUE)
+}

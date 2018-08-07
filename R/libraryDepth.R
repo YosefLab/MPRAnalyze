@@ -30,6 +30,13 @@ DEPTH_EST_FUNCTIONS = list(
 #' @return the MpraObject with estimated values for sequencing depth factors
 #' 
 #' @export
+#' 
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
 estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both", 
                                 depth.estimator="uq") {
     
@@ -115,6 +122,15 @@ compute.depth <- function(data, lib.factor, func) {
 #' @return the MpraObject with library depth factors
 #' 
 #' @export
+#' 
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' ## set constant depth factors (no depth correction)
+#' obj <- setDepthFactors(obj, dnaDepth = rep(1, NCOL(data$obs.dna)),
+#'                               rnaDepth = rep(1, NCOL(data$obs.rna)))
 setDepthFactors <- function(obj, dnaDepth, rnaDepth) {
     if(length(dnaDepth) != NCOL(obj@dnaCounts) 
         | length(rnaDepth) != NCOL(obj@rnaCounts)) {

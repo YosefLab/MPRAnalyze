@@ -24,6 +24,18 @@ MpraObject(dnaCounts, rnaCounts, dnaAnnot = NULL, rnaAnnot = NULL,
 \item{BPPARAM}{the biocParalell backend to use for parallelization throughout
 the analysis}
 }
+\value{
+an MpraObject
+}
 \description{
 Initialize a MpraObject object
+}
+\examples{
+data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+                     nbatch=2, nbc=20)
+## use 3 of the non-active enhancers as controls
+obj <- MpraObject(dnaCounts = data$obs.dna, 
+                  rnaCounts = data$obs.rna, 
+                  colAnnot = data$annot,
+                  controls = as.integer(c(1,2,4)))
 }

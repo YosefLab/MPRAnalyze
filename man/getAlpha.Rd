@@ -17,7 +17,8 @@ each enhancer
 "all": will return the corresponding transcription rates for all values 
 included in the model
 factor name: must be a factor included in the RNA annotations and the rna 
-design. Will return the corresponding rates for all values of the given factor}
+design. Will return the corresponding rates for all values of the given 
+factor}
 
 \item{full}{if true, return rate of the full model (default), otherwise of
 the reduced model (only applies if an LRT-based analysis was used)}
@@ -27,4 +28,16 @@ the estimate for transcription rate as fitted by the model
 }
 \description{
 return the fitted value for the transcription rate.
+}
+\examples{
+data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+                     nbatch=2, nbc=20)
+obj <- MpraObject(dnaCounts = data$obs.dna, 
+                  rnaCounts = data$obs.rna, 
+                  colAnnot = data$annot)
+obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+                              rnaDesign = ~ condition, reducedDesign = ~ 1)
+## get alpha estimate for the two conditions
+alpha <- getAlpha(obj, by.factor="condition")
 }

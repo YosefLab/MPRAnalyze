@@ -18,3 +18,14 @@ Calculate likelihood ratio test for the specific nested model
 \note{
 Must be run after running an LRT-based analysis
 }
+\examples{
+data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+                     nbatch=2, nbc=20)
+obj <- MpraObject(dnaCounts = data$obs.dna, 
+                  rnaCounts = data$obs.rna, 
+                  colAnnot = data$annot)
+obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+obj <- analyze.comparative(obj, dnaDesign = ~ batch + barcode + condition, 
+                              rnaDesign = ~ condition, reducedDesign = ~ 1)
+results <- test.lrt(obj)
+}

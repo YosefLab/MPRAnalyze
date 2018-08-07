@@ -2,7 +2,9 @@
 % Please edit documentation in R/accessFunctions.R
 \name{getFits.RNA}
 \alias{getFits.RNA}
-\title{Get RNA full model fits from an MpraObject}
+\title{Get RNA model-based estimates from an MpraObject (the expected values based 
+on the model). These can be compared with the observed counts to assess 
+goodness of fit.}
 \usage{
 getFits.RNA(obj, enhancers = NULL, depth = TRUE, full = TRUE,
   rnascale = TRUE)
@@ -10,17 +12,33 @@ getFits.RNA(obj, enhancers = NULL, depth = TRUE, full = TRUE,
 \arguments{
 \item{obj}{MpraObject to extract from}
 
-\item{enhancers}{enhancer to extract}
+\item{enhancers}{which enhancers to get the fits for. Can be character 
+vectors with enhancer names, logical or numeric enhancer indices, or NULL if 
+all enhancers are to be extracted (default)}
 
-\item{depth}{include depth correction}
+\item{depth}{include depth correction in the model fitting (default TRUE)}
 
-\item{full}{whether to extract from full model}
+\item{full}{if LRT modeling was used, TRUE (default) would return the fits
+of the full model, FALSEwould return the reduced model fits.}
 
-\item{rnascale}{whether to use prefit rna model factors}
+\item{rnascale}{if controls were used to correct the fitting (in comparative
+analyses), use these factors to re-adjust the estimates back.}
 }
 \value{
 RNA fits (numeric, enhancers x samples)
 }
 \description{
-Get RNA full model fits from an MpraObject
+Get RNA model-based estimates from an MpraObject (the expected values based 
+on the model). These can be compared with the observed counts to assess 
+goodness of fit.
+}
+\examples{
+data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+obj <- MpraObject(dnaCounts = data$obs.dna, 
+                  rnaCounts = data$obs.rna, 
+                  colAnnot = data$annot)
+obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+                              rnaDesign = ~1)
+rna.fits <- getFits.RNA(obj)
 }

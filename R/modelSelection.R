@@ -1,10 +1,25 @@
 
-#' Set the distributional model used
+#' Set the distributional model used. Default is gamma.pois, and is recommended.
+#' Other supoprted models are ln.nb in which the DNA follows a log-normal
+#' distribution and the RNA follows a negative binomial, and ln.ln in which
+#' both follow log-normal distributions.
+#' To use alternative distributional models, use this function before fitting
+#' the model.
 #' @param obj the MPRAnalyze object
 #' @param model the charater identifier of the model to be used. Currently 
-#' supported models: "ln.nb", "gamma.pois".
+#' supported models: "ln.nb", "gamma.pois", "ln.ln"
 #' @return the MPRAnalyze with the model set for the given value
 #' @export
+#' 
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' obj <- setModel(obj, "ln.ln")
+#' obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+#'                               rnaDesign = ~1)
 setModel <- function(obj, model) {
     
     if(model %in% c("ln.nb", "gamma.pois", "ln.ln")) {

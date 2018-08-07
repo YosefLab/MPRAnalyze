@@ -37,3 +37,10 @@ library, each column in the matrix is usually not a separate library. For this
 reason, it is recommended to supply this function with the appropriate
 partitioning of the data matrix columns into libraries, see lib.factor
 }
+\examples{
+data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+obj <- MpraObject(dnaCounts = data$obs.dna, 
+                  rnaCounts = data$obs.rna, 
+                  colAnnot = data$annot)
+obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+}

@@ -30,3 +30,15 @@ for `ln.nb` and `ln.ln`)
 \description{
 extract the DNA model parameters
 }
+\examples{
+data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+obj <- MpraObject(dnaCounts = data$obs.dna, 
+                  rnaCounts = data$obs.rna, 
+                  colAnnot = data$annot)
+obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+obj <- analyze.quantification(obj, dnaDesign = ~ batch + barcode, 
+                              rnaDesign = ~1)
+model.params.dna <- getModelParameters.DNA(obj)
+model.params.rna <- getModelParameters.RNA(obj)
+
+}
