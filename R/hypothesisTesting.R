@@ -129,7 +129,6 @@ test.coefficient <- function(obj, factor, contrast) {
 #' accurate zscores as well as empircal p-values.
 #' @param subset only test a subset of the enhancers in the object (logical,
 #' indices or names). Default is NULL, then all the enhancers are included.
-#' 
 #' @export
 #' @return a data.frame of empirical summary statistics based on the model's 
 #' estimate of slope, or the given statistic. These are:
@@ -227,15 +226,12 @@ test.empirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
 #' estimate mode of a sample
 #' @param x the sample to estimate the mode of
 #' @return the estimate mode of the sample distribution
-#' @importFrom graphics hist
-#' @details the mode is estimates by repeatedly computing a histogram and 
-#' "focusing" on the highest bar. 
+#' @details the etimated mode is the center of the window that contains the most
+#' observations. Window size is set to 1% of the range of values.
 est.mode <- function(x) {
-    bin.x = x
-    while(length(bin.x)  > 1) {
-        h <- hist(bin.x, plot = FALSE)
-        bin.max <- which.max(h$counts)
-        bin.x <- x[x > h$breaks[bin.max] & x < h$breaks[bin.max + 1]]
-    }
-    return(bin.x)
+    cdf <- ecdf(x)
+    win.size <- (max(x) - min(x)) * 0.05
+    f <- cdf(x + win.size) - cdf(x - win.size)
+    m <- x[which.max(f)]
+    return(m)
 }

@@ -16,6 +16,6 @@ the estimate mode of the sample distribution
 estimate mode of a sample
 }
 \details{
-the mode is estimates by repeatedly computing a histogram and 
-"focusing" on the highest bar.
+the etimated mode is the center of the window that contains the most
+observations. Window size is set to 1% of the range of values.
 }
