@@ -11,10 +11,13 @@ getSingleAlpha(obj, term = NULL, value = NULL, full = TRUE)
 
 \item{term}{the term to get the alpha of (see details)}
 
-\item{value}{the value of the term to get the alpha of (Se details)}
+\item{value}{the value of the term to get the alpha of (See details)}
 
 \item{full}{if true, return alpha of the full model (default), otherwise of
 the reduced model (only applies if an LRT-based analysis was used)}
+}
+\value{
+a named vector
 }
 \description{
 return the fitted value for alpha (transcription rate).

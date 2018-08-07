@@ -6,6 +6,16 @@
 \usage{
 est.mode(x)
 }
+\arguments{
+\item{x}{the sample to estimate the mode of}
+}
+\value{
+the estimate mode of the sample distribution
+}
 \description{
 estimate mode of a sample
+}
+\details{
+the mode is estimates by repeatedly computing a histogram and 
+"focusing" on the highest bar.
 }

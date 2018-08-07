@@ -164,6 +164,18 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
 #' @param print.progress print a progress report on the fitting (default:TRUE),
 #' recommended since the joint model fitting is computationally intensive
 #' @param BPPARAM the parallelization backend to use
+#' @return a list with components:
+#' \itemize{
+#'     \item d.fitval: the fitted values of the DNA counts
+#'     \item d.est: the estimated true DNA levels (corrected for library size)
+#'     \item d.coef: the fitted mode parameters for the DNA counts
+#'     \item d.se: the standard errors of the estimates of the DNA counts
+#'     \item r.est: the fitted values of the RNA counts
+#'     \item r.fitval: the fitted mode parameters for the RNA counts
+#'     \item r.est: the estimated true RNA levels (corrected for library size)
+#'     \item r.se: the standard errors of the estimates of the RNA counts
+#'     \item ll: the log likelihood of the model
+#' }
 fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                                      ddepth, rdepth,
                                      ddesign.mat, rdesign.mat, d2rdesign.mat,
