@@ -102,9 +102,11 @@ extractProp <- function(models, prop, valids) {
 #' return the fitted value for alpha (transcription rate).
 #' @param obj the MpraObject
 #' @param term the term to get the alpha of (see details)
-#' @param value the value of the term to get the alpha of (Se details)
+#' @param value the value of the term to get the alpha of (See details)
 #' @param full if true, return alpha of the full model (default), otherwise of
 #' the reduced model (only applies if an LRT-based analysis was used)
+#' 
+#' @return a named vector 
 #' 
 #' @details return the estimate for transcription rate as fitted by the package.
 #' If the design is intercepted, then by default the baseline (intercept) rate is
@@ -149,41 +151,4 @@ getSingleAlpha <- function(obj, term=NULL, value=NULL, full=TRUE) {
     
     names(coef) <- rownames(coefs)
     return(coef)
-}
-
-#' Resample observations of enhancer from fit distribution
-#' 
-#' @param obj MpraObject to extract from
-#' @param enhancer enhancer to extract 
-#' @param full whether to extract from full model
-#' 
-#' @return resampled observations
-#' 
-#' @export
-resampleObs <- function(obj, enhancer=NULL, full=TRUE){
-    dpar <- getDistrParam.DNA(obj, enhancer=enhancer, full=full)
-    rpar <- getDistrParam.RNA(obj, enhancer=enhancer, full=full)
-    if(obj@model=="gamma.pois") {
-        dsample <- apply(dpar, 1, function(x) {
-            rgamma(n = 1, shape = x["shape"], rate = x["rate"])
-        })
-        rsample <- apply(rpar, 1, function(x) {
-            rnbinom(n = 1, size = x["size"], mu = x["mu"])
-        })
-    } else if(obj@model=="ln.nb") {
-        dsample <- apply(dpar, 1, function(x) {
-            rlnorm(n = 1, meanlog = x["meanlog"], sdlog = x["sdlog"])
-        })
-        rsample <- apply(rpar, 1, function(x) {
-            rnbinom(n = 1, size = x["size"], mu = x["mu"])
-        }) 
-    } else if(obj@model=="ln.ln") {
-        dsample <- apply(dpar, 1, function(x) {
-            rlnorm(n = 1, meanlog = x["meanlog"], sdlog = x["sdlog"])
-        })
-        rsample <- apply(rpar, 1, function(x) {
-            rlnorm(n = 1,meanlog = x["meanlog"], sdlog = x["sdlog"])
-        }) 
-    } 
-    return(data.frame(dna=dsample, rna=rsample))
 }
