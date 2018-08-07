@@ -74,7 +74,15 @@ simulateMPRA <- function(tr = rep(2, 100), da = c(rep(0, 50), rep(0.5, 50)),
     annot <- expand.grid(barcode = factor(seq_len(nbc)),
                          batch = factor(seq_len(nbatch)))
         
-    desmat <- model.matrix(~ batch + barcode, annot)
+    if(nbatch > 1 & nbc > 1) {
+        desmat <- model.matrix(~ batch + barcode, annot)
+    } else if (nbatch > 1) {
+        desmat <- model.matrix(~ batch, annot)
+    } else if (nbc > 1) {
+        desmat <- model.matrix(~ barcode, annot)
+    } else {
+        stop("Specified design is too restridcted")
+    }
     
     ## get true counts by multiplying random coefficients with design matrix
     true.dna.log <-  coef.dna.mat %*% t(desmat)
@@ -94,7 +102,8 @@ simulateMPRA <- function(tr = rep(2, 100), da = c(rep(0, 50), rep(0.5, 50)),
         annot$condition <- "reference"
         annot.diff$condition <- "contrast"
         annot <- rbind(annot, annot.diff)
-        annot$condition <- factor(annot$condition)
+        annot$condition <- factor(annot$condition, 
+                                  levels=c("reference", "contrast"))
     }
     
     # get the true RNA by multiplying the true DNA by the transcription rate
