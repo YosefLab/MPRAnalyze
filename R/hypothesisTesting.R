@@ -220,10 +220,10 @@ testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
 #' @param x the sample to estimate the mode of
 #' @return the estimate mode of the sample distribution
 #' @details the etimated mode is the center of the window that contains the most
-#' observations. Window size is set to 1% of the range of values.
+#' observations. Window size is set to 2% of the range of values.
 est.mode <- function(x) {
     cdf <- ecdf(x)
-    win.size <- (max(x) - min(x)) * 0.05
+    win.size <- (max(x) - min(x)) * 0.01
     f <- cdf(x + win.size) - cdf(x - win.size)
     m <- x[which.max(f)]
     return(m)

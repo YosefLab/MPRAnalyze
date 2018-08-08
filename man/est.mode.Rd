@@ -17,5 +17,5 @@ estimate mode of a sample
 }
 \details{
 the etimated mode is the center of the window that contains the most
-observations. Window size is set to 1% of the range of values.
+observations. Window size is set to 2% of the range of values.
 }

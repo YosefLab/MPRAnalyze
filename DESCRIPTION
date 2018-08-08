@@ -1,7 +1,7 @@
 Package: MPRAnalyze
 Type: Package
 Title: Statistical Analysis of MPRA data
-Version: 0.99.1
+Version: 0.99.2
 Date: 2017-11-06
 Authors@R: c(
 	person('Tal', 'Ashuach', NULL, 'tal_ashuach@berkeley.edu', c('aut', 'cre')),
