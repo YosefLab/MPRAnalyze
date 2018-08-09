@@ -1,8 +1,8 @@
 #' easy access container for depth estimation functions
 DEPTH_EST_FUNCTIONS = list(
-    uq = function(x) quantile(c(unlist((x))), .75),
-    rle = function(x) exp(mean(log(c(unlist((x)))))),
-    totsum = function(x) sum(c(unlist(x)))
+    uq = function(x) quantile(c(unlist((x))), .75, na.rm=TRUE),
+    rle = function(x) exp(mean(log(c(unlist((x)))), na.rm=TRUE)),
+    totsum = function(x) sum(c(unlist(x)), na.rm = TRUE)
 )
 
 
