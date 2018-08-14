@@ -41,7 +41,7 @@ validateMpraObject <- function(object) {
                     "RNA, DNA feature names either missing or don't match")
     }
     if (length(unique(rownames(object@dnaCounts))) != 
-        length(rownames(objects@dnaCounts))) {
+        length(rownames(object@dnaCounts))) {
         errors <- c(errors, "enhancer IDs must by unique")
     }
     
