@@ -25,8 +25,8 @@ setClass("Designs", slots = c(
 #' explaining how it's invalid
 validateMpraObject <- function(object) {
     errors = character()
-    if (!all(dim(object@dnaCounts) == dim(object@rnaCounts))) {
-        errors <- c(errors, "DNA and RNA matrices dimensions don't match")
+    if (NROW(object@dnaCounts) != NROW(object@rnaCounts)) {
+        errors <- c(errors, "DNA and RNA don't have the same number of Rows")
     }
     if (NCOL(object@dnaCounts) != NROW(object@dnaAnnot)) {
         errors <- c(errors, "DNA observations and annotations don't match")
