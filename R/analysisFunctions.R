@@ -16,8 +16,8 @@
 #' @export
 #' @return the MpraObject with fitted models for the input enhancers
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
-#'                      nbatch=2, nbc=20)
+#' data <- simulateMPRA(tr = rep(2,5), da=c(rep(2,2), rep(2.5,3)), 
+#'                      nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
@@ -32,8 +32,6 @@
 analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE, 
                                 reducedDesign=NULL, correctControls=TRUE, 
                                 verbose=TRUE) {
-    ##TODO: if full becomes operational, add 'fullLRT' as a logical argument
-    
     if(!fit.se & is.null(reducedDesign)) {
         stop("Comparative analysis requires either a reduced design or fitting \
              the SE")
@@ -58,9 +56,7 @@ analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
                                         annotations=obj@rnaAnnot)
     obj@designs@rnaFull <- getDesignMat(design=rnaDesign, 
                                         annotations=obj@rnaAnnot)
-    
-    ##TODO: if full model, call a different function.
-    
+
     ## if controls are to be used and fullModel not: fit the control model
     if(correctControls & all(!is.na(obj@controls))) {
         message("Fitting controls-based background model...")
@@ -167,7 +163,7 @@ analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
 #' @export
 #' 
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)

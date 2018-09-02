@@ -9,8 +9,8 @@
 #' @return results data frame
 #' 
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
-#'                      nbatch=2, nbc=20)
+#' data <- simulateMPRA(tr = rep(2,5), da=c(rep(2,2), rep(2.5,3)), 
+#'                      nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
@@ -68,8 +68,8 @@ testLrt <- function(obj) {
 #' @return a data.frame of the results
 #' this include the test statistic, logFC, p-value and BH-corrected FDR.
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
-#'                      nbatch=2, nbc=20)
+#' data <- simulateMPRA(tr = rep(2,5), da=c(rep(2,2), rep(2.5,3)), 
+#'                      nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
@@ -149,7 +149,7 @@ testCoefficient <- function(obj, factor, contrast) {
 #' }
 #' 
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
