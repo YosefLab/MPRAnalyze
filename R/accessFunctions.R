@@ -220,7 +220,8 @@ getModelParameters_RNA <- function(obj, features=NULL, full=TRUE) {
     return(as.data.frame(coef.mat))
 }
 
-#' Get model distribution parameters from an MpraObject
+#' Get model distribution parameters from an MpraObject of a given candidate 
+#' enhancer
 #' 
 #' @rdname getDistrParam
 #' @aliases getDistrParam_DNA
@@ -233,9 +234,21 @@ getModelParameters_RNA <- function(obj, features=NULL, full=TRUE) {
 #' @return fit parameters (numeric, samples x parameters)
 #' 
 #' @export
+#' 
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot)
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' obj <- analyzeQuantification(obj, dnaDesign = ~ batch + barcode, 
+#'                               rnaDesign = ~1)
+#' ## get distributional parameters of the first enhancer:
+#' dist.params.dna <- getDistrParam_DNA(obj, 1)
+#' dist.params.rna <- getDistrParam_RNA(obj, 1)
+#' 
 #' @rdname getDistrParam
-getDistrParam_DNA <- function(obj, enhancer=NULL, full=TRUE){
-    
+getDistrParam_DNA <- function(obj, enhancer, full=TRUE){
     if(full == TRUE){
         fit <- obj@modelFits
     } else {
@@ -250,12 +263,8 @@ getDistrParam_DNA <- function(obj, enhancer=NULL, full=TRUE){
         par.rate <- as.vector(exp(-obj@designs@dna %*% 
                                       coef.mat[-1,,drop=FALSE]))
         par <- data.frame(shape = par.shape, rate = par.rate)
-    } else if(obj@model == "ln.nb") {
-        par.sdlog <- as.vector( exp(coef.mat[1,]))
-        par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
-        par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
-    } else if(obj@model == "ln.ln") {
-        par.sdlog <- as.vector( exp(coef.mat[1,]))
+    } else if(obj@model == "ln.nb" | obj@model == "ln.ln") {
+        par.sdlog <- as.vector(exp(coef.mat[1,]))
         par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
         par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     }
