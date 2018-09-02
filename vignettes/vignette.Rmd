@@ -27,6 +27,7 @@ MPRanalyze expects the input to be provided as two matrices: one for the DNA and
 When formatting the data, note that all enhancers must have the same number of columns. In the case of missing data, padding with 0s is recommended.
 
 ```{r load and examine data, include=TRUE}
+library(MPRAnalyze)
 data("ChrEpi")
 summary(colAnnot)
 head(colAnnot)
@@ -39,8 +40,7 @@ Note that while this datset is "paired", and therefore the dimensionality of the
 
 The MpraObject is the basic class that the package works with, and is very easy to initialize once the data is properly formatted. In addition to the data itself, the user can specify certain enhancers as "controls" (usaully scrambled, random sequences included in the experiment). These will be used by MPRAnalyze to establish the null behavior.
 Additionally, MPRAnalyze uses parallelization to reduce runtime, with the BiocParallel package. To utilize this, the user can create a BPPARAM object and pass it to the MpraObject, it will be used throughout the analysis.
-```{r init object}
-library(MPRAnalyze)
+```{r init object, include=TRUE}
 obj <- MpraObject(dnaCounts = dnaCounts, rnaCounts = rnaCounts, 
                   dnaAnnot = colAnnot, rnaAnnot = colAnnot, 
                   controls = control)
