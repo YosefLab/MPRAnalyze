@@ -247,7 +247,8 @@ getDistrParam_DNA <- function(obj, enhancer=NULL, full=TRUE){
     
     if(obj@model == "gamma.pois") {
         par.shape <- as.vector(exp(coef.mat[1,]))
-        par.rate <- as.vector(exp(-obj@designs@dna %*% coef.mat[-1,,drop=FALSE]))
+        par.rate <- as.vector(exp(-obj@designs@dna %*% 
+                                      coef.mat[-1,,drop=FALSE]))
         par <- data.frame(shape = par.shape, rate = par.rate)
     } else if(obj@model == "ln.nb") {
         par.sdlog <- as.vector( exp(coef.mat[1,]))

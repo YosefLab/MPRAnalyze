@@ -44,8 +44,9 @@ testLrt <- function(obj) {
                     df.dna=df.dna, df.rna.full=df.rna.full, 
                     df.rna.red=df.rna.red)
     ## if condition is single term, extract the coefficient as logFC
-    condition.name <- colnames(obj@designs@rnaFull)[!(colnames(obj@designs@rnaFull) %in% 
-                                                        colnames(obj@designs@rnaRed))]
+    condition.name <- (colnames(obj@designs@rnaFull)
+                       [!(colnames(obj@designs@rnaFull) %in% 
+                              colnames(obj@designs@rnaRed))])
     if(length(condition.name) == 1) {
         ## single coefficient is the log Fold Change
         res$logFC <- getModelParameters_RNA(obj)[,condition.name]
