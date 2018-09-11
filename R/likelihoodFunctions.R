@@ -4,6 +4,7 @@
 #' 
 #' @return a list with two items: dna, rna. Each item is the corresponding 
 #' likelihod function
+#' @noRd
 get.ll.functions <- function(model) {
     if(model == "gamma.pois"){
         llfnDNA <- ll.dna.gamma.pois
@@ -40,9 +41,11 @@ get.ll.functions <- function(model) {
 #'
 #' @return negative log likelihood of dna  observations under the specified 
 #' model
+#' @noRd
 NULL
 
 #' @rdname ll.dna
+#' @noRd
 ll.dna.gamma.pois <- function(theta, dcounts, log.ddepth, ddesign.mat) {
     
     log.rate.est <- matrix(rep(-(ddesign.mat %*% theta[-1] + log.ddepth), 
@@ -58,6 +61,7 @@ ll.dna.gamma.pois <- function(theta, dcounts, log.ddepth, ddesign.mat) {
 }
 
 #' @rdname ll.dna
+#' @noRd
 ll.dna.ln <- function(theta, dcounts, log.ddepth, ddesign.mat) {
     
     log.d.est <- matrix(rep(ddesign.mat %*% theta[-1] + log.ddepth, 
@@ -94,9 +98,11 @@ ll.dna.ln <- function(theta, dcounts, log.ddepth, ddesign.mat) {
 #' (logical, rna samples x rna parameters)
 #'
 #' @return negative log likelihood of rna observations under the specified model
+#' @noRd
 NULL
 
 #' @rdname ll.rna
+#' @noRd
 ll.rna.gamma.pois <- function(theta, theta.d, 
                             rcounts, log.rdepth,
                             d2rdesign.mat, rdesign.mat) {
@@ -119,6 +125,7 @@ ll.rna.gamma.pois <- function(theta, theta.d,
 }
 
 #' @rdname ll.rna
+#' @noRd
 ll.rna.ln.nb <- function(theta, theta.d, 
                         rcounts, log.rdepth,
                         d2rdesign.mat, rdesign.mat) {
@@ -137,6 +144,7 @@ ll.rna.ln.nb <- function(theta, theta.d,
 }
 
 #' @rdname ll.rna
+#' @noRd
 ll.rna.ln.ln <- function(theta, theta.d, 
                         rcounts, log.rdepth,
                         d2rdesign.mat, rdesign.mat) {

@@ -1,5 +1,3 @@
-
-
 #' get a design matrix from the input design
 #' 
 #' adds an extra first column if this is the rna design matrix and
@@ -14,6 +12,7 @@
 #' @param condition condition to substract from formula
 #'
 #' @return a design matrix
+#' @noRd
 getDesignMat <- function(design, annotations, condition=NULL) {
     if (is.null(design)) {
         design <- ~ 1
@@ -29,6 +28,7 @@ getDesignMat <- function(design, annotations, condition=NULL) {
 #' @param full the full design (formula)
 #' @param reduced the reduced design (formula)
 #' @return TRUE iff the reduced design is nested in the full design
+#' @noRd
 isNestedDesign <- function(full, reduced) {
     return(all(attr(terms(reduced), "term.labels") %in% 
                    attr(terms(full), "term.labels")))
@@ -37,6 +37,7 @@ isNestedDesign <- function(full, reduced) {
 #' Return TRUE iff the given design has an intercept term
 #' @param design either a formula or a design matrix
 #' @return TRUE iff the design has an intercept term
+#' @noRd
 checkForIntercept <- function(design) {
     if(is.matrix(design)) {
         return(all(design[,1] == 1))
@@ -51,6 +52,7 @@ checkForIntercept <- function(design) {
 #' @param models the models to reformet, should be a list of results from a 
 #' fit.* function
 #' @return a list of formatted extacted properties 
+#' @noRd
 reformatModels <- function(models) {
     valid <- !vapply(models, is.null, TRUE)
     res <- list(
@@ -78,6 +80,7 @@ reformatModels <- function(models) {
 #' @param prop the name of the property
 #' @param valids indices of the valid models in the input list
 #' @return the formatted extracted property (NULL, vector or matrix)
+#' @noRd
 extractProp <- function(models, prop, valids) {
     value <- models[valids][[1]][[prop]]
     if(is.null(value)) {
@@ -113,6 +116,7 @@ extractProp <- function(models, prop, valids) {
 #' is returned. Otherwise, term and value must be provided, such that term is a
 #' valid term in the design provided to the fit, and value is one of the 
 #' levels in the term.
+#' @noRd
 getSingleAlpha <- function(obj, term=NULL, value=NULL, full=TRUE) {
     coefs <- getModelParameters_RNA(obj, full = full)
     if(full) {

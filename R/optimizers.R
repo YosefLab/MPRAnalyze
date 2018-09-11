@@ -67,9 +67,11 @@
 #'     \item r.se: the standard errors of the estimates of the RNA counts
 #'     \item ll: the log likelihood of the model
 #' }
+#' @noRd
 NULL
 
 #' @rdname fit.dnarna
+#' @noRd
 fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
                                  ddepth, rdepth, rctrlscale,
                                  ddesign.mat, rdesign.mat, d2rdesign.mat,
@@ -183,6 +185,7 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
 #'     \item r.se: the standard errors of the estimates of the RNA counts
 #'     \item ll: the log likelihood of the model
 #' }
+#' @noRd
 fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
                                      ddepth, rdepth,
                                      ddesign.mat, rdesign.mat, d2rdesign.mat,

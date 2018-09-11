@@ -27,6 +27,7 @@
 #' estimates to the RNA observations 
 #' @param rdesign.ctrl.mat the control rna model design matrix 
 #' (logical, samples x rna parameters)
+#' @noRd
 NULL
 
 #' likelihood wrapper to compute terms of likelihood with non-zero derivative
@@ -55,9 +56,11 @@ NULL
 #' 
 #' @return negative sum of log likelihood terms with non-zero derivative
 #' with respect to case model 
+#' @noRd
 NULL
 
 #' @rdname cost.model.noctrl
+#' @noRd
 cost.dnarna <- function(theta, dcounts, rcounts,
                         llfnDNA, llfnRNA,
                         log.ddepth, log.rdepth, rctrlscale=NULL,
@@ -86,6 +89,7 @@ cost.dnarna <- function(theta, dcounts, rcounts,
 }
 
 #' @rdname cost.model.noctrl
+#' @noRd
 cost.dna <- function(theta, theta.r,
                      llfnDNA, llfnRNA,
                      dcounts, rcounts,
@@ -110,6 +114,7 @@ cost.dna <- function(theta, theta.r,
 }
 
 #' @rdname cost.model.noctrl
+#' @noRd
 cost.rna <- function(theta, theta.d, llfnRNA, rcounts,
                      log.rdepth, rctrlscale=NULL,
                      d2rdesign.mat, rdesign.mat,

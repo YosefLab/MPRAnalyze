@@ -23,6 +23,7 @@ setClass("Designs", slots = c(
 #'
 #' @return TRUE if object is valid, otherwise vector of character strings
 #' explaining how it's invalid
+#' @noRd
 validateMpraObject <- function(object) {
     errors = character()
     if (NROW(object@dnaCounts) != NROW(object@rnaCounts)) {

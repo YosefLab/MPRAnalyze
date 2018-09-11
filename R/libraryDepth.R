@@ -1,4 +1,5 @@
 #' easy access container for depth estimation functions
+#' @noRd
 DEPTH_EST_FUNCTIONS = list(
     uq = function(x) quantile(c(unlist((x))), .75, na.rm=TRUE),
     rle = function(x) exp(mean(log(c(unlist((x)))), na.rm=TRUE)),
@@ -67,6 +68,7 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both",
 #' for total sum normalization, and "rle" for RLE (uses geometric mean, and is 
 #' therefore not recommended if libraries have 0 counts)
 #' @return computed library depth corection factors
+#' @noRd
 estimateFactors <- function(counts, annotations, lib.factor=NULL, 
                             depth.estimator='uq') {
     if(is.null(lib.factor)) {
@@ -101,6 +103,7 @@ estimateFactors <- function(counts, annotations, lib.factor=NULL,
 #'
 #' @return a numeric of length NCOL(data) with the appropriate epth factor for
 #' each column (these are not unique values)
+#' @noRd
 compute.depth <- function(data, lib.factor, func) {
     lib.factor <- as.factor(lib.factor)
 
