@@ -29,8 +29,8 @@ When formatting the data, note that all enhancers must have the same number of c
 ```{r load and examine data, include=TRUE}
 library(MPRAnalyze)
 data("ChrEpi")
-summary(colAnnot)
-head(colAnnot)
+summary(ce.colAnnot)
+head(ce.colAnnot)
 ```
 
 In the filtered dataset we have 110 enhancers, 40 observations each: 10 unique barcodes, 2 replicates and 2 conditions (MT stands for episomal, WT for chromosomally integrated).
@@ -41,9 +41,9 @@ Note that while this datset is "paired", and therefore the dimensionality of the
 The MpraObject is the basic class that the package works with, and is very easy to initialize once the data is properly formatted. In addition to the data itself, the user can specify certain enhancers as "controls" (usaully scrambled, random sequences included in the experiment). These will be used by MPRAnalyze to establish the null behavior.
 Additionally, MPRAnalyze uses parallelization to reduce runtime, with the BiocParallel package. To utilize this, the user can create a BPPARAM object and pass it to the MpraObject, it will be used throughout the analysis.
 ```{r init object, include=TRUE}
-obj <- MpraObject(dnaCounts = dnaCounts, rnaCounts = rnaCounts, 
-                  dnaAnnot = colAnnot, rnaAnnot = colAnnot, 
-                  controls = control)
+obj <- MpraObject(dnaCounts = ce.dnaCounts, rnaCounts = ce.rnaCounts, 
+                  dnaAnnot = ce.colAnnot, rnaAnnot = ce.colAnnot, 
+                  controls = ce.control)
 ```
 
 Note that since we are using only a subset of the data, one of the enhancers included was not detected (all observations are 0). If this is the case, MPRAnalyze removes it from the analysis. In datasets with many zeros, it is possible to add pseudo-counts. With MPRA this should be done carefully, and we recommend only adding pseudocounts in cases where the RNA counts are positive but the DNA counts are 0 (these are the only cases we know this is a false 0).
@@ -118,9 +118,9 @@ res.chr <- testEmpirical(obj = obj,
 par(mfrow=c(2,2))
 
 hist(res.epi$pval.mad, main="episomal, all")
-hist(res.epi$pval.mad[control], main="episomal, controls")
+hist(res.epi$pval.mad[ce.control], main="episomal, controls")
 hist(res.chr$pval.mad, main="chromosomal, all")
-hist(res.chr$pval.mad[control], main="chromosomal, controls")
+hist(res.chr$pval.mad[ce.control], main="chromosomal, controls")
 
 par(mfrow=c(1,1))
 ```
