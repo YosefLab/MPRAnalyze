@@ -19,8 +19,8 @@ Calculate likelihood ratio test for the specific nested model
 Must be run after running an LRT-based analysis
 }
 \examples{
-data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
-                     nbatch=2, nbc=20)
+data <- simulateMPRA(tr = rep(2,5), da=c(rep(2,2), rep(2.5,3)), 
+                     nbatch=2, nbc=15)
 obj <- MpraObject(dnaCounts = data$obs.dna, 
                   rnaCounts = data$obs.rna, 
                   colAnnot = data$annot)

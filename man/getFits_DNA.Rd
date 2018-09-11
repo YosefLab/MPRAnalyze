@@ -34,7 +34,7 @@ on the model). These can be compared with the observed counts to assess
 goodness of fit.
 }
 \examples{
-data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+data <- simulateMPRA(tr = rep(2,5), da=NULL, nbatch=2, nbc=15)
 obj <- MpraObject(dnaCounts = data$obs.dna, 
                   rnaCounts = data$obs.rna, 
                   colAnnot = data$annot)

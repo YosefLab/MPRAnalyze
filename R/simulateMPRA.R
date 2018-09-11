@@ -48,7 +48,9 @@
 #' data <- simulateMPRA(dna.noise.sd = 0.75, rna.noise.sd = 0.75)
 #' # gradually increasing dataset
 #' data <- simulateMPRA(tr = seq(2,3,0.01), da=NULL)
-simulateMPRA <- function(tr = rep(2, 100), da = c(rep(0, 50), rep(0.5, 50)),
+simulateMPRA <- function(tr = rep(2, 100), 
+                         da = c(rep(0, ceiling(length(tr) / 2)), 
+                                rep(0.5, floor(length(tr) / 2))),
                          dna.noise.sd = 0.2, rna.noise.sd = 0.3,
                          dna.inter = 5, dna.inter.sd = 0.5,
                          nbc = 100, coef.bc.sd = 0.5,

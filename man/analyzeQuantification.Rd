@@ -30,7 +30,7 @@ the MpraObject, with populated models
 }
 }
 \examples{
-data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=20)
+data <- simulateMPRA(tr = rep(2,10), da=NULL, nbatch=2, nbc=15)
 obj <- MpraObject(dnaCounts = data$obs.dna, 
                   rnaCounts = data$obs.rna, 
                   colAnnot = data$annot)
