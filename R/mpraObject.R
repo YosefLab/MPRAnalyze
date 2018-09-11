@@ -26,23 +26,23 @@ setClass("Designs", slots = c(
 #' @noRd
 validateMpraObject <- function(object) {
     errors = character()
-    if (NROW(object@dnaCounts) != NROW(object@rnaCounts)) {
+    if (NROW(dnaCounts(object)) != NROW(rnaCounts(object))) {
         errors <- c(errors, "DNA and RNA don't have the same number of Rows")
     }
-    if (NCOL(object@dnaCounts) != NROW(object@dnaAnnot)) {
+    if (NCOL(dnaCounts(object)) != NROW(dnaAnnot(object))) {
         errors <- c(errors, "DNA observations and annotations don't match")
     }
-    if (NCOL(object@rnaCounts) != NROW(object@rnaAnnot)) {
+    if (NCOL(rnaCounts(object)) != NROW(rnaAnnot(object))) {
         errors <- c(errors, "RNA observations and annotations don't match")
     }
-    if (is.null(rownames(object@dnaCounts)) | 
-        is.null(rownames(object@rnaCounts)) |
-        any(rownames(object@dnaCounts) != rownames(object@rnaCounts))) {
+    if (is.null(rownames(dnaCounts(object))) | 
+        is.null(rownames(rnaCounts(object))) |
+        any(rownames(dnaCounts(object)) != rownames(rnaCounts(object)))) {
         errors <- c(errors,
                     "RNA, DNA feature names either missing or don't match")
     }
-    if (length(unique(rownames(object@dnaCounts))) != 
-        length(rownames(object@dnaCounts))) {
+    if (length(unique(rownames(dnaCounts(object)))) != 
+        length(rownames(dnaCounts(object)))) {
         errors <- c(errors, "enhancer IDs must by unique")
     }
     
@@ -160,3 +160,76 @@ MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL,
                BPPARAM=BPPARAM)
     return(obj)
 }
+
+#' get properties from a given MpraObject
+#' @param obj the MpraObject to extract the property from
+#' @return The value of the property
+#' @export
+#' @rdname MpraObject_getters
+#' @examples
+#' data <- simulateMPRA(tr = rep(2,15), nbatch=2, nbc=15)
+#' obj <- MpraObject(dnaCounts = data$obs.dna, 
+#'                   rnaCounts = data$obs.rna, 
+#'                   colAnnot = data$annot,
+#'                   controls = 1:5)
+#' dnaCounts <- dnaCounts(obj)
+#' rnaCounts <- rnaCounts(obj)
+#' dnaAnnot <- dnaAnnot(obj)
+#' rnaAnnot <- rnaAnnot(obj)
+#' controls <- controls(obj)
+#' dnaDepth <- dnaDepth(obj)
+#' rnaDepth <- rnaDepth(obj)
+#' model <- model(obj)
+setGeneric("dnaCounts", function(obj) standardGeneric("dnaCounts"))
+
+#' @rdname MpraObject_getters
+setMethod("dnaCounts", signature(obj="MpraObject"), function(obj) obj@dnaCounts)
+
+#' @rdname MpraObject_getters
+#' @export
+setGeneric("rnaCounts", function(obj) standardGeneric("rnaCounts"))
+
+#' @rdname MpraObject_getters
+setMethod("rnaCounts", signature(obj="MpraObject"), function(obj) obj@rnaCounts)
+
+#' @rdname MpraObject_getters
+#' @export
+setGeneric("dnaAnnot", function(obj) standardGeneric("dnaAnnot"))
+
+#' @rdname MpraObject_getters
+setMethod("dnaAnnot", signature(obj="MpraObject"), function(obj) obj@dnaAnnot)
+
+#' @rdname MpraObject_getters
+#' @export
+setGeneric("rnaAnnot", function(obj) standardGeneric("rnaAnnot"))
+
+#' @rdname MpraObject_getters
+setMethod("rnaAnnot", signature(obj="MpraObject"), function(obj) obj@rnaAnnot)
+
+#' @rdname MpraObject_getters
+#' @export
+setGeneric("controls", function(obj) standardGeneric("controls"))
+
+#' @rdname MpraObject_getters
+setMethod("controls", signature(obj="MpraObject"), function(obj) obj@controls)
+
+#' @rdname MpraObject_getters
+#' @export
+setGeneric("dnaDepth", function(obj) standardGeneric("dnaDepth"))
+
+#' @rdname MpraObject_getters
+setMethod("dnaDepth", signature(obj="MpraObject"), function(obj) obj@dnaDepth)
+
+#' @rdname MpraObject_getters
+#' @export
+setGeneric("rnaDepth", function(obj) standardGeneric("rnaDepth"))
+
+#' @rdname MpraObject_getters
+setMethod("rnaDepth", signature(obj="MpraObject"), function(obj) obj@rnaDepth)
+
+#' @rdname MpraObject_getters
+#' @export
+setGeneric("model", function(obj) standardGeneric("model"))
+
+#' @rdname MpraObject_getters
+setMethod("model", signature(obj="MpraObject"), function(obj) obj@model)

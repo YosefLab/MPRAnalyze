@@ -30,12 +30,12 @@ setModel <- function(obj, model) {
     
     # check that data is integer if count distribution is used
     # round if this is not the case and issue a warning
-    if(obj@model %in% c("ln.nb", "gamma.pois")){
-        if(!all(obj@rnaCounts%%1 == 0)) {
+    if(model(obj) %in% c("ln.nb", "gamma.pois")){
+        if(!all(rnaCounts(obj) %% 1 == 0)) {
             warning("Negative binomial count distribution of rna model in ",
-                    obj@model, " requires integer RNA observations. ",
+                    model(obj), " requires integer RNA observations. ",
                     "Rounded RNA count matrix to integers.")
-            obj@rnaCounts <- round(obj@rnaCounts)
+            obj@rnaCounts <- round(rnaCounts(obj))
         }
     }
     return(obj)

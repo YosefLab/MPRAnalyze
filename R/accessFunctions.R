@@ -47,25 +47,25 @@ getFits_DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
         dmat <- obj@designs@dna2rna
     }
     
-    if(obj@model == "gamma.pois") {
+    if(model(obj) == "gamma.pois") {
         # disp * (1/beta)
         disp <- rep(coef.mat[,1], NROW(dmat))
         beta.inv <- coef.mat[,-1] %*% t(dmat)
         dfit <- exp(disp + beta.inv)
         
-    } else if(obj@model == "ln.nb" | obj@model == "ln.ln") {
+    } else if(model(obj) == "ln.nb" | model(obj) == "ln.ln") {
         dfit <- exp(coef.mat[-1,,drop=FALSE] %*% t(dmat))
     }
     
     if(depth == TRUE){
-        dfit <- dfit * rep(obj@dnaDepth, each = NROW(coef.mat))
+        dfit <- dfit * rep(dnaDepth(obj), each = NROW(coef.mat))
     }
     
     rownames(dfit) <- enhancers
     if(transition) {
-        colnames(dfit) <- rownames(obj@rnaAnnot)
+        colnames(dfit) <- rownames(rnaAnnot(obj))
     } else {
-        colnames(dfit) <- rownames(obj@dnaAnnot)
+        colnames(dfit) <- rownames(dnaAnnot(obj))
     }
     return(dfit)
 }
@@ -130,13 +130,13 @@ getFits_RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
     rfit <- exp(joint.des.mat %*% coef.mat)
     
     if(depth == TRUE){
-        rfit <- rfit * replicate(NCOL(rfit), obj@rnaDepth)
+        rfit <- rfit * replicate(NCOL(rfit), rnaDepth(obj))
     }
     
     rfit <- t(rfit) * dfit
     
     rownames(rfit) <- enhancers
-    colnames(rfit) <- rownames(obj@rnaAnnot)
+    colnames(rfit) <- rownames(rnaAnnot(obj))
     return(rfit)
 }
 
@@ -172,9 +172,9 @@ getFits_RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #' @rdname extractModelParameters
 getModelParameters_DNA <- function(obj, features=NULL, full=TRUE) {
     if(is.null(features)) {
-        features <- seq_len(NROW(obj@dnaCounts))
+        features <- seq_len(NROW(dnaCounts(obj)))
     } else if (is.character(features)) {
-        features <- which(rownames(obj@dnaCounts) %in% features)
+        features <- which(rownames(dnaCounts(obj)) %in% features)
     }
     
     if(is.null(obj@modelFits)){
@@ -190,7 +190,7 @@ getModelParameters_DNA <- function(obj, features=NULL, full=TRUE) {
              did not include fitting a reduced model")
     }
     colnames(coef.mat) <- c("disp", colnames(obj@designs@dna))
-    rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
+    rownames(coef.mat) <- rownames(dnaCounts(obj))[features]
     return(as.data.frame(coef.mat))
 }
 
@@ -201,9 +201,9 @@ getModelParameters_RNA <- function(obj, features=NULL, full=TRUE) {
         stop("can't extract model parameters before fitting a model")
     }
     if(is.null(features)) {
-        features <- seq_len(NROW(obj@dnaCounts))
+        features <- seq_len(NROW(dnaCounts(obj)))
     } else if (is.character(features)) {
-        features <- which(rownames(obj@dnaCounts) %in% features)
+        features <- which(rownames(dnaCounts(obj)) %in% features)
     }
     
     if(full) {
@@ -216,7 +216,7 @@ getModelParameters_RNA <- function(obj, features=NULL, full=TRUE) {
         stop("Reduced model unavailable")
     }
     
-    rownames(coef.mat) <- rownames(obj@dnaCounts)[features]
+    rownames(coef.mat) <- rownames(dnaCounts(obj))[features]
     return(as.data.frame(coef.mat))
 }
 
@@ -258,18 +258,18 @@ getDistrParam_DNA <- function(obj, enhancer, full=TRUE){
     coef.mat <- t(fit$d.coef[enhancer,,drop=FALSE])
     coef.mat[is.na(coef.mat)] <- 0
     
-    if(obj@model == "gamma.pois") {
+    if(model(obj) == "gamma.pois") {
         par.shape <- as.vector(exp(coef.mat[1,]))
         par.rate <- as.vector(exp(-obj@designs@dna %*% 
                                       coef.mat[-1,,drop=FALSE]))
         par <- data.frame(shape = par.shape, rate = par.rate)
-    } else if(obj@model == "ln.nb" | obj@model == "ln.ln") {
+    } else if(model(obj) == "ln.nb" | model(obj) == "ln.ln") {
         par.sdlog <- as.vector(exp(coef.mat[1,]))
         par.meanlog <- as.vector(obj@designs@dna %*% coef.mat[-1,,drop=FALSE])
         par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     }
     
-    rownames(par) <- rownames(obj@dnaAnnot)
+    rownames(par) <- rownames(dnaAnnot(obj))
     return(par)
 }
 
@@ -285,21 +285,21 @@ getDistrParam_RNA <- function(obj, enhancer=NULL, full=TRUE){
     rfit <- as.vector(getFits_RNA(obj, enhancers=enhancer, depth=FALSE, 
                                 full=full, rnascale=TRUE))
     
-    if(obj@model == "gamma.pois") {
+    if(model(obj) == "gamma.pois") {
         par.size <- as.vector(exp(fit$r.coef[enhancer,1]))
         par.mu <- rfit
         par <- data.frame(size = par.size, mu = par.mu)
-    } else if(obj@model == "ln.nb") {
+    } else if(model(obj) == "ln.nb") {
         par.size <- as.vector(exp(fit$r.coef[enhancer,1]))
         par.mu <- rfit
         par <- data.frame(size = par.size, mu = par.mu)
-    } else if(obj@model == "ln.ln") {
+    } else if(model(obj) == "ln.ln") {
         par.sdlog <- as.vector(exp(fit$r.coef[enhancer,1]))
         par.meanlog <- log(rfit)
         par <- data.frame(meanlog = par.meanlog, sdlog = par.sdlog)
     }
     
-    rownames(par) <- rownames(obj@rnaAnnot)
+    rownames(par) <- rownames(rnaAnnot(obj))
     return(par)
 }
 
@@ -321,7 +321,7 @@ getDistrParam_RNA <- function(obj, enhancer=NULL, full=TRUE){
 #' @return the estimate for transcription rate as fitted by the model
 #' 
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,5), da=c(rep(2,5), rep(2.5,5)), 
+#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
 #'                      nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
@@ -351,7 +351,7 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
         }
         return(as.data.frame(exp(alpha.mat)))
     } else {
-        l <- levels(obj@rnaAnnot[,by.factor])
+        l <- levels(rnaAnnot(obj)[,by.factor])
         ## if intercepted: first level is different
         if(checkForIntercept(des)) {
             int.alpha <- getSingleAlpha(obj)
@@ -364,7 +364,7 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
             getSingleAlpha(obj, term = by.factor, value = v, full = full)
         }))
         alpha.mat <- cbind(int.alpha, alpha.mat)
-        colnames(alpha.mat) <- levels(obj@rnaAnnot[,by.factor])
+        colnames(alpha.mat) <- levels(rnaAnnot(obj)[,by.factor])
         
         return(as.data.frame(alpha.mat))
     }
@@ -376,7 +376,7 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
 #' and 'rna' with the rna factors
 #' @export
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,5), da=c(rep(2,5), rep(2.5,5)), 
+#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
 #'                      nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
@@ -384,5 +384,5 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
 #' depth.factors <- getLibraryDepthFactors(obj)
 getLibraryDepthFactors <- function(obj) {
-    return(list(dna=obj@dnaDepth, rna=obj@rnaDepth))
+    return(list(dna=dnaDepth(obj), rna=rnaDepth(obj)))
 }

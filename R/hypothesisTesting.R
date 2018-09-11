@@ -85,11 +85,11 @@ testCoefficient <- function(obj, factor, contrast) {
              Coefficient-based testing cannot be perfromed.")
     }
     
-    if(!(factor %in% colnames(obj@rnaAnnot))) {
+    if(!(factor %in% colnames(rnaAnnot(obj)))) {
         stop("given factor: ", factor, 
             " is not included in object annotations")
     } 
-    ref <- levels(as.factor(obj@rnaAnnot[,factor]))[1]
+    ref <- levels(as.factor(rnaAnnot(obj)[,factor]))[1]
     if (ref == contrast) {
         stop("given contrast ", contrast, 
             " is the reference level of factor ", factor)
@@ -105,7 +105,7 @@ testCoefficient <- function(obj, factor, contrast) {
     
     # valids <- !is.null(obj@modelFits$r.se)
     valids <- apply(obj@modelFits$r.se, 1, function(x) !all(is.na(x)))
-    logFC <- se <- statistic <- pval <- fdr <- rep(NA, NROW(obj@dnaCounts))
+    logFC <- se <- statistic <- pval <- fdr <- rep(NA, NROW(dnaCounts(obj)))
     logFC[valids] <- obj@modelFits$r.coef[valids,coef.id]
     se[valids] <- obj@modelFits$r.se[valids,coef.id]
     statistic <- (logFC / se) ^ 2
@@ -114,7 +114,7 @@ testCoefficient <- function(obj, factor, contrast) {
     
     res <- data.frame(logFC=logFC, statistic=statistic, 
                       pval=pval, fdr=fdr, 
-                      row.names = rownames(obj@dnaCounts))
+                      row.names = rownames(dnaCounts(obj)))
     return(res)
 }
 
@@ -171,7 +171,7 @@ testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     
     if(!is.null(subset)) {
         if(is.character(subset)) {
-            subset <- rownames(obj@dnaCounts) %in% subset
+            subset <- rownames(dnaCounts(obj)) %in% subset
         }
         if(is.logical(subset)) {
             subset <- which(subset)
@@ -181,7 +181,7 @@ testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     
     res <- data.frame(statistic=statistic)
     
-    if(all(is.na(obj@controls)) | !useControls) {
+    if(all(is.na(controls(obj))) | !useControls) {
         ## No controls, use bottom of the distribution to establish the baseline
         
         #estimate mode of distribution
@@ -197,8 +197,8 @@ testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
         res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
         res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
     } else {
-        ctrl.idx <- rep(FALSE, NROW(obj@dnaCounts))
-        ctrl.idx[obj@controls] <- TRUE
+        ctrl.idx <- rep(FALSE, NROW(dnaCounts(obj)))
+        ctrl.idx[controls(obj)] <- TRUE
         if (!is.null(subset)) {
             ctrl.idx <- ctrl.idx[subset]
         }

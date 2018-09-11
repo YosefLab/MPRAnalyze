@@ -136,8 +136,8 @@ compute.depth <- function(data, lib.factor, func) {
 #' obj <- setDepthFactors(obj, dnaDepth = rep(1, NCOL(data$obs.dna)),
 #'                               rnaDepth = rep(1, NCOL(data$obs.rna)))
 setDepthFactors <- function(obj, dnaDepth, rnaDepth) {
-    if(length(dnaDepth) != NCOL(obj@dnaCounts) 
-        | length(rnaDepth) != NCOL(obj@rnaCounts)) {
+    if(length(dnaDepth) != NCOL(dnaCounts(obj)) |
+       length(rnaDepth) != NCOL(rnaCounts(obj))) {
         stop("invalid length of depth factors")
     }
     obj@dnaDepth <- dnaDepth
