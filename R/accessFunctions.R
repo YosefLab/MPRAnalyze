@@ -369,20 +369,3 @@ getAlpha <- function(obj, by.factor=NULL, full=TRUE) {
         return(as.data.frame(alpha.mat))
     }
 }
-
-#' extract library depth factors.
-#' @param obj the object o extract the factors from
-#' @return a list with two elements: 'dna' with the dna library depth factors, 
-#' and 'rna' with the rna factors
-#' @export
-#' @examples
-#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
-#'                      nbatch=2, nbc=15)
-#' obj <- MpraObject(dnaCounts = data$obs.dna, 
-#'                   rnaCounts = data$obs.rna, 
-#'                   colAnnot = data$annot)
-#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
-#' depth.factors <- getLibraryDepthFactors(obj)
-getLibraryDepthFactors <- function(obj) {
-    return(list(dna=dnaDepth(obj), rna=rnaDepth(obj)))
-}
