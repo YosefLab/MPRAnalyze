@@ -53,7 +53,8 @@ validateMpraObject <- function(object) {
     }
 }
 
-#' The main container class for MPRAnalyze
+#' Full documentation of MpraObject structure and slots
+#' 
 #' @slot dnaCounts matrix of DNA counts
 #' @slot rnaCounts matrix of RNA counts
 #' @slot dnaAnnot DNA column annotations 
@@ -76,6 +77,8 @@ validateMpraObject <- function(object) {
 #' function
 #' @slot modelPreFits.dna.ctrl fitted models for control DNA
 #' @slot BPPARAM The BiocParallel parallelization backend to use throughout
+#' 
+#' @noRd
 setClass("MpraObject", validity = validateMpraObject,
          slots = c(
              ## provided by user
@@ -100,23 +103,51 @@ setClass("MpraObject", validity = validateMpraObject,
              BPPARAM = "BiocParallelParam"
          ))
 
-
-#' Initialize a MpraObject object
-#'
-#' @import BiocParallel
-#'
-#' @param dnaCounts the DNA counts matrix
-#' @param rnaCounts the RNA counts matrix
-#' @param dnaAnnot column annotations for the DNA matrix
-#' @param rnaAnnot column annotations for the RNA matrix
-#' @param colAnnot (deprecated) column annotations - should only be used if DNA,
-#' RNA annotations are the same.
-#' @param controls a vector specifying which enhancers are negative controls
-#' (scrambles)
-#' @param BPPARAM the biocParalell backend to use for parallelization throughout
-#' the analysis
-#' @return an MpraObject
+#' MpraObject
+#' 
+#' @description The main object MPRAnalyze works with, contains the input data,
+#' associated annotations, model parameters and analysis results.
+#' 
 #' @export
+#' @import BiocParallel
+#' 
+#' @param dnaCounts the DNA count matrix
+#' @param rnaCounts the RNA count matrix
+#' @param dnaAnnot data.frame with the DNA column (sample) annotations
+#' @param rnaAnnot data.frame with the RNA column (sample) annotations
+#' @param colAnnot if annotations for DNA and RNA are identical, they can be set
+#' at the same time using colAnnot instead of using both rnaAnnot and dnaAnnot
+#' @param controls IDs of the rows in the matrices that correspond to negative 
+#' control enhancers. These are used to establish the null for quantification
+#' purposes, and to correct systemic bias in comparative analyses. Can be a 
+#' character vectors (corresponding to rownames in the data matrices), logical
+#' or numeric indices.
+#' @param BPPARAM a parallelization backend using the BiocParallel package, see
+#' more details [here](http://bioconductor.org/packages/release/bioc/html/BiocParallel.html)
+#' 
+#' @param obj The MpraObject to extract properties from
+#' 
+#' @return an initialized MpraObject
+#' 
+#' @section Accessors:
+#' MpraObject properties can be accessed using accessor functions
+#' \describe{
+#' \item{dnaCounts}{the DNA count matrix}
+#' \item{rnaCounts}{the RNA count matrix}
+#' \item{dnaAnnot}{data.frame with the DNA column (sample) annotations}
+#' \item{ranAnnot}{data.frame with the RNA column (sample) annotations}
+#' \item{model}{the distributional model used. the Gamma-Poisson convolutional 
+#' model is used by default. see \code{\link{setModel}}}
+#' \item{dnaDepth}{The library size correction factors computed for the DNA
+#' libraries. These are computed by the \code{\link{estimateDepthFactors}} 
+#' function and can be set manually using the \code{\link{setDepthFactors}}
+#' function}
+#' \item{rnaDepth}{The library size correction factors computed for the RNA
+#' libraries These are computed by the \code{\link{estimateDepthFactors}} 
+#' function and can be set manually using the \code{\link{setDepthFactors}}
+#' function}
+#' }
+#' 
 #' @examples
 #' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
 #'                      nbatch=2, nbc=20)
@@ -125,6 +156,16 @@ setClass("MpraObject", validity = validateMpraObject,
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot,
 #'                   controls = as.integer(c(1,2,4)))
+#' dnaCounts <- dnaCounts(obj)
+#' rnaCounts <- rnaCounts(obj)
+#' dnaAnnot <- dnaAnnot(obj)
+#' rnaAnnot <- rnaAnnot(obj)
+#' controls <- controls(obj)
+#' model <- model(obj)
+#' 
+#' obj <- estimateDepthFactors(obj, lib.factor=c("batch", "condition"))
+#' dnaDepth <- dnaDepth(obj)
+#' rnaDepth <- rnaDepth(obj)
 MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
                        colAnnot=NULL, controls=NA_integer_,
                        BPPARAM=NULL) {
@@ -161,75 +202,58 @@ MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL,
     return(obj)
 }
 
-#' get properties from a given MpraObject
-#' @param obj the MpraObject to extract the property from
-#' @return The value of the property
-#' @export
-#' @rdname MpraObject_getters
-#' @examples
-#' data <- simulateMPRA(tr = rep(2,15), nbatch=2, nbc=15)
-#' obj <- MpraObject(dnaCounts = data$obs.dna, 
-#'                   rnaCounts = data$obs.rna, 
-#'                   colAnnot = data$annot,
-#'                   controls = 1:5)
-#' dnaCounts <- dnaCounts(obj)
-#' rnaCounts <- rnaCounts(obj)
-#' dnaAnnot <- dnaAnnot(obj)
-#' rnaAnnot <- rnaAnnot(obj)
-#' controls <- controls(obj)
-#' dnaDepth <- dnaDepth(obj)
-#' rnaDepth <- rnaDepth(obj)
-#' model <- model(obj)
+#' @rdname MpraObject
 setGeneric("dnaCounts", function(obj) standardGeneric("dnaCounts"))
 
-#' @rdname MpraObject_getters
+#' @rdname MpraObject
+#' @export
 setMethod("dnaCounts", signature(obj="MpraObject"), function(obj) obj@dnaCounts)
 
-#' @rdname MpraObject_getters
-#' @export
+#' @rdname MpraObject
 setGeneric("rnaCounts", function(obj) standardGeneric("rnaCounts"))
 
-#' @rdname MpraObject_getters
+#' @rdname MpraObject
+#' @export
 setMethod("rnaCounts", signature(obj="MpraObject"), function(obj) obj@rnaCounts)
 
-#' @rdname MpraObject_getters
-#' @export
+#' @rdname MpraObject
 setGeneric("dnaAnnot", function(obj) standardGeneric("dnaAnnot"))
 
-#' @rdname MpraObject_getters
+#' @rdname MpraObject
+#' @export
 setMethod("dnaAnnot", signature(obj="MpraObject"), function(obj) obj@dnaAnnot)
 
-#' @rdname MpraObject_getters
-#' @export
+#' @rdname MpraObject
 setGeneric("rnaAnnot", function(obj) standardGeneric("rnaAnnot"))
 
-#' @rdname MpraObject_getters
+#' @rdname MpraObject
+#' @export
 setMethod("rnaAnnot", signature(obj="MpraObject"), function(obj) obj@rnaAnnot)
 
-#' @rdname MpraObject_getters
-#' @export
+#' @rdname MpraObject
 setGeneric("controls", function(obj) standardGeneric("controls"))
 
-#' @rdname MpraObject_getters
+#' @rdname MpraObject
+#' @export
 setMethod("controls", signature(obj="MpraObject"), function(obj) obj@controls)
 
-#' @rdname MpraObject_getters
-#' @export
+#' @rdname MpraObject
 setGeneric("dnaDepth", function(obj) standardGeneric("dnaDepth"))
 
-#' @rdname MpraObject_getters
+#' @rdname MpraObject
+#' @export
 setMethod("dnaDepth", signature(obj="MpraObject"), function(obj) obj@dnaDepth)
 
-#' @rdname MpraObject_getters
-#' @export
+#' @rdname MpraObject
 setGeneric("rnaDepth", function(obj) standardGeneric("rnaDepth"))
 
-#' @rdname MpraObject_getters
+#' @rdname MpraObject
+#' @export
 setMethod("rnaDepth", signature(obj="MpraObject"), function(obj) obj@rnaDepth)
 
-#' @rdname MpraObject_getters
-#' @export
+#' @rdname MpraObject
 setGeneric("model", function(obj) standardGeneric("model"))
 
-#' @rdname MpraObject_getters
+#' @rdname MpraObject
+#' @export
 setMethod("model", signature(obj="MpraObject"), function(obj) obj@model)
