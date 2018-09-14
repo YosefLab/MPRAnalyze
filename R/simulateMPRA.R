@@ -135,7 +135,11 @@ simulateMPRA <- function(tr = rep(2, 100),
     count.rna <- round(obs.rna)
     
     rownames(true.dna) <- rownames(count.dna) <- rownames(true.rna) <- 
-    rownames(count.rna) <- paste0("enh_", seq_len(nenhancer))
+        rownames(count.rna) <- paste0("enh_", seq_len(nenhancer))
+    
+    colnames(true.dna) <- colnames(count.dna) <- colnames(true.rna) <-
+        colnames(count.rna) <- rownames(annot) <-
+        paste0(annot$condition, "_b", annot$batch, "_bc", annot$barcode)
     
     return(list(true.dna = true.dna, obs.dna = count.dna, 
                 true.rna = true.rna, obs.rna = count.rna, 
