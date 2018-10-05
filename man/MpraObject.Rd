@@ -3,6 +3,8 @@
 \docType{methods}
 \name{MpraObject}
 \alias{MpraObject}
+\alias{MpraObject,matrix-method}
+\alias{MpraObject,SummarizedExperiment-method}
 \alias{dnaCounts}
 \alias{dnaCounts,MpraObject-method}
 \alias{rnaCounts}
@@ -23,6 +25,14 @@
 \usage{
 MpraObject(dnaCounts, rnaCounts, dnaAnnot = NULL, rnaAnnot = NULL,
   colAnnot = NULL, controls = NA_integer_, BPPARAM = NULL)
+
+\S4method{MpraObject}{matrix}(dnaCounts, rnaCounts, dnaAnnot = NULL,
+  rnaAnnot = NULL, colAnnot = NULL, controls = NA_integer_,
+  BPPARAM = NULL)
+
+\S4method{MpraObject}{SummarizedExperiment}(dnaCounts, rnaCounts,
+  dnaAnnot = NULL, rnaAnnot = NULL, colAnnot = NULL,
+  controls = NA_integer_, BPPARAM = NULL)
 
 dnaCounts(obj)
 
@@ -57,9 +67,15 @@ model(obj)
 \S4method{model}{MpraObject}(obj)
 }
 \arguments{
-\item{dnaCounts}{the DNA count matrix}
+\item{dnaCounts}{the DNA count matrix, or a SummarizedExperiment object
+containing the DNA Counts and column annotations for the DNA data. If the
+input is a SummarizedExperiment object, the dnaAnnot (or colAnnot) arguments
+will be ignored}
 
-\item{rnaCounts}{the RNA count matrix}
+\item{rnaCounts}{the RNA count matrix, or a SummarizedExperiment object
+containing the RNA Counts and column annotations for the RNA data. If the
+input is a SummarizedExperiment object, the rnaAnnot (or colAnnot) arguments
+will be ignored}
 
 \item{dnaAnnot}{data.frame with the DNA column (sample) annotations}
 
@@ -125,4 +141,5 @@ model <- model(obj)
 obj <- estimateDepthFactors(obj, lib.factor=c("batch", "condition"))
 dnaDepth <- dnaDepth(obj)
 rnaDepth <- rnaDepth(obj)
+
 }

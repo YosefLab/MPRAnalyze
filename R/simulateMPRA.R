@@ -83,7 +83,7 @@ simulateMPRA <- function(tr = rep(2, 100),
     } else if (nbc > 1) {
         desmat <- model.matrix(~ barcode, annot)
     } else {
-        stop("Specified design is too restridcted")
+        stop("Specified design is too restricted")
     }
     
     ## get true counts by multiplying random coefficients with design matrix

@@ -16,7 +16,8 @@ Imports:
     BiocParallel,
     methods,
     progress,
-    stats
+    stats,
+    SummarizedExperiment
 biocViews: 
 	Software,
     StatisticalMethod,

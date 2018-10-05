@@ -110,9 +110,16 @@ setClass("MpraObject", validity = validateMpraObject,
 #' 
 #' @export
 #' @import BiocParallel
+#' @import SummarizedExperiment
 #' 
-#' @param dnaCounts the DNA count matrix
-#' @param rnaCounts the RNA count matrix
+#' @param dnaCounts the DNA count matrix, or a SummarizedExperiment object
+#' containing the DNA Counts and column annotations for the DNA data. If the
+#' input is a SummarizedExperiment object, the dnaAnnot (or colAnnot) arguments
+#' will be ignored
+#' @param rnaCounts the RNA count matrix, or a SummarizedExperiment object
+#' containing the RNA Counts and column annotations for the RNA data. If the
+#' input is a SummarizedExperiment object, the rnaAnnot (or colAnnot) arguments
+#' will be ignored
 #' @param dnaAnnot data.frame with the DNA column (sample) annotations
 #' @param rnaAnnot data.frame with the RNA column (sample) annotations
 #' @param colAnnot if annotations for DNA and RNA are identical, they can be set
@@ -166,41 +173,73 @@ setClass("MpraObject", validity = validateMpraObject,
 #' obj <- estimateDepthFactors(obj, lib.factor=c("batch", "condition"))
 #' dnaDepth <- dnaDepth(obj)
 #' rnaDepth <- rnaDepth(obj)
-MpraObject <- function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
+#' 
+#' @rdname MpraObject
+setGeneric("MpraObject", 
+           function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
+                    colAnnot=NULL, controls=NA_integer_,
+                    BPPARAM=NULL) standardGeneric("MpraObject"))
+
+#' @rdname MpraObject
+#' @export
+setMethod("MpraObject", signature = signature(dnaCounts = "matrix"),
+          function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
                        colAnnot=NULL, controls=NA_integer_,
                        BPPARAM=NULL) {
-    if(is.null(BPPARAM)) {
-        BPPARAM <- SerialParam()
-    }
-    
-    if(is.logical(controls)) {
-        controls <- which(controls)
-    } else if (is.character(controls)) {
-        controls <- which(rownames(dnaCounts) %in% controls)
-    }
-    if((is.null(dnaAnnot) | is.null(rnaAnnot)) & !is.null(colAnnot)) {
-        rnaAnnot <- dnaAnnot <- colAnnot
-    }
-    
-    ## remove invalid enhancers: either all dna or all rna counts are 0.
-    invalid <- union(which(apply(dnaCounts, 1, function(x) all(x==0))),
-                     which(apply(rnaCounts, 1, function(x) all(x==0))))
-    if(length(invalid) > 0) {
-        warning(length(invalid), " enhancers were removed from the analysis")
-        if(length(controls) > 1) {
-            ctrl <- rep(FALSE, NROW(dnaCounts))
-            ctrl[controls] <- TRUE
-            controls <- which(ctrl[-invalid])
-        }
-        dnaCounts <- dnaCounts[-invalid,]
-        rnaCounts <- rnaCounts[-invalid,]
-    }
-    
-    obj <- new("MpraObject", dnaCounts=dnaCounts, rnaCounts=rnaCounts,
-               dnaAnnot=dnaAnnot, rnaAnnot=rnaAnnot, controls=controls, 
-               BPPARAM=BPPARAM)
-    return(obj)
-}
+              if(is.null(BPPARAM)) {
+                  BPPARAM <- SerialParam()
+              }
+              
+              if(is.logical(controls)) {
+                  controls <- which(controls)
+              } else if (is.character(controls)) {
+                  controls <- which(rownames(dnaCounts) %in% controls)
+              }
+              if((is.null(dnaAnnot) | is.null(rnaAnnot)) & !is.null(colAnnot)) {
+                  rnaAnnot <- dnaAnnot <- colAnnot
+              }
+              
+              ## remove invalid enhancers: all dna or all rna counts are 0.
+              invalid <- union(which(apply(dnaCounts, 1, 
+                                           function(x) all(x==0))),
+                               which(apply(rnaCounts, 1, 
+                                           function(x) all(x==0))))
+              if(length(invalid) > 0) {
+                  warning(length(invalid), 
+                          " enhancers were removed from the analysis")
+                  if(length(controls) > 1) {
+                      ctrl <- rep(FALSE, NROW(dnaCounts))
+                      ctrl[controls] <- TRUE
+                      controls <- which(ctrl[-invalid])
+                  }
+                  dnaCounts <- dnaCounts[-invalid,]
+                  rnaCounts <- rnaCounts[-invalid,]
+              }
+              
+              obj <- new("MpraObject", dnaCounts=dnaCounts, 
+                         rnaCounts=rnaCounts, dnaAnnot=dnaAnnot, 
+                         rnaAnnot=rnaAnnot, controls=controls, 
+                         BPPARAM=BPPARAM)
+              return(obj)
+              
+})
+
+#' @rdname MpraObject
+#' @export
+setMethod("MpraObject", 
+          signature = signature(dnaCounts = "SummarizedExperiment"),
+          function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
+                   colAnnot=NULL, controls=NA_integer_,
+                   BPPARAM=NULL) {
+              return(MpraObject(dnaCounts = assay(dnaCounts),
+                                rnaCounts = assay(rnaCounts),
+                                dnaAnnot = colData(dnaCounts),
+                                rnaAnnot = colData(rnaCounts),
+                                controls = controls,
+                                BPPARAM = BPPARAM))
+          })
+
+
 
 #' @rdname MpraObject
 setGeneric("dnaCounts", function(obj) standardGeneric("dnaCounts"))
