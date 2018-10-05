@@ -233,8 +233,8 @@ setMethod("MpraObject",
                    BPPARAM=NULL) {
               return(MpraObject(dnaCounts = assay(dnaCounts),
                                 rnaCounts = assay(rnaCounts),
-                                dnaAnnot = colData(dnaCounts),
-                                rnaAnnot = colData(rnaCounts),
+                                dnaAnnot = as.data.frame(colData(dnaCounts)),
+                                rnaAnnot = as.data.frame(colData(rnaCounts)),
                                 controls = controls,
                                 BPPARAM = BPPARAM))
           })
