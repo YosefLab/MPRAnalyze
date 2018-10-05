@@ -110,7 +110,7 @@ setClass("MpraObject", validity = validateMpraObject,
 #' 
 #' @export
 #' @import BiocParallel
-#' @import SummarizedExperiment
+#' @importFrom SummarizedExperiment SummarizedExperiment assay colData
 #' 
 #' @param dnaCounts the DNA count matrix, or a SummarizedExperiment object
 #' containing the DNA Counts and column annotations for the DNA data. If the
@@ -163,6 +163,13 @@ setClass("MpraObject", validity = validateMpraObject,
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot,
 #'                   controls = as.integer(c(1,2,4)))
+#' ## alternatively, initialize the object with SummarizedExperiment objects:
+#' \dontrun{
+#' se.DNA <- SummarizedExperiment(list(data$obs.dna), colData=data$annot)
+#' se.RNA <- SummarizedExperiment(list(data$obs.rna), colData=data$annot)
+#' obj <- MpraObject(dnaCounts = se.DNA, rnaCounts = rna.se, 
+#'                   controls = as.integer(c(1,2,4)))
+#' }
 #' dnaCounts <- dnaCounts(obj)
 #' rnaCounts <- rnaCounts(obj)
 #' dnaAnnot <- dnaAnnot(obj)

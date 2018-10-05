@@ -131,6 +131,13 @@ obj <- MpraObject(dnaCounts = data$obs.dna,
                   rnaCounts = data$obs.rna, 
                   colAnnot = data$annot,
                   controls = as.integer(c(1,2,4)))
+## alternatively, initialize the object with SummarizedExperiment objects:
+\dontrun{
+se.DNA <- SummarizedExperiment(list(data$obs.dna), colData=data$annot)
+se.RNA <- SummarizedExperiment(list(data$obs.rna), colData=data$annot)
+obj <- MpraObject(dnaCounts = se.DNA, rnaCounts = rna.se, 
+                  controls = as.integer(c(1,2,4)))
+}
 dnaCounts <- dnaCounts(obj)
 rnaCounts <- rnaCounts(obj)
 dnaAnnot <- dnaAnnot(obj)
