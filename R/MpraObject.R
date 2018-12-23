@@ -86,7 +86,7 @@ setClass("MpraObject", validity = validateMpraObject,
              rnaCounts = "matrix",
              dnaAnnot = "data.frame",
              rnaAnnot = "data.frame",
-             controls = "integerORNULL", 
+             controls = "logical", 
              controls.forfit = "integerORNULL", 
              
              lib.factor = "factor",
@@ -197,10 +197,12 @@ setMethod("MpraObject", signature = signature(dnaCounts = "matrix"),
                   BPPARAM <- SerialParam()
               }
               
-              if(is.logical(controls)) {
-                  controls <- which(controls)
+              if(is.numeric(controls)) {
+                  c <- rep(FALSE, NROW(dnaCounts))
+                  c[controls] <- TRUE
+                  controls <- c
               } else if (is.character(controls)) {
-                  controls <- which(rownames(dnaCounts) %in% controls)
+                  controls <- rownames(dnaCounts) %in% controls
               }
               if((is.null(dnaAnnot) | is.null(rnaAnnot)) & !is.null(colAnnot)) {
                   rnaAnnot <- dnaAnnot <- colAnnot
@@ -215,9 +217,7 @@ setMethod("MpraObject", signature = signature(dnaCounts = "matrix"),
                   warning(length(invalid), 
                           " enhancers were removed from the analysis")
                   if(length(controls) > 1) {
-                      ctrl <- rep(FALSE, NROW(dnaCounts))
-                      ctrl[controls] <- TRUE
-                      controls <- which(ctrl[-invalid])
+                      controls <- controls[-invalid]
                   }
                   dnaCounts <- dnaCounts[-invalid,]
                   rnaCounts <- rnaCounts[-invalid,]
@@ -237,6 +237,7 @@ setMethod("MpraObject",
           signature = signature(dnaCounts = "SummarizedExperiment"),
           function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
                    colAnnot=NULL, controls=NA_integer_,
+                   colAnnot=NULL, controls=NA, rowAnnot=NULL,
                    BPPARAM=NULL) {
               return(MpraObject(dnaCounts = assay(dnaCounts),
                                 rnaCounts = assay(rnaCounts),

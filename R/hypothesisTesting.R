@@ -197,8 +197,7 @@ testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
         res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
         res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
     } else {
-        ctrl.idx <- rep(FALSE, NROW(dnaCounts(obj)))
-        ctrl.idx[controls(obj)] <- TRUE
+        ctrl.idx <- controls(obj)
         if (!is.null(subset)) {
             ctrl.idx <- ctrl.idx[subset]
         }
