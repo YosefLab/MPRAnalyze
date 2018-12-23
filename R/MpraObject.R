@@ -2,6 +2,7 @@
 setClassUnion('listORNULL', members=c('list', 'NULL'))
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
 setClassUnion('integerORNULL', members=c('integer', 'NULL'))
+setClassUnion('dfORNULL', members=c('data.frame', 'NULL'))
 setClassUnion('Design', members = c('matrix', 'formula', 'NULL'))
 
 setClass("Designs", slots = c(
@@ -61,6 +62,7 @@ validateMpraObject <- function(object) {
 #' (info on condition, batch, barcode, etc)
 #' @slot rnaAnnot RNA column annotations 
 #' (info on condition, batch, barcode, etc)
+#' @slot rowAnnot annotations for the features (candidate enhancers)
 #' @slot controls indices of negative controls
 #' @slot controls.forfit indices of negative controls used for fitting in `full`
 #' mode
@@ -86,6 +88,7 @@ setClass("MpraObject", validity = validateMpraObject,
              rnaCounts = "matrix",
              dnaAnnot = "data.frame",
              rnaAnnot = "data.frame",
+             rowAnnot = "dfORNULL",
              controls = "logical", 
              controls.forfit = "integerORNULL", 
              
@@ -110,7 +113,7 @@ setClass("MpraObject", validity = validateMpraObject,
 #' 
 #' @export
 #' @import BiocParallel
-#' @importFrom SummarizedExperiment SummarizedExperiment assay colData
+#' @importFrom SummarizedExperiment SummarizedExperiment assay colData rowData
 #' 
 #' @param dnaCounts the DNA count matrix, or a SummarizedExperiment object
 #' containing the DNA Counts and column annotations for the DNA data. If the
@@ -129,6 +132,8 @@ setClass("MpraObject", validity = validateMpraObject,
 #' purposes, and to correct systemic bias in comparative analyses. Can be a 
 #' character vectors (corresponding to rownames in the data matrices), logical
 #' or numeric indices.
+#' @param rowAnnot a data.frame with the row (candidate enhancer) annotations.
+#' The names must match the row names in the DNA and RNA count matrices.
 #' @param BPPARAM a parallelization backend using the BiocParallel package, see
 #' more details [here](http://bioconductor.org/packages/release/bioc/html/BiocParallel.html)
 #' 
@@ -143,6 +148,7 @@ setClass("MpraObject", validity = validateMpraObject,
 #' \item{rnaCounts}{the RNA count matrix}
 #' \item{dnaAnnot}{data.frame with the DNA column (sample) annotations}
 #' \item{ranAnnot}{data.frame with the RNA column (sample) annotations}
+#' \item{rowAnnot}{data.frame with the row (candidate enhancers) annotations}
 #' \item{model}{the distributional model used. the Gamma-Poisson convolutional 
 #' model is used by default. see \code{\link{setModel}}}
 #' \item{dnaDepth}{The library size correction factors computed for the DNA
@@ -175,6 +181,7 @@ setClass("MpraObject", validity = validateMpraObject,
 #' dnaAnnot <- dnaAnnot(obj)
 #' rnaAnnot <- rnaAnnot(obj)
 #' controls <- controls(obj)
+#' rowAnnot <- rowAnnot(obj) 
 #' model <- model(obj)
 #' 
 #' obj <- estimateDepthFactors(obj, lib.factor=c("batch", "condition"))
@@ -184,14 +191,14 @@ setClass("MpraObject", validity = validateMpraObject,
 #' @rdname MpraObject
 setGeneric("MpraObject", 
            function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
-                    colAnnot=NULL, controls=NA_integer_,
+                    colAnnot=NULL, controls=NA_integer_, rowAnnot=NULL, 
                     BPPARAM=NULL) standardGeneric("MpraObject"))
 
 #' @rdname MpraObject
 #' @export
 setMethod("MpraObject", signature = signature(dnaCounts = "matrix"),
           function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
-                       colAnnot=NULL, controls=NA_integer_,
+                       colAnnot=NULL, controls=NA_integer_, rowAnnot=NULL,
                        BPPARAM=NULL) {
               if(is.null(BPPARAM)) {
                   BPPARAM <- SerialParam()
@@ -226,7 +233,7 @@ setMethod("MpraObject", signature = signature(dnaCounts = "matrix"),
               obj <- new("MpraObject", dnaCounts=dnaCounts, 
                          rnaCounts=rnaCounts, dnaAnnot=dnaAnnot, 
                          rnaAnnot=rnaAnnot, controls=controls, 
-                         BPPARAM=BPPARAM)
+                         rowAnnot=rowAnnot, BPPARAM=BPPARAM)
               return(obj)
               
 })
@@ -236,7 +243,6 @@ setMethod("MpraObject", signature = signature(dnaCounts = "matrix"),
 setMethod("MpraObject", 
           signature = signature(dnaCounts = "SummarizedExperiment"),
           function(dnaCounts, rnaCounts, dnaAnnot=NULL, rnaAnnot=NULL, 
-                   colAnnot=NULL, controls=NA_integer_,
                    colAnnot=NULL, controls=NA, rowAnnot=NULL,
                    BPPARAM=NULL) {
               return(MpraObject(dnaCounts = assay(dnaCounts),
@@ -244,10 +250,13 @@ setMethod("MpraObject",
                                 dnaAnnot = as.data.frame(colData(dnaCounts)),
                                 rnaAnnot = as.data.frame(colData(rnaCounts)),
                                 controls = controls,
+                                rowAnnot = as.data.frame(rowData(dnaCounts)),
                                 BPPARAM = BPPARAM))
           })
 
 
+
+## Getters
 
 #' @rdname MpraObject
 setGeneric("dnaCounts", function(obj) standardGeneric("dnaCounts"))
@@ -276,6 +285,13 @@ setGeneric("rnaAnnot", function(obj) standardGeneric("rnaAnnot"))
 #' @rdname MpraObject
 #' @export
 setMethod("rnaAnnot", signature(obj="MpraObject"), function(obj) obj@rnaAnnot)
+
+#' @rdname MpraObject
+setGeneric("rowAnnot", function(obj) standardGeneric("rowAnnot"))
+
+#' @rdname MpraObject
+#' @export
+setMethod("rowAnnot", signature(obj="MpraObject"), function(obj) obj@rowAnnot)
 
 #' @rdname MpraObject
 setGeneric("controls", function(obj) standardGeneric("controls"))

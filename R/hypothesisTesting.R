@@ -181,7 +181,7 @@ testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
     
     res <- data.frame(statistic=statistic)
     
-    if(all(is.na(controls(obj))) | !useControls) {
+    if(!any(controls(obj)) | !useControls) {
         ## No controls, use bottom of the distribution to establish the baseline
         
         #estimate mode of distribution

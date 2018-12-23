@@ -58,7 +58,7 @@ analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
                                         annotations=rnaAnnot(obj))
 
     ## if controls are to be used and fullModel not: fit the control model
-    if(correctControls & all(!is.na(controls(obj)))) {
+    if(correctControls & any(controls(obj))) {
         message("Fitting controls-based background model...")
         obj@modelPreFits.dna.ctrl <- reformatModels(fit.dnarna.onlyctrl.iter(
             model=model(obj),

@@ -20,10 +20,13 @@ library depth is set.}
 library factors, this function should be called twice: once with "dna" and
 once with "rna"}
 
-\item{depth.estimator}{a character indicating which depth estimation to use.
-Currently supported values are "uq" for upper quantile (default) and "rle"
-for RLE (uses geometric mean, and is therefore not recommended if libraries
-have 0 counts)}
+\item{depth.estimator}{a character indicating which depth estimation to use,
+or a function to perform the estimation. Currently supported values are "uq" 
+for upper quantile (default), "rle" for RLE (uses geometric mean, and is 
+therefore not recommended if libraries have 0 counts), or "totsum" for total 
+sum.
+For a function input: function should take a numeric vector and return a 
+single numeric, and preferably handle NA values. See examples.}
 }
 \value{
 the MpraObject with estimated values for sequencing depth factors
@@ -43,4 +46,8 @@ obj <- MpraObject(dnaCounts = data$obs.dna,
                   rnaCounts = data$obs.rna, 
                   colAnnot = data$annot)
 obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+## Upper quantile, using a higher quantile than 0.75:
+obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both",
+                            depth.estimator = function(x) quantile(x, .95, 
+                                 na.rm=TRUE))
 }

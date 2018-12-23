@@ -13,6 +13,8 @@
 \alias{dnaAnnot,MpraObject-method}
 \alias{rnaAnnot}
 \alias{rnaAnnot,MpraObject-method}
+\alias{rowAnnot}
+\alias{rowAnnot,MpraObject-method}
 \alias{controls}
 \alias{controls,MpraObject-method}
 \alias{dnaDepth}
@@ -24,15 +26,16 @@
 \title{MpraObject}
 \usage{
 MpraObject(dnaCounts, rnaCounts, dnaAnnot = NULL, rnaAnnot = NULL,
-  colAnnot = NULL, controls = NA_integer_, BPPARAM = NULL)
+  colAnnot = NULL, controls = NA_integer_, rowAnnot = NULL,
+  BPPARAM = NULL)
 
 \S4method{MpraObject}{matrix}(dnaCounts, rnaCounts, dnaAnnot = NULL,
   rnaAnnot = NULL, colAnnot = NULL, controls = NA_integer_,
-  BPPARAM = NULL)
+  rowAnnot = NULL, BPPARAM = NULL)
 
 \S4method{MpraObject}{SummarizedExperiment}(dnaCounts, rnaCounts,
-  dnaAnnot = NULL, rnaAnnot = NULL, colAnnot = NULL,
-  controls = NA_integer_, BPPARAM = NULL)
+  dnaAnnot = NULL, rnaAnnot = NULL, colAnnot = NULL, controls = NA,
+  rowAnnot = NULL, BPPARAM = NULL)
 
 dnaCounts(obj)
 
@@ -49,6 +52,10 @@ dnaAnnot(obj)
 rnaAnnot(obj)
 
 \S4method{rnaAnnot}{MpraObject}(obj)
+
+rowAnnot(obj)
+
+\S4method{rowAnnot}{MpraObject}(obj)
 
 controls(obj)
 
@@ -90,6 +97,9 @@ purposes, and to correct systemic bias in comparative analyses. Can be a
 character vectors (corresponding to rownames in the data matrices), logical
 or numeric indices.}
 
+\item{rowAnnot}{a data.frame with the row (candidate enhancer) annotations.
+The names must match the row names in the DNA and RNA count matrices.}
+
 \item{BPPARAM}{a parallelization backend using the BiocParallel package, see
 more details [here](http://bioconductor.org/packages/release/bioc/html/BiocParallel.html)}
 
@@ -110,6 +120,7 @@ MpraObject properties can be accessed using accessor functions
 \item{rnaCounts}{the RNA count matrix}
 \item{dnaAnnot}{data.frame with the DNA column (sample) annotations}
 \item{ranAnnot}{data.frame with the RNA column (sample) annotations}
+\item{rowAnnot}{data.frame with the row (candidate enhancers) annotations}
 \item{model}{the distributional model used. the Gamma-Poisson convolutional 
 model is used by default. see \code{\link{setModel}}}
 \item{dnaDepth}{The library size correction factors computed for the DNA
@@ -143,6 +154,7 @@ rnaCounts <- rnaCounts(obj)
 dnaAnnot <- dnaAnnot(obj)
 rnaAnnot <- rnaAnnot(obj)
 controls <- controls(obj)
+rowAnnot <- rowAnnot(obj) 
 model <- model(obj)
 
 obj <- estimateDepthFactors(obj, lib.factor=c("batch", "condition"))
