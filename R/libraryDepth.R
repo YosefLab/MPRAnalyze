@@ -1,9 +1,9 @@
 #' easy access container for depth estimation functions
 #' @noRd
 DEPTH_EST_FUNCTIONS = list(
-    uq = function(x) quantile(c(unlist((x))), .75, na.rm=TRUE),
-    rle = function(x) exp(mean(log(c(unlist((x)))), na.rm=TRUE)),
-    totsum = function(x) sum(c(unlist(x)), na.rm = TRUE)
+    uq = function(x) quantile(x, .75, na.rm=TRUE),
+    rle = function(x) exp(mean(log(x), na.rm=TRUE)),
+    totsum = function(x) sum((x), na.rm = TRUE)
 )
 
 
@@ -23,10 +23,13 @@ DEPTH_EST_FUNCTIONS = list(
 #' factor or the name of a column in the object's colAnnot. If not provided, the
 #' data is assumed to have been generated from a single library, and constant
 #' library depth is set.
-#' @param depth.estimator a character indicating which depth estimation to use.
-#' Currently supported values are "uq" for upper quantile (default) and "rle"
-#' for RLE (uses geometric mean, and is therefore not recommended if libraries
-#' have 0 counts)
+#' @param depth.estimator a character indicating which depth estimation to use,
+#' or a function to perform the estimation. Currently supported values are "uq" 
+#' for upper quantile (default), "rle" for RLE (uses geometric mean, and is 
+#' therefore not recommended if libraries have 0 counts), or "totsum" for total 
+#' sum.
+#' For a function input: function should take a numeric vector and return a 
+#' single numeric, and preferably handle NA values. See examples.
 #'
 #' @return the MpraObject with estimated values for sequencing depth factors
 #' 
@@ -38,6 +41,10 @@ DEPTH_EST_FUNCTIONS = list(
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
+#' ## Upper quantile, using a higher quantile than 0.75:
+#' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both",
+#'                             depth.estimator = function(x) quantile(x, .95, 
+#'                                  na.rm=TRUE))
 estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both", 
                                 depth.estimator="uq") {
     
@@ -45,16 +52,24 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both",
         stop("which.lib must be 'dna', 'rna' or 'both' (default)")
     }
     if (which.lib %in% c("dna", "both")) {
-        obj@dnaDepth <- estimateFactors(counts=obj@dnaCounts, 
-                                        annotations=obj@dnaAnnot, 
-                                        lib.factor=lib.factor, 
-                                        depth.estimator=depth.estimator)
+        dnaDepth <- estimateFactors(counts=obj@dnaCounts, 
+                                    annotations=obj@dnaAnnot, 
+                                    lib.factor=lib.factor, 
+                                    depth.estimator=depth.estimator)
+        if (any(dnaDepth == 0)) {
+            warning("Some DNA library size factors are 0.")
+        }
+        obj@dnaDepth <- dnaDepth
     }
     if (which.lib %in% c("rna", "both")) {
-        obj@rnaDepth <- estimateFactors(counts=obj@rnaCounts, 
-                                        annotations=obj@rnaAnnot, 
-                                        lib.factor=lib.factor, 
-                                        depth.estimator=depth.estimator)
+        rnaDepth <- estimateFactors(counts=obj@rnaCounts, 
+                                    annotations=obj@rnaAnnot, 
+                                    lib.factor=lib.factor, 
+                                    depth.estimator=depth.estimator)
+        if (any(rnaDepth == 0)) {
+            warning("Some RNA library size factors are 0.")
+        }
+        obj@rnaDepth <- rnaDepth
     }
     return(obj)
 }
@@ -85,9 +100,13 @@ estimateFactors <- function(counts, annotations, lib.factor=NULL,
             lib.factor <- do.call(paste0, annotations[,lib.factor])
         }
     }
-    est <- DEPTH_EST_FUNCTIONS[[depth.estimator]]
-    if(is.null(est)) {
-        stop(depth.estimator, " depth estimation is not supported")
+    if(is.function(depth.estimator)) {
+        est <- depth.estimator
+    } else if (is.character(depth.estimator)) {
+        est <- DEPTH_EST_FUNCTIONS[[depth.estimator]]
+        if(is.null(est)) {
+            stop(depth.estimator, " depth estimation is not supported")
+        }
     }
     
     # obj@lib.factor <- as.factor(lib.factor)
@@ -107,7 +126,9 @@ estimateFactors <- function(counts, annotations, lib.factor=NULL,
 compute.depth <- function(data, lib.factor, func) {
     lib.factor <- as.factor(lib.factor)
 
-    depth <- by(data = t(data), INDICES = lib.factor, FUN = func)
+    depth <- by(data = t(data), INDICES = lib.factor, FUN = function(x) {
+        func(c(unlist(x)))
+    })
     if(depth[1] > 0) {
         depth <- depth / depth[1]
     }
