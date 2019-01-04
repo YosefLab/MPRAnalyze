@@ -1,7 +1,7 @@
 Package: MPRAnalyze
 Type: Package
 Title: Statistical Analysis of MPRA data
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: c(
 	person('Tal', 'Ashuach', NULL, 'tal_ashuach@berkeley.edu', c('aut', 'cre')),
 	person('David S', 'Fischer', NULL, 'david.fischer@helmholtz-muenchen.de', 'aut'),
@@ -18,7 +18,7 @@ Imports:
     progress,
     stats,
     SummarizedExperiment
-biocViews: 
+biocViews: ImmunoOncology, 
 	Software,
     StatisticalMethod,
     Sequencing,
