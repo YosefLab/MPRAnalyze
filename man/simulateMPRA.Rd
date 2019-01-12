@@ -4,8 +4,7 @@
 \alias{simulateMPRA}
 \title{Simulate an MPRA dataset}
 \usage{
-simulateMPRA(tr = rep(2, 100), da = c(rep(0, ceiling(length(tr)/2)),
-  rep(0.5, floor(length(tr)/2))), dna.noise.sd = 0.2,
+simulateMPRA(tr = rep(2, 100), da = NULL, dna.noise.sd = 0.2,
   rna.noise.sd = 0.3, dna.inter = 5, dna.inter.sd = 0.5, nbc = 100,
   coef.bc.sd = 0.5, nbatch = 3, coef.batch.sd = 0.5)
 }
@@ -14,11 +13,9 @@ simulateMPRA(tr = rep(2, 100), da = c(rep(0, ceiling(length(tr)/2)),
 determines the number of enhancers included in the dataset Default is 100
 enhancers of identical transcription rate of 2.}
 
-\item{da}{a vector of the differential activity signal. Must be the same 
-length as tr. if NULL (default) only one condition is simulated, with no 
-differential activity. The values provided are used as the logFold Change
-between the conditions, treating the tr vector as the reference condition.
-For non-differentially active enhancers, this value should be 0.}
+\item{da}{a vector determinig differential activity. Values are assumed to be
+in log scale, and will be used in the model as log Fold-Change values. If 
+NULL (default) a single condition is simulated.}
 
 \item{dna.noise.sd}{level of noise to add to the DNA library}
 
@@ -63,10 +60,10 @@ of expected plasmids per barcode, the true transcription ratio, the size
 of the batch and barcode effects.
 }
 \examples{
-
-data <- simulateMPRA()
 # single condition
-data <- simulateMPRA(da=NULL)
+data <- simulateMPRA()
+# two conditions
+data <- simulateMPRA(da=c(rep(-0.5, 50), rep(0.5, 50)))
 # more observed noise
 data <- simulateMPRA(dna.noise.sd = 0.75, rna.noise.sd = 0.75)
 # gradually increasing dataset

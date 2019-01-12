@@ -2,11 +2,9 @@
 #' @param tr a vector of the true transcription rates. The length of the vector 
 #' determines the number of enhancers included in the dataset Default is 100
 #' enhancers of identical transcription rate of 2.
-#' @param da a vector of the differential activity signal. Must be the same 
-#' length as tr. if NULL (default) only one condition is simulated, with no 
-#' differential activity. The values provided are used as the logFold Change
-#' between the conditions, treating the tr vector as the reference condition.
-#' For non-differentially active enhancers, this value should be 0.
+#' @param da a vector determinig differential activity. Values are assumed to be
+#' in log scale, and will be used in the model as log Fold-Change values. If 
+#' NULL (default) a single condition is simulated.
 #' @param dna.noise.sd level of noise to add to the DNA library
 #' @param rna.noise.sd level of noise to add to the RNA library
 #' @param dna.inter the baseline DNA levels (intercept term), controlling the 
@@ -40,23 +38,23 @@
 #' @export
 #' 
 #' @examples
-#' 
-#' data <- simulateMPRA()
 #' # single condition
-#' data <- simulateMPRA(da=NULL)
+#' data <- simulateMPRA()
+#' # two conditions
+#' data <- simulateMPRA(da=c(rep(-0.5, 50), rep(0.5, 50)))
 #' # more observed noise
 #' data <- simulateMPRA(dna.noise.sd = 0.75, rna.noise.sd = 0.75)
 #' # gradually increasing dataset
 #' data <- simulateMPRA(tr = seq(2,3,0.01), da=NULL)
 simulateMPRA <- function(tr = rep(2, 100), 
-                         da = c(rep(0, ceiling(length(tr) / 2)), 
-                                rep(0.5, floor(length(tr) / 2))),
+                         da = NULL,
                          dna.noise.sd = 0.2, rna.noise.sd = 0.3,
                          dna.inter = 5, dna.inter.sd = 0.5,
                          nbc = 100, coef.bc.sd = 0.5,
                          nbatch = 3, coef.batch.sd = 0.5) {
     nenhancer = length(tr)
     stopifnot(is.null(da) | length(tr) == length(da))
+    stopifnot(is.null(da) | nbc > 1 | nbatch > 1)
     
     ## generate coefficient matrix for DNA
     coef.dna.bc <- matrix(rnorm(nenhancer * (nbc - 1), 
@@ -72,56 +70,40 @@ simulateMPRA <- function(tr = rep(2, 100),
     
     coef.dna.mat <- cbind(coef.dna.intercept, coef.dna.batch, coef.dna.bc)
     
-    ##  create corresponding annotation data.frame and design matrix
-    annot <- expand.grid(barcode = factor(seq_len(nbc)),
-                         batch = factor(seq_len(nbatch)))
-        
-    if(nbatch > 1 & nbc > 1) {
-        desmat <- model.matrix(~ batch + barcode, annot)
-    } else if (nbatch > 1) {
-        desmat <- model.matrix(~ batch, annot)
-    } else if (nbc > 1) {
-        desmat <- model.matrix(~ barcode, annot)
+    if (is.null(da)) {
+        cond.fact <- factor("reference")
     } else {
-        stop("Specified design is too restricted")
+        cond.fact <- factor(c("reference", "contrast"), 
+                            levels = c("reference", "contrast"))
     }
+    ##  create corresponding annotation data.frame 
+    annot <- expand.grid(barcode = factor(seq_len(nbc)),
+                         batch = factor(seq_len(nbatch)),
+                         condition = factor(cond.fact))
     
+    # create the design matrix for the DNA model
+    form <- "~ 1"
+    if (nbatch > 1) {form <- c(form, "batch")}
+    if (nbc > 1) {form <- c(form, "barcode")}
+    
+    desmat.dna <- model.matrix(as.formula(paste0(form, collapse = "+")), annot)
+
     ## get true counts by multiplying random coefficients with design matrix
-    true.dna.log <-  coef.dna.mat %*% t(desmat)
+    true.dna.log <-  coef.dna.mat %*% t(desmat.dna)
     ## add noise to dna observations
     obs.dna.log <- matrix(rnorm(n = prod(dim(true.dna.log)), 
                                 mean = true.dna.log, sd = dna.noise.sd), 
                           nrow = NROW(true.dna.log))
-    ## if differential activity is needed, use same coefficients to generate
-    ## another set of observations (different noise)
-    if (!is.null(da)) {
-        obs.dna.log.diff <- matrix(rnorm(n = prod(dim(true.dna.log)), 
-                                        mean = true.dna.log, sd = dna.noise.sd),
-                              nrow = NROW(true.dna.log))
-        obs.dna.log <- cbind(obs.dna.log, obs.dna.log.diff)
-        
-        annot.diff <- annot
-        annot$condition <- "reference"
-        annot.diff$condition <- "contrast"
-        annot <- rbind(annot, annot.diff)
-        annot$condition <- factor(annot$condition, 
-                                  levels=c("reference", "contrast"))
-    }
+   
+    ## create RNA model components
+    coef.rna.mat <- cbind(tr, da)
     
-    # get the true RNA by multiplying the true DNA by the transcription rate
-    true.rna.log <- true.dna.log + 
-        matrix(rep(log(tr), NCOL(true.dna.log)), ncol=NCOL(true.dna.log))
+    form <- if (is.null(da)) ~ 1 else ~ condition
+    desmat.rna <- model.matrix(form, annot)
+    ## get true counts by adding the log-alpha to the dna counts
+    true.rna.log <- true.dna.log + (coef.rna.mat %*% t(desmat.rna))
     
-    ## if differential activity, add differential observations
-    if (!is.null(da)) {
-        true.rna.log.diff <- true.dna.log + 
-            matrix(rep(log(tr) + da, 
-                       NCOL(true.dna.log)), 
-                   ncol=NCOL(true.dna.log))
-        true.rna.log <- cbind(true.rna.log, true.rna.log.diff)
-        true.dna.log <- cbind(true.dna.log, true.dna.log)
-    }
-    
+    ## add noise to rna observations
     obs.rna.log <- matrix(rnorm(n = prod(dim(true.rna.log)),
                                 mean = true.rna.log, sd = rna.noise.sd), 
                           nrow = NROW(true.rna.log))

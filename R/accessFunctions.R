@@ -18,7 +18,7 @@
 #' @export
 #' 
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,5), da=NULL, nbatch=2, nbc=15)
+#' data <- simulateMPRA(tr = rep(2,5), nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
@@ -88,7 +88,7 @@ getFits_DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #' 
 #' @export
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,5), da=NULL, nbatch=2, nbc=15)
+#' data <- simulateMPRA(tr = rep(2,5), nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
@@ -158,7 +158,7 @@ getFits_RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #' variance  for `ln.nb` and `ln.ln`)
 #' 
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,5), da=NULL, nbatch=2, nbc=15)
+#' data <- simulateMPRA(tr = rep(2,5), nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
@@ -236,7 +236,7 @@ getModelParameters_RNA <- function(obj, features=NULL, full=TRUE) {
 #' @export
 #' 
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,5), da=NULL, nbatch=2, nbc=15)
+#' data <- simulateMPRA(tr = rep(2,5), nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 
 #'                   colAnnot = data$annot)
@@ -321,7 +321,7 @@ getDistrParam_RNA <- function(obj, enhancer=NULL, full=TRUE){
 #' @return the estimate for transcription rate as fitted by the model
 #' 
 #' @examples
-#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(2,5), rep(2.5,5)), 
+#' data <- simulateMPRA(tr = rep(2,10), da=c(rep(0,5), rep(1,5)), 
 #'                      nbatch=2, nbc=15)
 #' obj <- MpraObject(dnaCounts = data$obs.dna, 
 #'                   rnaCounts = data$obs.rna, 

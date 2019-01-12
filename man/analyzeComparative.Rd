@@ -35,7 +35,7 @@ the MpraObject with fitted models for the input enhancers
 Run a comparative analysis between conditions
 }
 \examples{
-data <- simulateMPRA(tr = rep(2,5), da=c(rep(2,2), rep(2.5,3)), 
+data <- simulateMPRA(tr = rep(2,5), da=c(rep(0,2), rep(1,3)), 
                      nbatch=2, nbc=15)
 obj <- MpraObject(dnaCounts = data$obs.dna, 
                   rnaCounts = data$obs.rna, 

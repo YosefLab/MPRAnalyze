@@ -31,7 +31,7 @@ variance  for `ln.nb` and `ln.ln`)
 extract the DNA model parameters
 }
 \examples{
-data <- simulateMPRA(tr = rep(2,5), da=NULL, nbatch=2, nbc=15)
+data <- simulateMPRA(tr = rep(2,5), nbatch=2, nbc=15)
 obj <- MpraObject(dnaCounts = data$obs.dna, 
                   rnaCounts = data$obs.rna, 
                   colAnnot = data$annot)
