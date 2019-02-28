@@ -80,9 +80,12 @@ In some MPRA experiments, the DNA counts originate from pre-transduction plasmid
 Essentially - any factor that cannot or should not be carried from the DNA to the RNA model, should not be included in the DNA model at all. 
 
 ## including barcode annotations in the design
-While replicate and condition factors are not always transferrable, barcode information - if available - is. Including barcode information in the DNA model allows MPRAnalyze to provide different estimated counts for each barcode, and dramatically increases the statistical power of the model.
-This means that barcodes should be modeled in the DNA model, but not necessarily in the RNA model. Modeling barcode effect in the RNA model essentially means different transcription rate estimates will be calculated for each different barcodes of the same enhancer, which is not usually desired. In quantification analyses, this would make comparing enhancers to eachother exceedingly complicated, since unlike batch- or condition- effects, barcodes are not comparable between enhancers. In compartive analyses, while modeling barcodes isn't conceptually problematic, in practice this could result in overfitting the model and inlfating the results.
-Broadly, barcode factors should be included in the DNA model design and ignored in the RNA model design.
+While replicate and condition factors are not always transferrable, barcode information - if available - is. Including barcode information in the DNA model allows MPRAnalyze to provide different estimated counts for each barcode, and dramatically increases the statistical power of the model. This should be done thoughtfully, as explained below. Overall, we recommend only modeling barcodes in the DNA model, and only in comparative analyses.
+The two considertations behind these recommendations are:
+### Type of analysis
+While most experiment include a limited number of conditions or batches, many MPRA designs include dozens or sometimes hundreds of barcodes per enhancer. This could dramatically increase the complexity of the model, and therefore the time required to optimize the model parameters. In quantification analyses, the resulting estimates of transcription rate are often not impacted by modeling barcodes, and therefore the runtime cost doesn't justify the gain in accuracy. However, in comparative analyses, the gain in statistical power from modeling barcodes can be substantial. We generally recommend modeling barcodes only in comparative analyses, and if the number of barcodes is very large (more than 100 barcodes per enhancer) - filtering the data should be considered.
+### Modeling barcodes in the DNA model only
+Barcodes should sometimes be modeled in the DNA model, but not necessarily in the RNA model. Modeling barcode effect in the RNA model essentially means different transcription rate estimates will be calculated for each different barcode of the same enhancer, which is not usually desired. In quantification analyses, this would make comparing enhancers to eachother exceedingly complicated, since unlike batch- or condition- effects, barcodes are not comparable between enhancers. In compartive analyses, while modeling barcodes isn't conceptually problematic, in practice this could result in overfitting the model and inlfating the results.
 
 # Quantification Analysis
 Quantification analysis is addressing the question of what is the transription rate for each enhancer in the dataset. These estimates can then be used to identify and classify active enhancers that induce a higher transcription rate.
@@ -90,7 +93,7 @@ Regarding model design - this data is from a paired experiment, so DNA factors a
 Finally, fitting the model is done by calling the `analyzeQuantification` function:
 ```{r quant model fit}
 obj <- analyzeQuantification(obj = obj, 
-                              dnaDesign = ~ barcode + batch + condition,
+                              dnaDesign = ~ batch + condition,
                               rnaDesign = ~ condition)
 ```
 

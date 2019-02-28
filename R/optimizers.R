@@ -90,10 +90,14 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     log.rdepth.valid <- log(rdepth[valid.c.r])
     
     ## clean design matrix from unused factors
-    valid.df <- apply(ddesign.mat[valid.c.d,,drop=FALSE], 2, 
-                      function(x) !all(x==0))
+    # valid.df <- apply(ddesign.mat[valid.c.d,,drop=FALSE], 2, 
+    #                   function(x) !all(x==0))
+    # valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2,
+    #                   function(x) !all(x==0))
+    valid.df <- apply(ddesign.mat[valid.c.d,,drop=FALSE], 2,
+                      function(x) sum(x!=0) > 1)
     valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2,
-                      function(x) !all(x==0))
+                      function(x) sum(x!=0) > 1)
     
     ddmat.valid <- ddesign.mat[valid.c.d,valid.df,drop=FALSE]
     rdmat.valid <- rdesign.mat[valid.c.r,valid.rf,drop=FALSE]
@@ -102,6 +106,10 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     
     ## Initialize parameter vector with a guess
     guess <- rep(0, 1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
+    guess[1] <- log(sd(dcounts.valid))
+    means <- log((dcounts.valid %*% ddmat.valid) / colSums(ddmat.valid))
+    guess[2:(1 + NCOL(ddmat.valid))] <- (means - means[1])
+    guess[2] <- means[1]
     
     ## optimize
     suppressWarnings(
