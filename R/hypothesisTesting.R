@@ -202,7 +202,9 @@ testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
             ctrl.idx <- ctrl.idx[subset]
         }
         ctrls <- statistic[ctrl.idx]
-        res$control = ctrl.idx
+        
+        res$control <- FALSE
+        res$control[ctrl.idx] <- TRUE
         
         res$zscore <- ((statistic - mean(ctrls, na.rm=TRUE)) / 
                                 sd(ctrls, na.rm=TRUE))
