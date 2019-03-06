@@ -96,9 +96,16 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     #                   function(x) !all(x==0))
     valid.df <- apply(ddesign.mat[valid.c.d,,drop=FALSE], 2,
                       function(x) sum(x!=0) > 1)
+    if(!any(valid.df)) {
+        valid.df <- apply(ddesign.mat[valid.c.d,,drop=FALSE], 2,
+                          function(x) !all(x==0))
+    }
     valid.rf <- apply(rdesign.mat[valid.c.r,,drop=FALSE], 2,
                       function(x) sum(x!=0) > 1)
-    
+    if(!any(valid.rf)) {
+        valid.rf <- apply(rdesign.mat[valid.c.d,,drop=FALSE], 2,
+                          function(x) !all(x==0))
+    }
     ddmat.valid <- ddesign.mat[valid.c.d,valid.df,drop=FALSE]
     rdmat.valid <- rdesign.mat[valid.c.r,valid.rf,drop=FALSE]
     d2rmat.valid <- d2rdesign.mat[valid.c.r,valid.df,drop=FALSE]
@@ -106,8 +113,10 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
     
     ## Initialize parameter vector with a guess
     guess <- rep(0, 1 + NCOL(ddmat.valid) + NCOL(rdmat.valid))
-    guess[1] <- log(sd(dcounts.valid))
-    means <- log((dcounts.valid %*% ddmat.valid) / colSums(ddmat.valid))
+    if(length(dcounts.valid) > 1) {
+        guess[1] <- log(sd(dcounts.valid))
+    }
+    means <- as.vector(log((dcounts.valid %*% ddmat.valid) / colSums(ddmat.valid)))
     guess[2:(1 + NCOL(ddmat.valid))] <- (means - means[1])
     guess[2] <- means[1]
     
@@ -202,7 +211,7 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     ## get cost function
     ll.funs <- get.ll.functions(model)
     
-    ## filter invalid counts (NAs) from data and design
+    ## filter invalid counts (0, NAs) from data and design
     valid.c.d <- (dcounts > 0) & !is.na(dcounts)
     valid.c.r.agg <- apply((rcounts > 0) & !is.na(rcounts), 2, any) 
     log.ddepth <- log(ddepth)
@@ -210,7 +219,11 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     
     ## clean design matrix from unused factors
     valid.rf <- apply(rdesign.mat[valid.c.r.agg,,drop=FALSE], 2, 
-                      function(x) !all(x==0))
+                      function(x) sum(x!=0) > 1)
+    if(!any(valid.rf)) {
+        valid.rf <- apply(rdesign.mat[valid.c.r.agg,,drop=FALSE], 2,
+                          function(x) !all(x==0))
+    }
     
     ## Iterative parameter estimation: coordinate ascent
     # Iterate DNA and RNA model estimation
@@ -222,8 +235,10 @@ fit.dnarna.onlyctrl.iter <- function(model, dcounts, rcounts,
     llnew <- 0
     iter <- 1
     converged <- TRUE
-    RELTOL <- 10^(-6) # down to -6 or -8?
+    RELTOL <- 10^(-6)
     MAXITER <- 1000
+    
+    
     while((llnew > llold-llold*RELTOL | iter <= 2) & iter < MAXITER) {
         ## estimate dna model for each control enhancer
         dfits <- bplapply(seq_len(NROW(dcounts)), function(i) {
