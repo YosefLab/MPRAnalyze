@@ -52,24 +52,24 @@ estimateDepthFactors <- function(obj, lib.factor=NULL, which.lib="both",
         stop("which.lib must be 'dna', 'rna' or 'both' (default)")
     }
     if (which.lib %in% c("dna", "both")) {
-        dnaDepth <- estimateFactors(counts=obj@dnaCounts, 
-                                    annotations=obj@dnaAnnot, 
-                                    lib.factor=lib.factor, 
-                                    depth.estimator=depth.estimator)
-        if (any(dnaDepth == 0)) {
+        dDepth <- estimateFactors(counts=obj@dnaCounts, 
+                                  annotations=obj@dnaAnnot, 
+                                  lib.factor=lib.factor, 
+                                  depth.estimator=depth.estimator)
+        if (any(dDepth == 0)) {
             warning("Some DNA library size factors are 0.")
         }
-        obj@dnaDepth <- dnaDepth
+        obj@dnaDepth <- dDepth
     }
     if (which.lib %in% c("rna", "both")) {
-        rnaDepth <- estimateFactors(counts=obj@rnaCounts, 
-                                    annotations=obj@rnaAnnot, 
-                                    lib.factor=lib.factor, 
-                                    depth.estimator=depth.estimator)
-        if (any(rnaDepth == 0)) {
+        rDepth <- estimateFactors(counts=obj@rnaCounts, 
+                                  annotations=obj@rnaAnnot, 
+                                  lib.factor=lib.factor, 
+                                  depth.estimator=depth.estimator)
+        if (any(rDepth == 0)) {
             warning("Some RNA library size factors are 0.")
         }
-        obj@rnaDepth <- rnaDepth
+        obj@rnaDepth <- rDepth
     }
     return(obj)
 }
