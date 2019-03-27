@@ -73,7 +73,7 @@ NULL
 #' @rdname fit.dnarna
 #' @noRd
 fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
-                                 ddepth, rdepth, rctrlscale,
+                                 ddepth, rdepth, rctrlscale, dguess,
                                  ddesign.mat, rdesign.mat, d2rdesign.mat,
                                  rdesign.ctrl.mat, theta.d.ctrl.prefit,
                                  compute.hessian) {
@@ -117,8 +117,13 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
         guess[1] <- log(sd(dcounts.valid))
     }
     means <- as.vector(log((dcounts.valid %*% ddmat.valid) / colSums(ddmat.valid)))
-    guess[2:(1 + NCOL(ddmat.valid))] <- (means - means[1])
+    guess[seq(2, (1 + NCOL(ddmat.valid)))] <- (means - means[1])
     guess[2] <- means[1]
+    if (!is.null(dguess)) {
+        guess[1] <- dguess[1]
+        guess[seq(2, (1 + NCOL(ddmat.valid)))] <- dguess[c(FALSE, valid.df)]
+        guess[is.na(guess)] <- 0
+    }
     
     ## optimize
     suppressWarnings(
