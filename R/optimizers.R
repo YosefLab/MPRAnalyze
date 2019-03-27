@@ -48,6 +48,8 @@
 #' @param d2rdesign.mat the transition matrix relating DNA estimates to RNA 
 #' observations (logical, rna sample x dna parameters)
 #' @param rctrlscale control-based correction scalers
+#' @param dguess initialization vector for the DNA parameters (used when fitting
+#' the reduced model, using the full model parameters to initialize)
 #' @param rdesign.ctrl.mat the control rna model design matrix 
 #' (logical, samples x rna parameters)
 #' @param theta.d.ctrl.prefit ctrl dna model parameters to condition likelihood
