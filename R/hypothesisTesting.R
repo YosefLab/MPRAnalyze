@@ -128,6 +128,8 @@ testCoefficient <- function(obj, factor, contrast) {
 #' @param useControls is TRUE and controls are available, use the controls to
 #' establish the background model and compare against. This allows for more
 #' accurate zscores as well as empircal p-values.
+#' @param twoSided should the p-value be from a two-sided test (default: FALSE,
+#' right-side test)
 #' @param subset only test a subset of the enhancers in the object (logical,
 #' indices or names). Default is NULL, then all the enhancers are included.
 #' @export
@@ -161,7 +163,8 @@ testCoefficient <- function(obj, factor, contrast) {
 #' ## or test with a different statistic:
 #' aggregated.ratio <- rowSums(data$obs.rna) / rowSums(data$obs.dna)
 #' results <- testEmpirical(obj, aggregated.ratio)
-testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
+testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, twoSided=FALSE,
+                          subset=NULL) {
     
     if(is.null(statistic)) {
         alpha <- getAlpha(obj)
@@ -194,8 +197,6 @@ testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
         res$zscore <- (statistic - dist.peak) / std.div
         res$mad.score <- (statistic - dist.peak) / mad.score
         
-        res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
-        res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
     } else {
         ctrl.idx <- controls(obj)
         if (!is.null(subset)) {
@@ -210,9 +211,15 @@ testEmpirical <- function(obj, statistic=NULL, useControls=TRUE, subset=NULL) {
                                 sd(ctrls, na.rm=TRUE))
         res$mad.score <- ((statistic - median(ctrls, na.rm=TRUE)) / 
                                 mad(ctrls, na.rm=TRUE))
+        res$pval.empirical <- 1 - ecdf(ctrls)(statistic)
+    }
+    
+    if (twoSided) {
+        res$pval.mad <- 2 * pnorm(abs(res$mad.score), lower.tail = FALSE)
+        res$pval.zscore <- 2 * pnorm(abs(res$zscore), lower.tail = FALSE)
+    } else {
         res$pval.mad <- pnorm(res$mad.score, lower.tail = FALSE)
         res$pval.zscore <- pnorm(res$zscore, lower.tail = FALSE)
-        res$pval.empirical <- 1 - ecdf(ctrls)(statistic)
     }
     
     return(res)

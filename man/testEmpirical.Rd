@@ -6,7 +6,7 @@
 tests (see details)}
 \usage{
 testEmpirical(obj, statistic = NULL, useControls = TRUE,
-  subset = NULL)
+  twoSided = FALSE, subset = NULL)
 }
 \arguments{
 \item{obj}{the MpraObject, after running an analysis function}
@@ -18,6 +18,9 @@ vector.}
 \item{useControls}{is TRUE and controls are available, use the controls to
 establish the background model and compare against. This allows for more
 accurate zscores as well as empircal p-values.}
+
+\item{twoSided}{should the p-value be from a two-sided test (default: FALSE,
+right-side test)}
 
 \item{subset}{only test a subset of the enhancers in the object (logical,
 indices or names). Default is NULL, then all the enhancers are included.}
