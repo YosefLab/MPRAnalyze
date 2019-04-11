@@ -1,7 +1,10 @@
 #' easy access container for depth estimation functions
 #' @noRd
 DEPTH_EST_FUNCTIONS = list(
-    uq = function(x) quantile(x, .75, na.rm=TRUE),
+    uq = function(x) {
+        x[x==0] <- NA
+        return(quantile(x, .75, na.rm=TRUE))
+        },
     rle = function(x) exp(mean(log(x), na.rm=TRUE)),
     totsum = function(x) sum((x), na.rm = TRUE)
 )
@@ -25,9 +28,9 @@ DEPTH_EST_FUNCTIONS = list(
 #' library depth is set.
 #' @param depth.estimator a character indicating which depth estimation to use,
 #' or a function to perform the estimation. Currently supported values are "uq" 
-#' for upper quantile (default), "rle" for RLE (uses geometric mean, and is 
-#' therefore not recommended if libraries have 0 counts), or "totsum" for total 
-#' sum.
+#' for upper quantile of non-zero values (default), "rle" for RLE (uses 
+#' geometric mean, and is therefore not recommended if libraries have 0 counts),
+#'  or "totsum" for total sum.
 #' For a function input: function should take a numeric vector and return a 
 #' single numeric, and preferably handle NA values. See examples.
 #'
