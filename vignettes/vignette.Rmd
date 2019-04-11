@@ -160,3 +160,13 @@ plot(density(res$logFC))
 plot(res$logFC, -log10(res$pval))
 ```
 
+# Allelic Comparison / Mutagensis Analyses
+Another common use of MPRAs are when one wishes to compare the activity of two different sequences. This is a comparative analysis that requires a different model design, since these sequences are often tested at the same time and under the same conditions, and therefore do not share barcodes.
+Running these analyses in MPRAnalyze is fairly straight forward: the formatting of the data and the functions are the same as a comparative analysis. The only difference is that since the "conditions" no longer share barcodes, the model needs to treat the barcodes differently within each condition. This can be done by changing the annotations of the samples. Using the data we've been using, we can achieve this as follows:
+
+```{r allelic}
+ce.colAnnot$barcode_allelic <- interaction(ce.colAnnot$barcode, ce.colAnnot$condition)
+summary(ce.colAnnot)
+```
+
+Now each barcode is only associated with a single condition, and the next steps are the same as before: creating an object, normalizing library size and running a comparative analysis.
