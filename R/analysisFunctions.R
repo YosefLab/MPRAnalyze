@@ -12,6 +12,8 @@
 #' @param correctControls if TRUE (default), use the negative controls to 
 #' establish the null hypothesis, correcting for systemic bias in the data
 #' @param verbose print progress reports (default: TRUE)
+#' @param BPPARAM a parallelization object created by BiocParallel. This 
+#' overwrites the BPPARAM object set in the object creation.
 #' @import progress
 #' @export
 #' @return the MpraObject with fitted models for the input enhancers
@@ -162,6 +164,8 @@ analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
 #' @param obj the MpraObject
 #' @param dnaDesign the design of the DNA counts
 #' @param rnaDesign the design of the RNA counts
+#' @param BPPARAM a parallelization object created by BiocParallel. This 
+#' overwrites the BPPARAM object set in the object creation.
 #' 
 #' @return the MpraObject, with populated models
 #' @import progress
