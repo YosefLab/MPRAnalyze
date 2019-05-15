@@ -31,7 +31,7 @@
 #'                               rnaDesign = ~ condition, fit.se = TRUE)
 analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE, 
                                 reducedDesign=NULL, correctControls=TRUE, 
-                                verbose=TRUE) {
+                                verbose=TRUE, BPPARAM=NULL) {
     if(!fit.se & is.null(reducedDesign)) {
         stop("Comparative analysis requires either a reduced design or fitting \
              the SE")
@@ -49,6 +49,9 @@ analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
     }
     if(length(model(obj)) == 0) {
         obj <- autoChooseModel(obj)
+    }
+    if(!is.null(BPPARAM)) {
+        obj@BPPARAM <- BPPARAM
     }
     
     obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=dnaAnnot(obj))
@@ -172,7 +175,8 @@ analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE,
 #' obj <- estimateDepthFactors(obj, lib.factor = "batch", which.lib = "both")
 #' obj <- analyzeQuantification(obj, dnaDesign = ~ batch + barcode, 
 #'                               rnaDesign = ~1)
-analyzeQuantification <- function(obj, dnaDesign=~1, rnaDesign=~1){
+analyzeQuantification <- function(obj, dnaDesign=~1, rnaDesign=~1, 
+                                  BPPARAM=NULL){
     if(length(dnaDepth(obj)) == 0){
         warning("No DNA library depth factors set")
         obj <- estimateDepthFactors(obj, which.lib = "dna")
@@ -183,6 +187,9 @@ analyzeQuantification <- function(obj, dnaDesign=~1, rnaDesign=~1){
     }
     if(length(model(obj)) == 0) {
         obj <- autoChooseModel(obj)
+    }
+    if(!is.null(BPPARAM)) {
+        obj@BPPARAM <- BPPARAM
     }
     
     obj@designs@dna <- getDesignMat(design=dnaDesign, annotations=dnaAnnot(obj))
