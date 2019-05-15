@@ -9,9 +9,9 @@ simulateMPRA(tr = rep(2, 100), da = NULL, dna.noise.sd = 0.2,
   coef.bc.sd = 0.5, nbatch = 3, coef.batch.sd = 0.5)
 }
 \arguments{
-\item{tr}{a vector of the true transcription rates. The length of the vector 
-determines the number of enhancers included in the dataset Default is 100
-enhancers of identical transcription rate of 2.}
+\item{tr}{a vector of the true transcription rates, in log scale. The length 
+of the vector determines the number of enhancers included in the dataset. 
+Default is 100 enhancers of identical transcription rate of 2.}
 
 \item{da}{a vector determinig differential activity. Values are assumed to be
 in log scale, and will be used in the model as log Fold-Change values. If 

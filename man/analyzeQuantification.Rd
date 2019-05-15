@@ -6,7 +6,8 @@
 determine which sequences have a regulatory function, when no condition is 
 being tested.}
 \usage{
-analyzeQuantification(obj, dnaDesign = ~1, rnaDesign = ~1)
+analyzeQuantification(obj, dnaDesign = ~1, rnaDesign = ~1,
+  BPPARAM = NULL)
 }
 \arguments{
 \item{obj}{the MpraObject}
@@ -14,6 +15,9 @@ analyzeQuantification(obj, dnaDesign = ~1, rnaDesign = ~1)
 \item{dnaDesign}{the design of the DNA counts}
 
 \item{rnaDesign}{the design of the RNA counts}
+
+\item{BPPARAM}{a parallelization object created by BiocParallel. This 
+overwrites the BPPARAM object set in the object creation.}
 }
 \value{
 the MpraObject, with populated models

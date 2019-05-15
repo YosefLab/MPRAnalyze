@@ -5,7 +5,8 @@
 \title{Run a comparative analysis between conditions}
 \usage{
 analyzeComparative(obj, dnaDesign, rnaDesign, fit.se = FALSE,
-  reducedDesign = NULL, correctControls = TRUE, verbose = TRUE)
+  reducedDesign = NULL, correctControls = TRUE, verbose = TRUE,
+  BPPARAM = NULL)
 }
 \arguments{
 \item{obj}{the MpraObject}
@@ -27,6 +28,9 @@ design (i.e all terms in the reduced must be included in the full).}
 establish the null hypothesis, correcting for systemic bias in the data}
 
 \item{verbose}{print progress reports (default: TRUE)}
+
+\item{BPPARAM}{a parallelization object created by BiocParallel. This 
+overwrites the BPPARAM object set in the object creation.}
 }
 \value{
 the MpraObject with fitted models for the input enhancers
