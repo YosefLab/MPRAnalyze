@@ -1,0 +1,22 @@
+citHeader("To cite MPRAnalyze in publications use:")
+
+citEntry(entry = "Article",
+  title        = "MPRAnalyze: statistical framework for massively parallel reporter assays",
+  author       = personList(as.person("Tal Ashuach"),
+                   as.person("David S. Fischer"),
+                   as.person("Anat Kreimer"),
+                   as.person("Nadav Ahituv"),
+                   as.person("Nir Yosef")),
+  journal      = "Genome Biology",
+  year         = "2019",
+  volume       = "20",
+  number       = "1",
+  pages        = "1--17",
+  url          = "https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1787-z",
+
+  textVersion  =
+  paste("Ashuach, T., Fischer, D. S., Kreimer, A., Ahituv, N., ",
+        "Theis, F. J., & Yosef, N. (2019). ",
+        "MPRAnalyze: statistical framework for massively ",
+        "parallel reporter assays. Genome biology, 20(1), 1-17.")
+)
