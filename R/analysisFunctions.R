@@ -199,6 +199,7 @@ analyzeComparative <- function(obj, rnaDesign, dnaDesign=NULL, fit.se=FALSE,
 #'                               rnaDesign = ~1)
 analyzeQuantification <- function(obj, dnaDesign=~1, rnaDesign=~1, 
                                   BPPARAM=NULL){
+    obj@mode <- "classic"
     if(length(dnaDepth(obj)) == 0){
         warning("No DNA library depth factors set")
         obj <- estimateDepthFactors(obj, which.lib = "dna")
