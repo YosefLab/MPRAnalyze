@@ -190,6 +190,82 @@ fit.dnarna.noctrlobs <- function(model, dcounts, rcounts,
         ll = -fit$value))
 }
 
+#' @rdname fit.dnarna
+#' @noRd
+fit.dnarna.noctrlobs.scale <- function(model, dcounts, rcounts,
+                                       ddepth, rdepth, rctrlscale,
+                                       rdesign.mat, rdesign.ctrl.mat, 
+                                       compute.hessian) {
+    # ## get likelihood function
+    # ll.funs <- get.ll.functions(model)
+    
+    ## filter invalid counts (NAs) from data and design
+    valid.c <- (dcounts > 0) & !is.na(dcounts) & (rcounts > 0) & !is.na(rcounts)
+    
+    dcounts.valid <- dcounts[valid.c]
+    rcounts.valid <- rcounts[1,valid.c,drop=FALSE]
+    log.ddepth.valid <- log(ddepth[valid.c])
+    log.rdepth.valid <- log(rdepth[valid.c])
+    
+    ## clean design matrix from unused factors
+    valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2,
+                      function(x) sum(x!=0) > 1)
+    if(!any(valid.rf)) {
+        valid.rf <- apply(rdesign.mat[valid.c,,drop=FALSE], 2,
+                          function(x) !all(x==0))
+    }
+    rdmat.valid <- rdesign.mat[valid.c,valid.rf,drop=FALSE]
+    rdmat.ctrl.valid <- rdesign.ctrl.mat[valid.c,,drop=FALSE]
+    
+    ## Initialize parameter vector with a guess
+    guess <- rep(0, 1 + NCOL(rdmat.valid))
+    
+    ## optimize
+    suppressWarnings(
+        fit <- optim(
+            par = guess,
+            fn = cost.rna.scale, 
+            llfnRNA = ll.rna.scale.nb,
+            dcounts = dcounts.valid, 
+            rcounts = rcounts.valid,
+            log.ddepth = log.ddepth.valid, 
+            log.rdepth = log.rdepth.valid,
+            rctrlscale = rctrlscale,
+            rdesign.mat = rdmat.valid,
+            rdesign.ctrl.mat = rdmat.ctrl.valid,
+            hessian = compute.hessian,
+            method = "L-BFGS-B", control = list(maxit=1000), 
+            lower=-23, upper=23)
+    )
+    
+    r.coef <- c(fit$par[1], rep(NA, NCOL(rdesign.mat)))
+    r.coef[1 + which(valid.rf)] <- fit$par[-1]
+    r.df <- length(fit$par)
+    
+    ## standard error of the estimates
+    se <- NULL
+    r.se <- NULL
+    if (compute.hessian) {
+        se.comp <- tryCatch({
+            se <- sqrt(diag(solve(fit$hessian)))
+        }, error = function(e) return(e))
+        
+        if(!inherits(se.comp, "error")) {
+            r.se <- c(se[1], rep(NA, NCOL(rdesign.mat)))
+            r.se[1 + which(valid.rf)] <- se[seq(2, 1+NCOL(rdmat.valid))]
+        } else {
+            message(se.comp$message)
+        }
+    }
+    
+    return(list(
+        r.coef = r.coef, r.se = r.se, r.df = r.df,
+        r.ctrl.coef = NULL, r.ctrl.se = NULL, r.ctrl.df = 0,
+        converged = fit$convergence,
+        ll = -fit$value))
+}
+
+
 #' fit the control-based joint model. Seperate DNA model per enhancer, joint RNA
 #' model.
 #' 

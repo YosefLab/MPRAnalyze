@@ -6,8 +6,13 @@
 on the model). These can be compared with the observed counts to assess 
 goodness of fit.}
 \usage{
-getFits_DNA(obj, enhancers = NULL, depth = TRUE, full = TRUE,
-  transition = FALSE)
+getFits_DNA(
+  obj,
+  enhancers = NULL,
+  depth = TRUE,
+  full = TRUE,
+  transition = FALSE
+)
 }
 \arguments{
 \item{obj}{MpraObject to extract from}

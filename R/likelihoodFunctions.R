@@ -126,6 +126,21 @@ ll.rna.gamma.pois <- function(theta, theta.d,
 
 #' @rdname ll.rna
 #' @noRd
+ll.rna.scale.nb <- function(theta, dcounts, rcounts, 
+                            log.ddepth, log.rdepth, rdesign.mat) {
+    log.d.est <- log(dcounts) - log.ddepth
+    log.r.est <- log.d.est + rep(((rdesign.mat %*% theta[-1]) + log.rdepth), 
+                                 NCOL(dcounts))
+    
+    ll <- sum(dnbinom(x = rcounts,
+                      size = exp(exp(theta[1])),
+                      mu = exp(log.r.est),
+                      log = TRUE))
+    return(-ll)
+}
+
+#' @rdname ll.rna
+#' @noRd
 ll.rna.ln.nb <- function(theta, theta.d, 
                         rcounts, log.rdepth,
                         d2rdesign.mat, rdesign.mat) {

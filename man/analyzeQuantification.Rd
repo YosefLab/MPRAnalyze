@@ -6,8 +6,7 @@
 determine which sequences have a regulatory function, when no condition is 
 being tested.}
 \usage{
-analyzeQuantification(obj, dnaDesign = ~1, rnaDesign = ~1,
-  BPPARAM = NULL)
+analyzeQuantification(obj, dnaDesign = ~1, rnaDesign = ~1, BPPARAM = NULL)
 }
 \arguments{
 \item{obj}{the MpraObject}

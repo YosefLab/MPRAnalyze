@@ -97,6 +97,7 @@ setClass("MpraObject", validity = validateMpraObject,
              rnaDepth = "numeric",
              rnaCtrlScale = "numericORNULL",
              
+             mode = "character",
              model = "character",
              designs = "Designs",
              modelFits = "list",

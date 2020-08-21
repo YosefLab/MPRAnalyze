@@ -4,8 +4,12 @@
 \alias{estimateDepthFactors}
 \title{estimate library size correction factors}
 \usage{
-estimateDepthFactors(obj, lib.factor = NULL, which.lib = "both",
-  depth.estimator = "uq")
+estimateDepthFactors(
+  obj,
+  lib.factor = NULL,
+  which.lib = "both",
+  depth.estimator = "uq"
+)
 }
 \arguments{
 \item{obj}{the MpraObject}

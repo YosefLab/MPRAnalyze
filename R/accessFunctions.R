@@ -28,6 +28,9 @@
 #' dna.fits <- getFits_DNA(obj)
 getFits_DNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE, 
                         transition=FALSE){
+    if ("mode" %in% slotNames(obj) & (obj@mode == "scale")) {
+        stop("In Scale mode, the DNA is not fitted.")
+    }
     if(is.null(enhancers)) {
         enhancers <- names(obj@modelFits$ll)
     } else if(is.numeric(enhancers)) {
@@ -117,9 +120,6 @@ getFits_RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
         rctrlscale <- NULL
     }
     
-    dfit <- getFits_DNA(obj=obj, enhancers=enhancers, depth=FALSE, 
-                        full=full, transition=TRUE)
-    
     joint.des.mat <- cbind(rdesign, rctrldesign)
     
     coef.mat <- t(fit$r.coef[enhancers,-1,drop=FALSE])
@@ -133,7 +133,11 @@ getFits_RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
         rfit <- rfit * replicate(NCOL(rfit), rnaDepth(obj))
     }
     
-    rfit <- t(rfit) * dfit
+    if (!("mode" %in% slotNames(obj)) | (obj@mode != "scale")) {
+        dfit <- getFits_DNA(obj=obj, enhancers=enhancers, depth=FALSE, 
+                            full=full, transition=TRUE)
+        rfit <- t(rfit) * dfit
+    }
     
     rownames(rfit) <- enhancers
     colnames(rfit) <- rownames(rnaAnnot(obj))
@@ -171,6 +175,9 @@ getFits_RNA <- function(obj, enhancers=NULL, depth=TRUE, full=TRUE,
 #' @export
 #' @rdname extractModelParameters
 getModelParameters_DNA <- function(obj, features=NULL, full=TRUE) {
+    if ("mode" %in% slotNames(obj) & (obj@mode == "scale")) {
+        stop("In Scale mode, the DNA is not fitted.")
+    }
     if(is.null(features)) {
         features <- seq_len(NROW(dnaCounts(obj)))
     } else if (is.character(features)) {
@@ -201,9 +208,9 @@ getModelParameters_RNA <- function(obj, features=NULL, full=TRUE) {
         stop("can't extract model parameters before fitting a model")
     }
     if(is.null(features)) {
-        features <- seq_len(NROW(dnaCounts(obj)))
+        features <- seq_len(NROW(rnaCounts(obj)))
     } else if (is.character(features)) {
-        features <- which(rownames(dnaCounts(obj)) %in% features)
+        features <- which(rownames(rnaCounts(obj)) %in% features)
     }
     
     if(full) {
@@ -216,7 +223,7 @@ getModelParameters_RNA <- function(obj, features=NULL, full=TRUE) {
         stop("Reduced model unavailable")
     }
     
-    rownames(coef.mat) <- rownames(dnaCounts(obj))[features]
+    rownames(coef.mat) <- rownames(rnaCounts(obj))[features]
     return(as.data.frame(coef.mat))
 }
 
@@ -249,6 +256,9 @@ getModelParameters_RNA <- function(obj, features=NULL, full=TRUE) {
 #' 
 #' @rdname getDistrParam
 getDistrParam_DNA <- function(obj, enhancer, full=TRUE){
+    if ("mode" %in% slotNames(obj) & (obj@mode == "scale")) {
+        stop("In Scale mode, the DNA is not fitted.")
+    }
     if(full == TRUE){
         fit <- obj@modelFits
     } else {

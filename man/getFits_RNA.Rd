@@ -6,8 +6,7 @@
 on the model). These can be compared with the observed counts to assess 
 goodness of fit.}
 \usage{
-getFits_RNA(obj, enhancers = NULL, depth = TRUE, full = TRUE,
-  rnascale = TRUE)
+getFits_RNA(obj, enhancers = NULL, depth = TRUE, full = TRUE, rnascale = TRUE)
 }
 \arguments{
 \item{obj}{MpraObject to extract from}

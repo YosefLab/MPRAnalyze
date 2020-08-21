@@ -12,6 +12,9 @@
 #' @param correctControls if TRUE (default), use the negative controls to 
 #' establish the null hypothesis, correcting for systemic bias in the data
 #' @param verbose print progress reports (default: TRUE)
+#' @param mode whether to run in classic mode ("classic") or in scalable mode ("scale"). 
+#' Scale mode is only available in situations when each RNA observation has a single
+#' corresponding DNA observation.
 #' @param BPPARAM a parallelization object created by BiocParallel. This 
 #' overwrites the BPPARAM object set in the object creation.
 #' @import progress
@@ -31,9 +34,24 @@
 #' ## alternatively, run a coefficient-based analysis:
 #' obj <- analyzeComparative(obj, dnaDesign = ~ batch + barcode + condition, 
 #'                               rnaDesign = ~ condition, fit.se = TRUE)
-analyzeComparative <- function(obj, dnaDesign, rnaDesign, fit.se=FALSE, 
+analyzeComparative <- function(obj, rnaDesign, dnaDesign=NULL, fit.se=FALSE, 
                                 reducedDesign=NULL, correctControls=TRUE, 
-                                verbose=TRUE, BPPARAM=NULL) {
+                                verbose=TRUE, mode="classic", BPPARAM=NULL) {
+    if ("mode" %in% slotNames(obj) & (mode == "scale")) {
+        obj@mode <- mode
+        if (correctControls) {
+            warning("Control-based correction is not currently supported in scalable mode")
+        }
+        return(analyzeComparative.scale(obj, rnaDesign = rnaDesign, fit.se = fit.se, 
+                                        reducedDesign = reducedDesign, verbose = verbose, BPPARAM = BPPARAM))
+    }
+    else {
+        obj@mode <- "classic"
+    }
+    
+    if (is.null(dnaDesign)) {
+        stop("dnaDesign must be provided")
+    }
     if(!fit.se & is.null(reducedDesign)) {
         stop("Comparative analysis requires either a reduced design or fitting \
              the SE")
@@ -236,5 +254,94 @@ analyzeQuantification <- function(obj, dnaDesign=~1, rnaDesign=~1,
     
     message("Analysis done!")
     return(obj)
+}
 
+
+#' scalable version of the comparative analysis function, where instead of fitting the DNA model,
+#' the DNA observations are used directly as the estimated true construct counts
+#' @noRd
+analyzeComparative.scale <- function(obj, rnaDesign, fit.se=FALSE, 
+                                     reducedDesign=NULL, verbose=TRUE, BPPARAM=NULL) {
+    if(!fit.se & is.null(reducedDesign)) {
+        stop("Comparative analysis requires either a reduced design or fitting \
+             the SE")
+    }
+    if(!is.null(reducedDesign)) {
+        if (!isNestedDesign(full=rnaDesign, reduced=reducedDesign)) {
+            stop("reduced design must be nested within the full RNA design")
+        }
+    }
+    if(length(dnaDepth(obj)) != NCOL(dnaCounts(obj))) {
+        obj <- estimateDepthFactors(obj, which.lib = "dna")
+    }
+    if(length(rnaDepth(obj)) != NCOL(rnaCounts(obj))) {
+        obj <- estimateDepthFactors(obj, which.lib = "rna")
+    }
+    if(length(model(obj)) == 0) {
+        obj <- autoChooseModel(obj)
+    }
+    if(!all(dim(dnaCounts(obj)) == dim(rnaCounts(obj)))) {
+        stop("For scalable analysis, counts matrices must be of equal 
+             dimensions and observations must be matched.")
+    }
+    if(!is.null(BPPARAM)) {
+        obj@BPPARAM <- BPPARAM
+    }
+    
+    obj@designs@rnaFull <- getDesignMat(design=rnaDesign, 
+                                        annotations=rnaAnnot(obj))
+    
+    theta.d.ctrl.prefit <- NULL
+    
+    ## Fit the full model (with SE extraction if fit.SE is on)
+    message("Fitting model...")
+    pb <- progress_bar$new(format = "[:bar] :percent (:current/:total)", 
+                           total = NROW(dnaCounts(obj)), clear = !verbose)
+    models <- bplapply(rownames(dnaCounts(obj)), function(rn) {
+        pb$tick()
+        tryCatch({
+            return(fit.dnarna.noctrlobs.scale(
+                model=model(obj),
+                dcounts=dnaCounts(obj)[rn,,drop=FALSE],
+                rcounts=rnaCounts(obj)[rn,,drop=FALSE],
+                ddepth=dnaDepth(obj),
+                rdepth=rnaDepth(obj),
+                rctrlscale=obj@rnaCtrlScale,
+                rdesign.mat=obj@designs@rnaFull,
+                rdesign.ctrl.mat=obj@designs@rnaCtrlFull,
+                compute.hessian=fit.se))
+        }, error = function(err) {message("error fitting ", rn, ": ", err)})
+    }, BPPARAM = obj@BPPARAM)
+    names(models) <- rownames(dnaCounts(obj))
+    obj@modelFits <-reformatModels.scale(models)
+    
+    if(!is.null(reducedDesign)) {
+        obj@designs@rnaRed <- getDesignMat(design=reducedDesign, 
+                                           annotations=rnaAnnot(obj))
+        
+        message("Fitting reduced model...")
+        pb <- progress_bar$new(format = "[:bar] :percent (:current/:total)", 
+                               total = NROW(dnaCounts(obj)), clear = verbose)
+        models <- bplapply(rownames(dnaCounts(obj)), function(rn) {
+            pb$tick()
+            tryCatch({
+                return(fit.dnarna.noctrlobs.scale(
+                    model=model(obj),
+                    dcounts=dnaCounts(obj)[rn,,drop=FALSE],
+                    rcounts=rnaCounts(obj)[rn,,drop=FALSE], 
+                    ddepth=dnaDepth(obj),
+                    rdepth=rnaDepth(obj),
+                    rctrlscale=obj@rnaCtrlScale,
+                    rdesign.mat=obj@designs@rnaRed,
+                    rdesign.ctrl.mat=obj@designs@rnaCtrlRed,
+                    compute.hessian=FALSE))
+            }, error = function(err) {message("error fitting: ", 
+                                              rn, ": ", err)})
+        }, BPPARAM = obj@BPPARAM)
+        names(models) <- rownames(dnaCounts(obj))
+        obj@modelFits.red <- reformatModels.scale(models)
+    }
+    
+    message("Analysis Done!")
+    return(obj)
 }

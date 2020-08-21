@@ -76,11 +76,11 @@ MPRAnalyze fits two nested generalized linear models. The two models have a conc
 Two common considerations are covered here:
 
 ## DNA design of paired factors only
-In some MPRA experiments, the DNA counts originate from pre-transduction plasmid libraries. In these cases, multiple replicates may be available, but they are independant of the multiple RNA replicates. Therefore, while there may be batch effect present in the DNA data, this effect cannot be transferred into the RNA model, and should be discarded. By not including it, the DNA estimates will essentially be averaged over replicates, but the multiple replicates will still be used to estimate the dispersion.
+In some MPRA experiments, the DNA counts originate from pre-transduction plasmid libraries. In these cases, multiple replicates may be available, but they are independant of the multiple RNA replicates. Therefore, while there may be batch effect present in the DNA data, this effect cannot be transferred into the RNA model, and should be discarded. By not including it, the DNA estimates will be averaged over replicates, but the multiple replicates will still be used to estimate the dispersion.
 Essentially - any factor that cannot or should not be carried from the DNA to the RNA model, should not be included in the DNA model at all. 
 
 ## including barcode annotations in the design
-While replicate and condition factors are not always transferrable, barcode information - if available - is. Including barcode information in the DNA model allows MPRAnalyze to provide different estimated counts for each barcode, and dramatically increases the statistical power of the model. This should be done thoughtfully, as explained below. Overall, we recommend only modeling barcodes in the DNA model, and only in comparative analyses.
+While replicate and condition factors are not always transferrable, barcode information - if available - is. Including barcode information in the DNA model allows MPRAnalyze to provide different estimated counts for each barcode, and dramatically increases the statistical power of the model. This should be done thoughtfully, as explained below. Overall, we recommend only modeling barcodes in the DNA model, and only in comparative analyses. When doing this makes the fitting the model unreasonably slow, MPRAnalyze offers a scalable model, explained below.
 The two considertations behind these recommendations are:
 ### Type of analysis
 While most experiment include a limited number of conditions or batches, many MPRA designs include dozens or sometimes hundreds of barcodes per enhancer. This could dramatically increase the complexity of the model, and therefore the time required to optimize the model parameters. In quantification analyses, the resulting estimates of transcription rate are often not impacted by modeling barcodes, and therefore the runtime cost doesn't justify the gain in accuracy. However, in comparative analyses, the gain in statistical power from modeling barcodes can be substantial. We generally recommend modeling barcodes only in comparative analyses, and if the number of barcodes is very large (more than 100 barcodes per enhancer) - filtering the data should be considered.
@@ -170,3 +170,17 @@ summary(ce.colAnnot)
 ```
 
 Now each barcode is only associated with a single condition, and the next steps are the same as before: creating an object, normalizing library size and running a comparative analysis.
+
+# scalable mode (from version 1.7.0)
+When modeling barcodes in comparative analyses, MPRAnalyze creates a coefficient in the model for each distinct barcode, making the model potentially very big, and correspondingly the runtime might get very slow. To address this, MPRAnalyze implements a scalable mode, with limited capabilities, that uses the DNA counts directly as estimates instead of creating a DNA model.
+This mode runs much faster and reaches similar results as the classic MPRAnalyze model in terms of the measured effect size, but has reduced statistical power and does not support control-based correction. Additionally, this model is only available in situations where the DNA and RNA observations are matched: meaning each RNA observation has a single corresponding DNA observation.
+Running this analysis is simply calling the same `analyzeComparative` function with the argument `mode="scale"`. dnaDesign is not necessary in this mode, since no DNA model is created.
+```{r scale}
+obj <- analyzeComparative(obj = obj, 
+                          rnaDesign = ~ condition, 
+                          reducedDesign = ~ 1, 
+                          mode="scale")
+res.scale <- testLrt(obj)
+head(res.scale)
+plot(res$logFC, res.scale$logFC)
+```

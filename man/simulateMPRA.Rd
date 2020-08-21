@@ -4,9 +4,18 @@
 \alias{simulateMPRA}
 \title{Simulate an MPRA dataset}
 \usage{
-simulateMPRA(tr = rep(2, 100), da = NULL, dna.noise.sd = 0.2,
-  rna.noise.sd = 0.3, dna.inter = 5, dna.inter.sd = 0.5, nbc = 100,
-  coef.bc.sd = 0.5, nbatch = 3, coef.batch.sd = 0.5)
+simulateMPRA(
+  tr = rep(2, 100),
+  da = NULL,
+  dna.noise.sd = 0.2,
+  rna.noise.sd = 0.3,
+  dna.inter = 5,
+  dna.inter.sd = 0.5,
+  nbc = 100,
+  coef.bc.sd = 0.5,
+  nbatch = 3,
+  coef.batch.sd = 0.5
+)
 }
 \arguments{
 \item{tr}{a vector of the true transcription rates, in log scale. The length 

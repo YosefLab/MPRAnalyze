@@ -5,8 +5,13 @@
 \title{test for significant activity (quantitative analysis) using various empirical
 tests (see details)}
 \usage{
-testEmpirical(obj, statistic = NULL, useControls = TRUE,
-  twoSided = FALSE, subset = NULL)
+testEmpirical(
+  obj,
+  statistic = NULL,
+  useControls = TRUE,
+  twoSided = FALSE,
+  subset = NULL
+)
 }
 \arguments{
 \item{obj}{the MpraObject, after running an analysis function}

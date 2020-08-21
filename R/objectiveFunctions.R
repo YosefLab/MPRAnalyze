@@ -130,3 +130,23 @@ cost.rna <- function(theta, theta.d, llfnRNA, rcounts,
                     rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat))
     return(r.ll)
 }
+
+#' @rdname cost.model.noctrl
+#' @noRd
+cost.rna.scale <- function(theta, dcounts, rcounts,
+                           llfnRNA,
+                           log.ddepth, log.rdepth, rctrlscale=NULL,
+                           rdesign.mat,
+                           rdesign.ctrl.mat=NULL) {
+    
+    ## compute likelihood
+    # likelihood of case rna observations
+    r.ll <- ll.rna.scale.nb(theta = c(theta, rctrlscale),
+                            dcounts = dcounts,
+                            rcounts = rcounts,
+                            log.ddepth = log.ddepth,
+                            log.rdepth = log.rdepth,
+                            rdesign.mat = cbind(rdesign.mat, rdesign.ctrl.mat)) 
+    
+    return(r.ll)
+}

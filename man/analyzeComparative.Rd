@@ -4,17 +4,25 @@
 \alias{analyzeComparative}
 \title{Run a comparative analysis between conditions}
 \usage{
-analyzeComparative(obj, dnaDesign, rnaDesign, fit.se = FALSE,
-  reducedDesign = NULL, correctControls = TRUE, verbose = TRUE,
-  BPPARAM = NULL)
+analyzeComparative(
+  obj,
+  rnaDesign,
+  dnaDesign = NULL,
+  fit.se = FALSE,
+  reducedDesign = NULL,
+  correctControls = TRUE,
+  verbose = TRUE,
+  mode = "classic",
+  BPPARAM = NULL
+)
 }
 \arguments{
 \item{obj}{the MpraObject}
 
+\item{rnaDesign}{the design for the RNA model.}
+
 \item{dnaDesign}{the design for the DNA model. Only terms that are matched
 with the RNA design should be included.}
-
-\item{rnaDesign}{the design for the RNA model.}
 
 \item{fit.se}{logical, if TRUE the standard errors of the coefficients
 are extracted from the model. These are necessary for computing coefficient-
@@ -28,6 +36,10 @@ design (i.e all terms in the reduced must be included in the full).}
 establish the null hypothesis, correcting for systemic bias in the data}
 
 \item{verbose}{print progress reports (default: TRUE)}
+
+\item{mode}{whether to run in classic mode ("classic") or in scalable mode ("scale"). 
+Scale mode is only available in situations when each RNA observation has a single
+corresponding DNA observation.}
 
 \item{BPPARAM}{a parallelization object created by BiocParallel. This 
 overwrites the BPPARAM object set in the object creation.}

@@ -19,6 +19,9 @@
 #'                               rnaDesign = ~ condition, reducedDesign = ~ 1)
 #' results <- testLrt(obj)
 testLrt <- function(obj) {
+    if ("mode" %in% slotNames(obj) & (obj@mode == "scale")) {
+        return(testLrt.scale(obj))
+    }
     if(length(obj@modelFits) == 0 | length(obj@modelFits.red) == 0) {
         stop("An LRT analysis must be performed before computing the test")
     }
@@ -43,6 +46,44 @@ testLrt <- function(obj) {
     res <- data.frame(statistic=lrt, pval=pval, fdr=fdr, df.test=df,
                     df.dna=df.dna, df.rna.full=df.rna.full, 
                     df.rna.red=df.rna.red)
+    ## if condition is single term, extract the coefficient as logFC
+    condition.name <- (colnames(obj@designs@rnaFull)
+                       [!(colnames(obj@designs@rnaFull) %in% 
+                              colnames(obj@designs@rnaRed))])
+    if(length(condition.name) == 1) {
+        ## single coefficient is the log Fold Change
+        res$logFC <- getModelParameters_RNA(obj)[,condition.name]
+    }
+    
+    return(res)
+}
+
+#' @rdname testLrt
+#' @noRd
+testLrt.scale <- function(obj) {
+    if(length(obj@modelFits) == 0 | length(obj@modelFits.red) == 0) {
+        stop("An LRT analysis must be performed before computing the test")
+    }
+    
+    message("Performing Likelihood Ratio Test...")
+    
+    ll.full <- obj@modelFits$ll
+    ll.red <- obj@modelFits.red$ll
+    df.rna.full <- obj@modelFits$r.df + obj@modelFits$r.ctrl.df + 
+        length(obj@rnaCtrlScale)
+    df.rna.red <- obj@modelFits.red$r.df + obj@modelFits.red$r.ctrl.df + 
+        length(obj@rnaCtrlScale)
+    df.full <- df.rna.full 
+    df.red <- df.rna.red 
+    
+    lrt <- 2*(ll.full - ll.red)
+    df <- df.full-df.red
+    pval <- pchisq(lrt, df=df, lower.tail=FALSE)
+    fdr <- p.adjust(pval, 'BH')
+    
+    res <- data.frame(statistic=lrt, pval=pval, fdr=fdr, df.test=df,
+                      df.rna.full=df.rna.full, 
+                      df.rna.red=df.rna.red)
     ## if condition is single term, extract the coefficient as logFC
     condition.name <- (colnames(obj@designs@rnaFull)
                        [!(colnames(obj@designs@rnaFull) %in% 

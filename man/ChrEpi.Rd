@@ -8,7 +8,8 @@
 \alias{ce.rnaCounts}
 \alias{ce.control}
 \title{Sample MPRA data}
-\format{\describe{
+\format{
+\describe{
 \item{ce.colAnnot}{
 Column annotations for each column (sample) in the data matrices
 \describe{
@@ -21,7 +22,16 @@ and MT corresponds to episomal}
 \item{ce.dnaCounts}{DNA observations}
 \item{ce.rnaCounts}{DNA observations}
 \item{ce.control}{indices of control enhancers}
-}}
+}
+
+An object of class \code{data.frame} with 40 rows and 3 columns.
+
+An object of class \code{matrix} with 110 rows and 40 columns.
+
+An object of class \code{matrix} with 110 rows and 40 columns.
+
+An object of class \code{logical} of length 110.
+}
 \source{
 \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5204343/}
 }
