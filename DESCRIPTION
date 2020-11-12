@@ -19,7 +19,7 @@ Imports:
     progress,
     stats,
     SummarizedExperiment
-biocViews: 
+biocViews: ImmunoOncology, 
 	Software,
     StatisticalMethod,
     Sequencing,
